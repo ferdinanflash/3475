@@ -37,7 +37,13 @@ function loadPresidentInfo() {
     
     document.getElementById('val-president').innerText = president;
     document.getElementById('val-alliance').innerText = alliance;
-    document.getElementById('val-id').innerText = idGame;
+    
+    // Menambahkan style cursor & onclick pada ID Presiden di Header agar bisa dicopy juga
+    const valId = document.getElementById('val-id');
+    valId.innerText = idGame;
+    valId.style.cursor = 'pointer';
+    valId.title = 'Click to copy ID';
+    valId.onclick = () => copyToClipboard(idGame);
     
     document.getElementById('edit-president').value = president;
     document.getElementById('edit-alliance').value = alliance;
@@ -234,7 +240,7 @@ function renderTable() {
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
         
-        // Diubah: Menghilangkan kolom Power dari tampilan tabel utama
+        // Diubah: Ditambahkan trigger onclick="copyToClipboard('${item.game_id}')" dan styling cursor pointer pada Game ID di tabel
         row.innerHTML = `
             <td>
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
@@ -242,7 +248,7 @@ function renderTable() {
             ${isAdmin ? actionCell : ''}
             <td>State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
-            <td>${item.game_id}</td>
+            <td onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer; font-weight:500;" title="Click to copy ID">${item.game_id} 📋</td>
             <td><span class="${badgeClass}">${item.status}</span></td>
         `;
         tbody.appendChild(row);
@@ -256,7 +262,14 @@ function showDetailPopup(index) {
 
     document.getElementById('pop-nickname').innerText = `Detail: ${player.nickname}`;
     document.getElementById('pop-state').innerText = `State ${player.transfer_from_state}`;
-    document.getElementById('pop-gameid').innerText = player.game_id;
+    
+    // Diubah: Tambahkan trigger klik salin pada elemen Game ID di dalam popup detail
+    const popGameId = document.getElementById('pop-gameid');
+    popGameId.innerText = `${player.game_id} 📋`;
+    popGameId.style.cursor = 'pointer';
+    popGameId.title = 'Click to copy ID';
+    popGameId.onclick = () => copyToClipboard(player.game_id);
+
     document.getElementById('pop-alliance').innerText = player.desired_alliance || '-';
     document.getElementById('pop-furnace').innerText = `FC ${player.furnace_level}`;
     document.getElementById('pop-power').innerText = Number(player.power).toLocaleString();
@@ -269,6 +282,28 @@ function showDetailPopup(index) {
 
 function closeDetailModal() {
     document.getElementById('detail-modal').classList.remove('active');
+}
+
+// FUNGSI UTAMA UNTUK MENYALIN (COPY) ID KE CLIPBOARD HP / PC
+function copyToClipboard(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`ID ${text} copied to clipboard!`, "success");
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        // Fallback jika browser versi lama / HTTP non-secure mendadak memblokir clipboard API
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast(`ID ${text} copied!`, "success");
+        } catch (e) {
+            showToast("Failed to copy ID automatically.", "error");
+        }
+        document.body.removeChild(textArea);
+    });
 }
 
 // Tutup popup jika user klik di luar kotak modal info
