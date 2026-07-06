@@ -6,8 +6,13 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let isAdmin = false;
 let transferList = [];
+let maxSlots = parseInt(localStorage.getItem('max_slots')) || 35; // Mengambil slot tersimpan atau default 35
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Terapkan nilai slot maksimal yang tersimpan saat pertama kali dimuat
+    const maxSlotsInput = document.getElementById('in-max-slots');
+    if (maxSlotsInput) maxSlotsInput.value = maxSlots;
+
     loadTransfers();
     setInterval(loadTransfers, 30000); // Polling update otomatis setiap 30 detik
 });
@@ -23,14 +28,30 @@ function getSupabase() {
     return supabaseClient;
 }
 
+// FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL
+function changeMaxSlots(value) {
+    if (!isAdmin) return;
+    
+    const parsedValue = parseInt(value);
+    if (isNaN(parsedValue) || parsedValue < 1) {
+        showToast("Invalid slots number!", "warning");
+        document.getElementById('in-max-slots').value = maxSlots;
+        return;
+    }
+
+    maxSlots = parsedValue;
+    localStorage.setItem('max_slots', maxSlots); // Simpan di browser agar tidak hilang saat di-refresh
+    showToast(`Maximum slots updated to ${maxSlots}`, "success");
+    updateCounters();
+}
+
 // 1. INPUT DATA TRANSFER INTO DATABASE
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
 
-    // Proteksi tambahan sisi client sebelum submit data
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
-    if (acceptedCount >= 35) {
+    if (acceptedCount >= maxSlots) {
         showToast("Registration is closed. Quota full!", "error");
         return;
     }
@@ -84,35 +105,41 @@ async function loadTransfers() {
         if (error) throw error;
         transferList = data || [];
         
-        // Perbarui Counter & Status Penguncian Form
         updateCounters();
-        
         renderTable();
     } catch (e) {
         console.error("Database failure:", e);
     }
 }
 
-// UPDATE JUMLAH COUNTER & LOCK LOGIC
+// UPDATE JUMLAH COUNTER & LOCK LOGIC (DINAMIS DENGAN MAX SLOTS)
 function updateCounters() {
     const totalApplicants = transferList.length;
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
 
-    // Ubah angka di interface
     document.getElementById('count-total').innerText = totalApplicants;
-    document.getElementById('count-accepted').innerText = `${acceptedCount} / 35`;
+    document.getElementById('count-accepted').innerText = acceptedCount;
 
     const inputs = document.querySelectorAll('.form-group input');
     const submitBtn = document.getElementById('submit-btn');
     const lockMessage = document.getElementById('lock-message');
+    const maxSlotsInput = document.getElementById('in-max-slots');
 
-    // LOGIKA PENGUNCIAN FORM JIKA SLOT TERTERIMA >= 35
-    if (acceptedCount >= 35) {
+    // Mengaktifkan/menonaktifkan edit input max slot berdasarkan status login admin
+    if (maxSlotsInput) {
+        maxSlotsInput.disabled = !isAdmin;
+    }
+
+    // LOGIKA PENGUNCIAN FORM JIKA SLOT TERTERIMA >= MAX SLOTS
+    if (acceptedCount >= maxSlots) {
         inputs.forEach(input => input.disabled = true);
         if (submitBtn) submitBtn.disabled = true;
         if (lockMessage) lockMessage.style.display = "block";
     } else {
-        inputs.forEach(input => input.disabled = false);
+        inputs.forEach(input => {
+            // Biarkan field tetap terbuka, kecuali kolom input max slots (diatur khusus oleh admin login)
+            if (input.id !== 'in-max-slots') input.disabled = false;
+        });
         if (submitBtn) submitBtn.disabled = false;
         if (lockMessage) lockMessage.style.display = "none";
     }
@@ -182,11 +209,10 @@ async function updateStatus(id, newStatus) {
     const client = getSupabase();
     if (!client) return;
 
-    // Validasi penolakan/penerimaan kuota baru jika menekan tombol accept
     if (newStatus === 'Accepted') {
         const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
-        if (acceptedCount >= 35) {
-            showToast("Cannot accept! Quota limit (35) has been reached.", "error");
+        if (acceptedCount >= maxSlots) {
+            showToast(`Cannot accept! Quota limit (${maxSlots}) has been reached.`, "error");
             return;
         }
     }
@@ -292,6 +318,8 @@ function handleAdminLogin() {
         if (badge) badge.style.display = "none";
         showToast("Admin Logout", "info");
     }
+    // Perbarui counter agar input slot terbuka/tertutup secara instan
+    updateCounters();
     renderTable();
 }
 
