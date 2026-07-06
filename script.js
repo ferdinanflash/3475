@@ -6,12 +6,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let isAdmin = false;
 let transferList = [];
-let maxSlots = parseInt(localStorage.getItem('max_slots')) || 35; // Mengambil slot tersimpan atau default 35
+let maxSlots = parseInt(localStorage.getItem('max_slots')) || 35;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Terapkan nilai slot maksimal yang tersimpan saat pertama kali dimuat
     const maxSlotsInput = document.getElementById('in-max-slots');
     if (maxSlotsInput) maxSlotsInput.value = maxSlots;
+
+    // Load informasi President awal
+    loadPresidentInfo();
 
     loadTransfers();
     setInterval(loadTransfers, 30000); // Polling update otomatis setiap 30 detik
@@ -28,6 +30,36 @@ function getSupabase() {
     return supabaseClient;
 }
 
+// LOAD INFORMASI PRESIDENT DARI LOCALSTORAGE
+function loadPresidentInfo() {
+    const president = localStorage.getItem('info_president') || "RARA";
+    const alliance = localStorage.getItem('info_alliance') || "IDN";
+    const idGame = localStorage.getItem('info_id') || "0828402093";
+
+    document.getElementById('val-president').innerText = president;
+    document.getElementById('val-alliance').innerText = alliance;
+    document.getElementById('val-id').innerText = idGame;
+
+    document.getElementById('edit-president').value = president;
+    document.getElementById('edit-alliance').value = alliance;
+    document.getElementById('edit-id').value = idGame;
+}
+
+// UPDATE INFORMASI PRESIDENT OLEH ADMIN
+function updatePresidentInfo(field, value) {
+    if (!isAdmin) return;
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+        showToast("Field cannot be empty!", "warning");
+        loadPresidentInfo();
+        return;
+    }
+
+    localStorage.setItem(`info_${field}`, trimmedValue);
+    showToast(`Info ${field.toUpperCase()} updated!`, "success");
+    loadPresidentInfo();
+}
+
 // FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL
 function changeMaxSlots(value) {
     if (!isAdmin) return;
@@ -40,7 +72,7 @@ function changeMaxSlots(value) {
     }
 
     maxSlots = parsedValue;
-    localStorage.setItem('max_slots', maxSlots); // Simpan di browser agar tidak hilang saat di-refresh
+    localStorage.setItem('max_slots', maxSlots);
     showToast(`Maximum slots updated to ${maxSlots}`, "success");
     updateCounters();
 }
@@ -112,7 +144,7 @@ async function loadTransfers() {
     }
 }
 
-// UPDATE JUMLAH COUNTER & LOCK LOGIC (DINAMIS DENGAN MAX SLOTS)
+// UPDATE JUMLAH COUNTER & LOCK LOGIC
 function updateCounters() {
     const totalApplicants = transferList.length;
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
@@ -125,20 +157,32 @@ function updateCounters() {
     const lockMessage = document.getElementById('lock-message');
     const maxSlotsInput = document.getElementById('in-max-slots');
 
-    // Mengaktifkan/menonaktifkan edit input max slot berdasarkan status login admin
     if (maxSlotsInput) {
         maxSlotsInput.disabled = !isAdmin;
     }
 
+    // Tampilkan/Sembunyikan form edit info president berdasarkan status admin
+    const infoValues = document.querySelectorAll('.info-value');
+    const infoInputs = document.querySelectorAll('.info-input');
+
+    if (isAdmin) {
+        infoValues.forEach(span => span.style.display = 'none');
+        infoInputs.forEach(input => input.style.display = 'inline-block');
+    } else {
+        infoValues.forEach(span => span.style.display = 'inline-block');
+        infoInputs.forEach(input => input.style.display = 'none');
+    }
+
     // LOGIKA PENGUNCIAN FORM JIKA SLOT TERTERIMA >= MAX SLOTS
     if (acceptedCount >= maxSlots) {
-        inputs.forEach(input => input.disabled = true);
+        inputs.forEach(input => {
+            if (input.id !== 'in-max-slots' && !input.classList.contains('info-input')) input.disabled = true;
+        });
         if (submitBtn) submitBtn.disabled = true;
         if (lockMessage) lockMessage.style.display = "block";
     } else {
         inputs.forEach(input => {
-            // Biarkan field tetap terbuka, kecuali kolom input max slots (diatur khusus oleh admin login)
-            if (input.id !== 'in-max-slots') input.disabled = false;
+            if (input.id !== 'in-max-slots' && !input.classList.contains('info-input')) input.disabled = false;
         });
         if (submitBtn) submitBtn.disabled = false;
         if (lockMessage) lockMessage.style.display = "none";
@@ -318,7 +362,6 @@ function handleAdminLogin() {
         if (badge) badge.style.display = "none";
         showToast("Admin Logout", "info");
     }
-    // Perbarui counter agar input slot terbuka/tertutup secara instan
     updateCounters();
     renderTable();
 }
