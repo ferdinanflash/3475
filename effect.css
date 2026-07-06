@@ -1,0 +1,35 @@
+/* ================= ANIMASI TULISAN EMAS (GOLD SHIMMER) ================= */
+.animated-title {
+    margin: 0; 
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    
+    /* Warna Dasar Gradasi Emas */
+    background: linear-gradient(
+        to right, 
+        #bf953f 0%, 
+        #fcf6ba 25%, 
+        #b38728 50%, 
+        #fbf5b7 75%, 
+        #aa771c 100%
+    );
+    background-size: 200% auto;
+    
+    /* Trik Kliping Teks */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    
+    /* Efek Bayangan Belakang & Animasi Bergerak */
+    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
+    animation: goldShimmer 4s linear infinite;
+}
+
+/* Pergerakan Efek Kilau Cahaya */
+@keyframes goldShimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
