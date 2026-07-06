@@ -131,6 +131,21 @@
         .badge-accepted { background: var(--success); color: #fff; }
         .badge-rejected { background: var(--danger); color: #fff; }
         
+        /* STYLE KHAS TOMBOL MATA DETAIL */
+        .btn-view-detail {
+            background: #475569;
+            color: #fff;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-view-detail:hover { background: var(--primary); }
+
         #toast-container { position: fixed; top: 15px; left: 15px; right: 15px; z-index: 9999; }
         .toast { background: #1e293b; border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 4px; margin-bottom: 10px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 0.9rem; }
         .admin-actions button { padding: 6px 10px; margin-right: 4px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
@@ -142,11 +157,91 @@
         
         .max-slot-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 2px; }
         .max-slot-container input { width: 55px; padding: 2px 4px; text-align: center; font-size: 1.1rem; font-weight: bold; background: #1e293b; border-color: #475569; color:#fff; border-radius:4px; }
+
+        /* ================= POPUP MODAL STYLES ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+            padding: 15px;
+        }
+        .modal-overlay.active {
+            opacity: 1; pointer-events: auto;
+        }
+        .modal-content {
+            background: var(--card-dark);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+            transform: translateY(-20px);
+            transition: transform 0.25s ease;
+            overflow: hidden;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            padding: 14px 18px;
+            background: #111827;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h4 { margin: 0; font-size: 1.1rem; color: #fff; }
+        .modal-close {
+            background: none; border: none; color: #94a3b8;
+            font-size: 1.4rem; cursor: pointer; padding: 0; line-height: 1;
+        }
+        .modal-close:hover { color: var(--danger); }
+        .modal-body {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .detail-label { color: #94a3b8; }
+        .detail-value { font-weight: bold; color: #f8fafc; text-align: right; }
     </style>
 </head>
 <body>
 
 <div id="toast-container"></div>
+
+<div class="modal-overlay" id="detail-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 id="pop-nickname">Player Detail</h4>
+            <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-row"><span class="detail-label">From State</span><span class="detail-value" id="pop-state">-</span></div>
+            <div class="detail-row"><span class="detail-label">Game ID</span><span class="detail-value" id="pop-gameid" style="color:var(--warning);">-</span></div>
+            <div class="detail-row"><span class="detail-label">Desired Alliance</span><span class="detail-value" id="pop-alliance">-</span></div>
+            <div class="detail-row"><span class="detail-label">Furnace Level</span><span class="detail-value" id="pop-furnace">-</span></div>
+            <div class="detail-row"><span class="detail-label">Power</span><span class="detail-value" id="pop-power" style="color:var(--primary);">-</span></div>
+            <div class="detail-row"><span class="detail-label">Hero Power</span><span class="detail-value" id="pop-heropower">-</span></div>
+            <div class="detail-row"><span class="detail-label">Total Hero Power</span><span class="detail-value" id="pop-totalhero">-</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" id="pop-status">-</span></div>
+        </div>
+    </div>
+</div>
 
 <div class="container">
     <header>
@@ -250,13 +345,12 @@
                 <table>
                     <thead>
                         <tr>
-                            <th id="th-action" style="display:none;">Action</th>
+                            <th>Detail</th> <th id="th-action" style="display:none;">Action</th>
                             <th>From State</th>
                             <th>Nickname</th>
-                            <th class="hide-mobile">Game ID</th> <th>Desired Alliance</th>
-                            <th>Furnace</th>
+                            <th>Game ID</th>
                             <th>Power</th>
-                            <th class="hide-mobile">Hero Pwr</th> <th class="hide-mobile">All Hero Pwr</th> <th>Status</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="transfer-tbody"></tbody>
@@ -266,6 +360,6 @@
     </div>
 </div>
 
-<script src="script.js?v=7"></script>
+<script src="script.js?v=100"></script>
 </body>
 </html>
