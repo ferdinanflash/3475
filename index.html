@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Player Transfer Registration</title>
     <link rel="stylesheet" href="effect.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,7 +20,8 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            margin: 0; padding: 15px;
+            margin: 0; padding: 12px;
+            -webkit-tap-highlight-color: transparent;
         }
         .container { max-width: 1200px; margin: 0 auto; }
         
@@ -31,7 +32,7 @@
             align-items: center; 
             margin-bottom: 20px; 
             border-bottom: 2px solid #334155; 
-            padding-bottom: 12px; 
+            padding-bottom: 16px; 
             flex-wrap: wrap; 
             gap: 15px; 
         }
@@ -93,41 +94,51 @@
 
         /* GRID SYSTEM FORM & DATA */
         .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        
         @media(max-width: 900px) { 
-            .grid { grid-template-columns: 1fr; } 
-            header { flex-direction: column; align-items: stretch; }
-            .header-right { justify-content: space-between; }
-            .admin-controls { align-items: flex-start; }
+            .grid { grid-template-columns: 1fr; gap: 15px; } 
+            header { flex-direction: column; align-items: center; text-align: center; }
+            .header-right { width: 100%; flex-direction: column; gap: 10px; }
+            .admin-controls { align-items: center; width: 100%; }
+            .btn-admin { width: 100%; text-align: center; padding: 10px !important; }
         }
         
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #94a3b8; }
-        input { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; box-sizing: border-box; }
+        input { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; box-sizing: border-box; transition: border-color 0.2s; }
         input:focus { border-color: var(--primary); outline: none; }
         input:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; border-color: #334155; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; color: #fff; }
-        .btn-primary { background: var(--primary); }
-        .btn-primary:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; color: #fff; transition: opacity 0.2s; }
+        .btn:active { opacity: 0.8; }
+        .btn-primary { background: var(--primary); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }
+        .btn-primary:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none; }
         .btn-admin { background: #475569; width: auto; padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; }
         
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        /* TABLE RESPONSIVE FLUID */
+        .table-container { 
+            overflow-x: auto; 
+            border-radius: 6px;
+            border: 1px solid #334155;
+            -webkit-overflow-scrolling: touch; /* Scroll lancar di iOS */
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; white-space: nowrap; }
         th, td { padding: 12px; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: #94a3b8; }
         .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
         .badge-waiting { background: var(--warning); color: #000; }
         .badge-accepted { background: var(--success); color: #fff; }
         .badge-rejected { background: var(--danger); color: #fff; }
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: #1e293b; border-left: 4px solid var(--primary); padding: 15px 25px; border-radius: 4px; margin-bottom: 10px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s ease; }
-        .admin-actions button { padding: 4px 8px; margin-right: 4px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
+        
+        #toast-container { position: fixed; top: 15px; left: 15px; right: 15px; z-index: 9999; }
+        .toast { background: #1e293b; border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 4px; margin-bottom: 10px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 0.9rem; }
+        .admin-actions button { padding: 6px 10px; margin-right: 4px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
         
         .counter-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .counter-card { background: #0f172a; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #334155; }
         .counter-val { font-size: 1.4rem; font-weight: bold; margin-top: 2px; }
-        .status-locked { color: var(--danger); font-weight: bold; text-align: center; margin-top: 10px; display: none; background: #451a03; padding: 10px; border-radius: 6px; border: 1px solid var(--danger); }
+        .status-locked { color: var(--danger); font-weight: bold; text-align: center; margin-top: 10px; display: none; background: #451a03; padding: 10px; border-radius: 6px; border: 1px solid var(--danger); font-size: 0.9rem; }
         
         .max-slot-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 2px; }
         .max-slot-container input { width: 55px; padding: 2px 4px; text-align: center; font-size: 1.1rem; font-weight: bold; background: #1e293b; border-color: #475569; color:#fff; border-radius:4px; }
@@ -140,19 +151,19 @@
 <div class="container">
     <header>
         <div class="header-left">
-            <h1 class="animated-title">3475 - Transfer Form</h1>
-            <p style="margin:4px 0 0 0; color:#94a3b8; font-size: 0.85rem;">Apply your data to immigrate state</p>
+            <h1 class="animated-title">Player Transfer Hub</h1>
+            <p style="margin:6px 0 0 0; color:#94a3b8; font-size: 0.85rem;">Apply your data to immigrate state</p>
         </div>
         
         <div class="header-right">
             <div class="president-info-box">
                 <div class="info-item">
-                    <span class="info-label">President:</span>
+                    <span class="info-label">Pres:</span>
                     <span class="info-value" id="val-president">RARA</span>
                     <input type="text" class="info-input" id="edit-president">
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Alliance:</span>
+                    <span class="info-label">Alli:</span>
                     <span class="info-value" id="val-alliance" style="color: var(--success);">IDN</span>
                     <input type="text" class="info-input" id="edit-alliance">
                 </div>
@@ -165,7 +176,7 @@
             </div>
 
             <div class="admin-controls">
-                <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">President</button>
+                <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">Admin Login</button>
                 <span id="admin-badge" style="display:none; color:var(--success); font-size:0.75rem; font-weight:bold;">[ADMIN MODE]</span>
             </div>
         </div>
@@ -230,9 +241,9 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="margin:0; border:none;">Applicants List</h3>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-admin" id="reset-phase-btn" style="background:#ef4444; display:none;" onclick="resetTransferPhase()">Reset Phase</button>
-                    <button class="btn btn-admin" style="background:#22c55e;" onclick="exportCSV()">Export CSV</button>
+                <div style="display: flex; gap: 8px; width: 100%; justify-content: space-between;">
+                    <button class="btn btn-admin" id="reset-phase-btn" style="background:#ef4444; display:none; flex: 1;" onclick="resetTransferPhase()">Reset Phase</button>
+                    <button class="btn btn-admin" style="background:#22c55e; flex: 1;" onclick="exportCSV()">Export CSV</button>
                 </div>
             </div>
             <div class="table-container">
@@ -258,6 +269,6 @@
     </div>
 </div>
 
-<script src="script.js?v=2"></script>
+<script src="script.js?v=5"></script>
 </body>
 </html>
