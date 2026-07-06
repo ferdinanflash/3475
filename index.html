@@ -116,12 +116,12 @@
         .btn-primary:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none; }
         .btn-admin { background: #475569; width: auto; padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; }
         
-        /* TABLE RESPONSIVE FLUID */
+        /* TABLE RESPONSIVE CONTAINER */
         .table-container { 
             overflow-x: auto; 
             border-radius: 6px;
             border: 1px solid #334155;
-            -webkit-overflow-scrolling: touch; /* Scroll lancar di iOS */
+            -webkit-overflow-scrolling: touch;
         }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; white-space: nowrap; }
         th, td { padding: 12px; border-bottom: 1px solid #334155; }
@@ -253,13 +253,10 @@
                             <th id="th-action" style="display:none;">Action</th>
                             <th>From State</th>
                             <th>Nickname</th>
-                            <th>Game ID</th>
-                            <th>Desired Alliance</th>
+                            <th class="hide-mobile">Game ID</th> <th>Desired Alliance</th>
                             <th>Furnace</th>
                             <th>Power</th>
-                            <th>Hero Pwr</th>
-                            <th>All Hero Pwr</th>
-                            <th>Status</th>
+                            <th class="hide-mobile">Hero Pwr</th> <th class="hide-mobile">All Hero Pwr</th> <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="transfer-tbody"></tbody>
@@ -269,6 +266,6 @@
     </div>
 </div>
 
-<script src="script.js?v=5"></script>
+<script src="script.js?v=7"></script>
 </body>
 </html>
