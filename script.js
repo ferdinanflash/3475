@@ -22,6 +22,41 @@ function getSupabase() {
     }
     return supabaseClient;
 }
+function handleAdminLogin() {
+    const btn = document.getElementById('admin-btn');
+    const badge = document.getElementById('admin-badge');
+    
+    if (!btn) {
+        console.error("Tombol admin-btn tidak ditemukan di HTML!");
+        return;
+    }
+
+    try {
+        if (!isAdmin) {
+            const password = prompt("Enter Password Admin:");
+            if (password === "3475") { 
+                isAdmin = true;
+                btn.innerText = "Logout Admin";
+                if (badge) badge.style.display = "inline";
+                showToast("Welcome Administrator", "success");
+            } else {
+                showToast("Wrong password!", "error");
+                return;
+            }
+        } else {
+            isAdmin = false;
+            btn.innerText = "Admin Login";
+            if (badge) badge.style.display = "none";
+            showToast("Admin Logout", "info");
+        }
+        
+        // Refresh tabel setelah status admin berubah
+        renderTable();
+        
+    } catch (error) {
+        console.error("Terjadi error pada fungsi login:", error);
+    }
+}
 
 // 1. INPUT DATA TRANSFER
 async function submitTransfer() {
