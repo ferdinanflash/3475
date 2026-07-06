@@ -65,39 +65,44 @@
     </header>
 
     <div class="grid">
-        <!-- FORM INPUT -->
-        <div class="card">
-            <h3>Transfer Form</h3>
-            <div class="form-group">
-                <label>Transfer From State</label>
-                <input type="number" id="in-state" placeholder="e.g. 3475">
-            </div>
-            <div class="form-group">
-                <label>In-Game Nickname</label>
-                <input type="text" id="in-nickname" placeholder="Enter nickname">
-            </div>
-            <div class="form-group">
-                <label>Game ID</label>
-                <input type="text" id="in-gameid" placeholder="Enter Game ID">
-            </div>
-            <div class="form-group">
-                <label>Furnace Level</label>
-                <input type="number" id="in-furnace" placeholder="e.g. 30">
-            </div>
-            <div class="form-group">
-                <label>Power</label>
-                <input type="number" id="in-power" placeholder="Total Power">
-            </div>
-            <div class="form-group">
-                <label>Hero Power</label>
-                <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
-            </div>
-            <div class="form-group">
-                <label>Total Hero Power</label>
-                <input type="number" id="in-totalhero" placeholder="Total Hero Power">
-            </div>
-            <button class="btn btn-primary" onclick="submitTransfer()">Submit Application</button>
-        </div>
+        <!-- FORM INPUT (Update bagian ini di index.html) -->
+<div class="card">
+    <h3>Transfer Form</h3>
+    <div class="form-group">
+        <label>Transfer From State</label>
+        <input type="number" id="in-state" placeholder="e.g. 3475">
+    </div>
+    <div class="form-group">
+        <label>In-Game Nickname</label>
+        <input type="text" id="in-nickname" placeholder="Enter nickname">
+    </div>
+    <div class="form-group">
+        <label>Game ID</label>
+        <input type="text" id="in-gameid" placeholder="Enter Game ID">
+    </div>
+    <!-- INPUT BARU DI SINI -->
+    <div class="form-group">
+        <label>Desired Alliance</label>
+        <input type="text" id="in-alliance" placeholder="e.g. 3475 / NAP">
+    </div>
+    <div class="form-group">
+        <label>Furnace Level</label>
+        <input type="number" id="in-furnace" placeholder="e.g. 30">
+    </div>
+    <div class="form-group">
+        <label>Power</label>
+        <input type="number" id="in-power" placeholder="Total Power">
+    </div>
+    <div class="form-group">
+        <label>Hero Power</label>
+        <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
+    </div>
+    <div class="form-group">
+        <label>Total Hero Power</label>
+        <input type="number" id="in-totalhero" placeholder="Total Hero Power">
+    </div>
+    <button class="btn btn-primary" onclick="submitTransfer()">Submit Application</button>
+</div>
 
         <!-- DAFTAR TRANSFER -->
         <div class="card">
