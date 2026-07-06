@@ -28,6 +28,13 @@ async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
 
+    // Proteksi tambahan sisi client sebelum submit data
+    const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
+    if (acceptedCount >= 35) {
+        showToast("Registration is closed. Quota full!", "error");
+        return;
+    }
+
     const state = document.getElementById('in-state').value.trim();
     const nickname = document.getElementById('in-nickname').value.trim();
     const gameId = document.getElementById('in-gameid').value.trim();
@@ -37,7 +44,6 @@ async function submitTransfer() {
     const heroPower = document.getElementById('in-heropower').value.trim();
     const totalHero = document.getElementById('in-totalhero').value.trim();
 
-    // Validasi kelengkapan data input
     if (!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
         showToast("Please fill all input fields!", "warning");
         return;
@@ -57,7 +63,6 @@ async function submitTransfer() {
 
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
-        // Reset form setelah berhasil submit
         document.querySelectorAll('.form-group input').forEach(input => input.value = "");
         loadTransfers();
     } else {
@@ -78,9 +83,38 @@ async function loadTransfers() {
 
         if (error) throw error;
         transferList = data || [];
+        
+        // Perbarui Counter & Status Penguncian Form
+        updateCounters();
+        
         renderTable();
     } catch (e) {
         console.error("Database failure:", e);
+    }
+}
+
+// UPDATE JUMLAH COUNTER & LOCK LOGIC
+function updateCounters() {
+    const totalApplicants = transferList.length;
+    const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
+
+    // Ubah angka di interface
+    document.getElementById('count-total').innerText = totalApplicants;
+    document.getElementById('count-accepted').innerText = `${acceptedCount} / 35`;
+
+    const inputs = document.querySelectorAll('.form-group input');
+    const submitBtn = document.getElementById('submit-btn');
+    const lockMessage = document.getElementById('lock-message');
+
+    // LOGIKA PENGUNCIAN FORM JIKA SLOT TERTERIMA >= 35
+    if (acceptedCount >= 35) {
+        inputs.forEach(input => input.disabled = true);
+        if (submitBtn) submitBtn.disabled = true;
+        if (lockMessage) lockMessage.style.display = "block";
+    } else {
+        inputs.forEach(input => input.disabled = false);
+        if (submitBtn) submitBtn.disabled = false;
+        if (lockMessage) lockMessage.style.display = "none";
     }
 }
 
@@ -91,10 +125,8 @@ function renderTable() {
     const resetBtn = document.getElementById('reset-phase-btn');
     
     if (!tbody) return;
-
     tbody.innerHTML = "";
     
-    // Tampilkan atau sembunyikan kolom aksi & tombol reset berdasarkan status login admin
     thAction.style.display = isAdmin ? "table-cell" : "none";
     if (resetBtn) {
         resetBtn.style.display = isAdmin ? "inline-block" : "none";
@@ -124,7 +156,6 @@ function renderTable() {
 
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
 
-        // Urutan kolom sudah lurus dan sejajar dengan <thead> pada HTML
         row.innerHTML = `
             ${isAdmin ? actionCell : ''}
             <td>State ${item.transfer_from_state}</td>
@@ -141,7 +172,7 @@ function renderTable() {
     });
 }
 
-// 4. ACTION ADMIN: UPDATE STATUS (WITH CONFIRMATION DIALOG)
+// 4. ACTION ADMIN: UPDATE STATUS
 async function updateStatus(id, newStatus) {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -151,7 +182,15 @@ async function updateStatus(id, newStatus) {
     const client = getSupabase();
     if (!client) return;
 
-    // Menampilkan pesan konfirmasi persetujuan/penolakan
+    // Validasi penolakan/penerimaan kuota baru jika menekan tombol accept
+    if (newStatus === 'Accepted') {
+        const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
+        if (acceptedCount >= 35) {
+            showToast("Cannot accept! Quota limit (35) has been reached.", "error");
+            return;
+        }
+    }
+
     const actionText = newStatus.toLowerCase();
     if (!confirm(`Are you sure you want to ${actionText} this player transfer application?`)) {
         return;
@@ -193,7 +232,7 @@ async function deleteRecord(id) {
     }
 }
 
-// 6. ACTION ADMIN: RESET TRANSFER PHASE (MASSIVE DELETION WITH "3475" VERIFICATION)
+// 6. ACTION ADMIN: RESET TRANSFER PHASE
 async function resetTransferPhase() {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -213,7 +252,6 @@ async function resetTransferPhase() {
     }
 
     try {
-        // Menggunakan filter neq('id', 0) untuk melakukan mass-delete global yang aman bagi API Supabase
         const { error } = await client
             .from('player_transfers')
             .delete()
