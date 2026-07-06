@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Transfer Registration</title>
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -22,7 +23,7 @@
             margin: 0; padding: 20px;
         }
         .container { max-width: 1200px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #334155; padding-bottom: 15px; }
+        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #334155; padding-bottom: 15px; flex-wrap: wrap; gap: 20px; }
         .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
         @media(max-width: 900px) { .grid { grid-template-columns: 1fr; } }
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
@@ -57,6 +58,17 @@
         /* Gaya Input Max Slot */
         .max-slot-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 2px; }
         .max-slot-container input { width: 60px; padding: 2px 5px; text-align: center; font-size: 1.1rem; font-weight: bold; background: #1e293b; border-color: #475569; }
+
+        /* PANEL INFORMASI KANAN ATAS */
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .admin-controls { display: flex; align-items: center; gap: 10px; }
+        .president-info-box { background: var(--card-dark); padding: 12px 15px; border-radius: 6px; border: 1px solid #334155; font-size: 0.85rem; min-width: 220px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label { color: #94a3b8; font-weight: 500; }
+        .info-value { font-weight: bold; color: #3b82f6; text-align: right; }
+        .info-input { width: 110px; padding: 2px 6px; font-size: 0.85rem; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 4px; text-align: right; font-weight: bold; display: none; }
+        .info-input:focus { border-color: var(--primary); outline: none; }
     </style>
 </head>
 <body>
@@ -69,16 +81,40 @@
             <h1 style="margin:0;">Player Transfer Hub</h1>
             <p style="margin:5px 0 0 0; color:#94a3b8;">Apply your data to immigrate state</p>
         </div>
-        <div>
-            <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">Admin Login</button>
-            <span id="admin-badge" style="display:none; color:var(--success); margin-left:10px; font-weight:bold;">[ADMIN]</span>
+        
+        <!-- PANEL INFORMASI DI KANAN ATAS -->
+        <div class="header-right">
+            <div class="admin-controls">
+                <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">Admin Login</button>
+                <span id="admin-badge" style="display:none; color:var(--success); font-weight:bold;">[ADMIN]</span>
+            </div>
+            
+            <div class="president-info-box">
+                <div class="info-row">
+                    <span class="info-label">Current President:</span>
+                    <span class="info-value" id="val-president">RARA</span>
+                    <input type="text" class="info-input" id="edit-president" onchange="updatePresidentInfo('president', this.value)">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Alliance:</span>
+                    <span class="info-value" id="val-alliance" style="color: var(--success);">IDN</span>
+                    <input type="text" class="info-input" id="edit-alliance" onchange="updatePresidentInfo('alliance', this.value)">
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ID:</span>
+                    <span class="info-value" id="val-id" style="color: var(--warning);">0828402093</span>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" class="info-input" id="edit-id" onchange="updatePresidentInfo('id', this.value)">
+                </div>
+            </div>
         </div>
     </header>
 
     <div class="grid">
+        <!-- FORM INPUT -->
         <div class="card">
             <h3>Transfer Form</h3>
             
+            <!-- PANEL COUNTER TAMPILAN -->
             <div class="counter-box">
                 <div class="counter-card">
                     <label style="margin:0; font-size:0.8rem;">Total Applicants</label>
@@ -94,6 +130,7 @@
                 </div>
             </div>
 
+            <!-- Pesan jika kuota penuh -->
             <div id="lock-message" class="status-locked">⚠️ REGISTRATION CLOSED (QUOTA FULL)</div>
 
             <div class="form-group" style="margin-top: 15px;">
@@ -131,6 +168,7 @@
             <button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button>
         </div>
 
+        <!-- DAFTAR TRANSFER -->
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="margin:0; border:none;">Applicants List</h3>
@@ -156,7 +194,8 @@
                         </tr>
                     </thead>
                     <tbody id="transfer-tbody">
-                        </tbody>
+                        <!-- Data via script.js -->
+                    </tbody>
                 </table>
             </div>
         </div>
