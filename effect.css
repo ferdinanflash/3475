@@ -37,24 +37,22 @@
 /* ================= OPTIMALISASI LAYAR HP (MOBILE) ================= */
 @media (max-width: 600px) {
     .animated-title {
-        font-size: 1.45rem; /* Ukuran judul lebih pas di HP agar tidak terpotong */
+        font-size: 1.45rem; /* Ukuran judul pas di HP */
         text-align: center;
         letter-spacing: 0.5px;
     }
     
-    /* Membuat form input lebih besar & mudah ditekankan jari di HP */
+    /* Mencegah iOS/Android auto-zoom saat klik input */
     input {
-        font-size: 16px !important; /* Mencegah iOS/Android auto-zoom saat klik input */
+        font-size: 16px !important; 
         padding: 12px !important;
     }
     
-    /* Tombol utama dibuat lebih tebal dan nyaman ditekan */
     .btn {
         padding: 14px !important;
         font-size: 1.05rem !important;
     }
 
-    /* Mengatur jarak box informasi Presiden di HP */
     .president-info-box {
         justify-content: center;
         width: 100%;
@@ -63,8 +61,20 @@
         padding: 10px !important;
     }
     
-    /* Kartu (Card) dibuat dengan padding yang pas agar space layar efisien */
     .card {
         padding: 16px !important;
+    }
+
+    /* === Sembunyikan Kolom Tabel yang Terlalu Panjang di HP === */
+    .hide-mobile {
+        display: none !important;
+    }
+
+    /* Memperkecil padding tabel agar pas di layar kecil */
+    table {
+        font-size: 0.8rem !important;
+    }
+    th, td {
+        padding: 8px 6px !important;
     }
 }
