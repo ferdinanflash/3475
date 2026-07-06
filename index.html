@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Transfer Registration</title>
+    <link rel="stylesheet" href="effect.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=10" defer></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -24,7 +24,7 @@
         }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* HEADER FLEX LAYOUT BARU */
+        /* HEADER FLEX LAYOUT */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -74,7 +74,7 @@
             box-sizing: border-box;
         }
         .info-input:focus { border-color: var(--primary); outline: none; }
-        #edit-id { width: 95px; } /* Sedikit lebih lebar untuk ID Angka */
+        #edit-id { width: 95px; }
         
         /* TOMBOL SAVE MINI ADMIN */
         .btn-save-info {
@@ -140,19 +140,19 @@
 <div class="container">
     <header>
         <div class="header-left">
-            <h1 style="margin:0; font-size: 1.6rem;">Player Transfer Hub</h1>
-            <p style="margin:3px 0 0 0; color:#94a3b8; font-size: 0.85rem;">Apply your data to immigrate state</p>
+            <h1 class="animated-title">3475 - Transfer Form</h1>
+            <p style="margin:4px 0 0 0; color:#94a3b8; font-size: 0.85rem;">Apply your data to immigrate state</p>
         </div>
         
         <div class="header-right">
             <div class="president-info-box">
                 <div class="info-item">
-                    <span class="info-label">President:</span>
+                    <span class="info-label">Pres:</span>
                     <span class="info-value" id="val-president">RARA</span>
                     <input type="text" class="info-input" id="edit-president">
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Alliance:</span>
+                    <span class="info-label">Alli:</span>
                     <span class="info-value" id="val-alliance" style="color: var(--success);">IDN</span>
                     <input type="text" class="info-input" id="edit-alliance">
                 </div>
@@ -258,6 +258,6 @@
     </div>
 </div>
 
-<script src="script.js"></script>
+<script src="script.js?v=1"></script>
 </body>
 </html>
