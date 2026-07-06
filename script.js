@@ -166,20 +166,40 @@ function renderTable() {
     });
 }
 
-// 4. ACTION ADMIN: UPDATE STATUS (ACCEPT / REJECT)
+// 4. ACTION ADMIN: UPDATE STATUS (ACCEPT / REJECT) - FIXED
 async function updateStatus(id, newStatus) {
-    if(!isAdmin) return;
+    if (!isAdmin) {
+        showToast("Unauthorized action!", "error");
+        return;
+    }
+    
     const client = getSupabase();
-    if (!client) return;
+    if (!client) {
+        showToast("Database connection failed", "error");
+        return;
+    }
 
-    const { error } = await client.from('player_transfers').update({ status: newStatus }).eq('id', id);
-    if (!error) {
-        showToast(`Application ${newStatus}!`, "success");
-        loadTransfers();
-    } else {
-        showToast("Update failed.", "error");
+    try {
+        // Mengubah status di tabel player_transfers berdasarkan ID baris
+        const { data, error } = await client
+            .from('player_transfers')
+            .update({ status: newStatus })
+            .eq('id', id)
+            .select(); // Memaksa Supabase mengembalikan data yang diubah untuk memastikan berhasil
+
+        if (error) throw error;
+
+        showToast(`Application ${newStatus} successfully!`, "success");
+        
+        // Memuat ulang data terbaru agar tabel langsung berubah di layar
+        await loadTransfers();
+        
+    } catch (err) {
+        console.error("Gagal memperbarui status:", err);
+        showToast("Failed to update status: " + err.message, "error");
     }
 }
+
 
 // 5. ACTION ADMIN: HAPUS REKORD
 async function deleteRecord(id) {
