@@ -198,7 +198,6 @@ async function submitTransfer() {
     }
 }
 
-// 3. TAMPILKAN KE TABEL (UPDATE)
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
@@ -231,12 +230,13 @@ function renderTable() {
 
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
 
+        // SUSUNAN DI SINI HARUS PAS DENGAN HEADER TH DI INDEX.HTML
         row.innerHTML = `
             ${isAdmin ? actionCell : ''}
             <td>State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
             <td>${item.game_id}</td>
-            <td>${item.desired_alliance || '-'}</td> <!-- Tampilkan Aliansi -->
+            <td>${item.desired_alliance || '-'}</td>
             <td>FC ${item.furnace_level}</td>
             <td>${Number(item.power).toLocaleString()}</td>
             <td>${Number(item.hero_power).toLocaleString()}</td>
@@ -246,6 +246,7 @@ function renderTable() {
         tbody.appendChild(row);
     });
 }
+
 
 // 8. EXPORT CSV DATA (UPDATE)
 function exportCSV() {
