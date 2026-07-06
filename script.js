@@ -9,7 +9,7 @@ let transferList = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     loadTransfers();
-    setInterval(loadTransfers, 30000); // Polling update otomatis tiap 30 detik
+    setInterval(loadTransfers, 30000); // Polling update otomatis setiap 30 detik
 });
 
 function getSupabase() {
@@ -17,48 +17,13 @@ function getSupabase() {
         if (typeof window.supabase !== 'undefined') {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         } else {
-            console.error("Supabase CDN failed to load");
+            console.error("Supabase CDN library failed to load");
         }
     }
     return supabaseClient;
 }
-function handleAdminLogin() {
-    const btn = document.getElementById('admin-btn');
-    const badge = document.getElementById('admin-badge');
-    
-    if (!btn) {
-        console.error("Tombol admin-btn tidak ditemukan di HTML!");
-        return;
-    }
 
-    try {
-        if (!isAdmin) {
-            const password = prompt("Enter Password Admin:");
-            if (password === "3475") { 
-                isAdmin = true;
-                btn.innerText = "Logout Admin";
-                if (badge) badge.style.display = "inline";
-                showToast("Welcome Administrator", "success");
-            } else {
-                showToast("Wrong password!", "error");
-                return;
-            }
-        } else {
-            isAdmin = false;
-            btn.innerText = "Admin Login";
-            if (badge) badge.style.display = "none";
-            showToast("Admin Logout", "info");
-        }
-        
-        // Refresh tabel setelah status admin berubah
-        renderTable();
-        
-    } catch (error) {
-        console.error("Terjadi error pada fungsi login:", error);
-    }
-}
-
-// 1. INPUT DATA TRANSFER
+// 1. INPUT DATA TRANSFER INTO DATABASE
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
@@ -66,13 +31,14 @@ async function submitTransfer() {
     const state = document.getElementById('in-state').value.trim();
     const nickname = document.getElementById('in-nickname').value.trim();
     const gameId = document.getElementById('in-gameid').value.trim();
+    const alliance = document.getElementById('in-alliance').value.trim();
     const furnace = document.getElementById('in-furnace').value.trim();
     const power = document.getElementById('in-power').value.trim();
     const heroPower = document.getElementById('in-heropower').value.trim();
     const totalHero = document.getElementById('in-totalhero').value.trim();
 
-    // Validasi basic
-    if(!state || !nickname || !gameId || !furnace || !power || !heroPower || !totalHero) {
+    // Validasi kelengkapan data input
+    if (!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
         showToast("Please fill all input fields!", "warning");
         return;
     }
@@ -81,6 +47,7 @@ async function submitTransfer() {
         transfer_from_state: parseInt(state),
         nickname: nickname,
         game_id: gameId,
+        desired_alliance: alliance,
         furnace_level: parseInt(furnace),
         power: parseInt(power),
         hero_power: parseInt(heroPower),
@@ -90,7 +57,7 @@ async function submitTransfer() {
 
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
-        // Reset form
+        // Reset form setelah berhasil submit
         document.querySelectorAll('.form-group input').forEach(input => input.value = "");
         loadTransfers();
     } else {
@@ -98,7 +65,7 @@ async function submitTransfer() {
     }
 }
 
-// 2. LOAD DATA DARI DATABASE
+// 2. FETCH DATA FROM DATABASE
 async function loadTransfers() {
     const client = getSupabase();
     if (!client) return;
@@ -117,151 +84,21 @@ async function loadTransfers() {
     }
 }
 
-// 3. TAMPILKAN KE TABEL
+// 3. RENDER DATA TO APPLICANTS LIST TABLE
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
-    if (!tbody) return;
-
-    tbody.innerHTML = "";
-    thAction.style.display = isAdmin ? "table-cell" : "none";
-
-    if (transferList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 9 : 8}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
-        return;
-    }
-
-    transferList.forEach(item => {
-        const row = document.createElement('tr');
-        
-        // Kolom khusus Admin Action
-        let actionCell = "";
-        if (isAdmin) {
-            actionCell = `
-                <td class="admin-actions">
-                    ${item.status === 'Waiting' ? `
-                        <button style="background:#22c55e;" onclick="updateStatus(${item.id}, 'Accepted')">Accept</button>
-                        <button style="background:#ef4444;" onclick="updateStatus(${item.id}, 'Rejected')">Reject</button>
-                    ` : `
-                        <button style="background:#475569;" onclick="deleteRecord(${item.id})">Delete</button>
-                    `}
-                </td>
-            `;
-        }
-
-        let badgeClass = `badge badge-${item.status.toLowerCase()}`;
-
-        row.innerHTML = `
-            ${isAdmin ? actionCell : ''}
-            <td>State ${item.transfer_from_state}</td>
-            <td><strong>${item.nickname}</strong></td>
-            <td>${item.game_id}</td>
-            <td>FC ${item.furnace_level}</td>
-            <td>${Number(item.power).toLocaleString()}</td>
-            <td>${Number(item.hero_power).toLocaleString()}</td>
-            <td>${Number(item.total_hero_power).toLocaleString()}</td>
-            <td><span class="${badgeClass}">${item.status}</span></td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// 4. ACTION ADMIN: UPDATE STATUS WITH CONFIRMATION (FIXED)
-async function updateStatus(id, newStatus) {
-    if (!isAdmin) {
-        showToast("Unauthorized action!", "error");
-        return;
-    }
+    const resetBtn = document.getElementById('reset-phase-btn');
     
-    const client = getSupabase();
-    if (!client) {
-        showToast("Database connection failed", "error");
-        return;
-    }
-
-    // TAMBAHAN: Memunculkan pop-up konfirmasi sebelum eksekusi ke database
-    const actionText = newStatus.toLowerCase(); // akan menjadi 'accepted' atau 'rejected'
-    if (!confirm(`Are you sure to ${actionText} this player transfer application?`)) {
-        return; // Jika admin klik 'Cancel', batalkan proses di sini
-    }
-
-    try {
-        const { data, error } = await client
-            .from('player_transfers')
-            .update({ status: newStatus })
-            .eq('id', id)
-            .select();
-
-        if (error) throw error;
-
-        showToast(`Application ${newStatus} successfully!`, "success");
-        await loadTransfers();
-        
-    } catch (err) {
-        console.error("Gagal memperbarui status:", err);
-        showToast("Failed to update status: " + err.message, "error");
-    }
-}
-
-// 5. ACTION ADMIN: HAPUS REKORD
-async function deleteRecord(id) {
-    if(!isAdmin || !confirm("Delete this record permanently?")) return;
-    const client = getSupabase();
-    if (!client) return;
-
-    const { error } = await client.from('player_transfers').delete().eq('id', id);
-    if (!error) {
-        showToast("Record deleted.", "success");
-        loadTransfers();
-    }
-}
-// 1. INPUT DATA TRANSFER (UPDATE)
-async function submitTransfer() {
-    const client = getSupabase();
-    if (!client) return;
-
-    const state = document.getElementById('in-state').value.trim();
-    const nickname = document.getElementById('in-nickname').value.trim();
-    const gameId = document.getElementById('in-gameid').value.trim();
-    const alliance = document.getElementById('in-alliance').value.trim(); // Ambil input baru
-    const furnace = document.getElementById('in-furnace').value.trim();
-    const power = document.getElementById('in-power').value.trim();
-    const heroPower = document.getElementById('in-heropower').value.trim();
-    const totalHero = document.getElementById('in-totalhero').value.trim();
-
-    if(!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
-        showToast("Please fill all input fields!", "warning");
-        return;
-    }
-
-    const { error } = await client.from('player_transfers').insert({
-        transfer_from_state: parseInt(state),
-        nickname: nickname,
-        game_id: gameId,
-        desired_alliance: alliance, // Simpan ke database
-        furnace_level: parseInt(furnace),
-        power: parseInt(power),
-        hero_power: parseInt(heroPower),
-        total_hero_power: parseInt(totalHero),
-        status: 'Waiting'
-    });
-
-    if (!error) {
-        showToast("Transfer application sent successfully!", "success");
-        document.querySelectorAll('.form-group input').forEach(input => input.value = "");
-        loadTransfers();
-    } else {
-        showToast("Error submitting: " + error.message, "error");
-    }
-}
-
-function renderTable() {
-    const tbody = document.getElementById('transfer-tbody');
-    const thAction = document.getElementById('th-action');
     if (!tbody) return;
 
     tbody.innerHTML = "";
+    
+    // Tampilkan atau sembunyikan kolom aksi & tombol reset berdasarkan status login admin
     thAction.style.display = isAdmin ? "table-cell" : "none";
+    if (resetBtn) {
+        resetBtn.style.display = isAdmin ? "inline-block" : "none";
+    }
 
     if (transferList.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${isAdmin ? 10 : 9}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
@@ -287,7 +124,7 @@ function renderTable() {
 
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
 
-        // SUSUNAN DI SINI HARUS PAS DENGAN HEADER TH DI INDEX.HTML
+        // Urutan kolom sudah lurus dan sejajar dengan <thead> pada HTML
         row.innerHTML = `
             ${isAdmin ? actionCell : ''}
             <td>State ${item.transfer_from_state}</td>
@@ -304,8 +141,146 @@ function renderTable() {
     });
 }
 
+// 4. ACTION ADMIN: UPDATE STATUS (WITH CONFIRMATION DIALOG)
+async function updateStatus(id, newStatus) {
+    if (!isAdmin) {
+        showToast("Unauthorized action!", "error");
+        return;
+    }
+    
+    const client = getSupabase();
+    if (!client) return;
 
-// 8. EXPORT CSV DATA (UPDATE)
+    // Menampilkan pesan konfirmasi persetujuan/penolakan
+    const actionText = newStatus.toLowerCase();
+    if (!confirm(`Are you sure you want to ${actionText} this player transfer application?`)) {
+        return;
+    }
+
+    try {
+        const { error } = await client
+            .from('player_transfers')
+            .update({ status: newStatus })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        showToast(`Application ${newStatus} successfully!`, "success");
+        await loadTransfers();
+        
+    } catch (err) {
+        console.error("Gagal memperbarui status:", err);
+        showToast("Failed to update status: " + err.message, "error");
+    }
+}
+
+// 5. ACTION ADMIN: DELETE SINGLE RECORD PERMANENTLY
+async function deleteRecord(id) {
+    if (!isAdmin) return;
+    if (!confirm("Delete this record permanently?")) return;
+
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { error } = await client.from('player_transfers').delete().eq('id', id);
+        if (error) throw error;
+
+        showToast("Record deleted successfully.", "success");
+        await loadTransfers();
+    } catch (err) {
+        showToast("Delete failed: " + err.message, "error");
+    }
+}
+
+// 6. ACTION ADMIN: RESET TRANSFER PHASE (MASSIVE DELETION WITH "3475" VERIFICATION)
+async function resetTransferPhase() {
+    if (!isAdmin) {
+        showToast("Unauthorized action!", "error");
+        return;
+    }
+
+    const client = getSupabase();
+    if (!client) return;
+
+    const confirm1 = confirm("⚠️ WARNING: Are you sure you want to RESET the entire Transfer Phase?\nThis action cannot be undone!");
+    if (!confirm1) return;
+
+    const confirm2 = prompt("Type '3475' to confirm massive deletion:");
+    if (confirm2 !== "3475") {
+        showToast("Reset canceled. Verification code incorrect.", "warning");
+        return;
+    }
+
+    try {
+        // Menggunakan filter neq('id', 0) untuk melakukan mass-delete global yang aman bagi API Supabase
+        const { error } = await client
+            .from('player_transfers')
+            .delete()
+            .neq('id', 0);
+
+        if (error) throw error;
+
+        showToast("All transfer records have been cleared!", "success");
+        await loadTransfers();
+        
+    } catch (err) {
+        console.error("Gagal melakukan reset phase:", err);
+        showToast("Reset failed: " + err.message, "error");
+    }
+}
+
+// 7. ADMIN MANAGEMENT: LOGIN & LOGOUT
+function handleAdminLogin() {
+    const btn = document.getElementById('admin-btn');
+    const badge = document.getElementById('admin-badge');
+    
+    if (!btn) return;
+
+    if (!isAdmin) {
+        const password = prompt("Enter Password Admin:");
+        if (password === "3475") {
+            isAdmin = true;
+            btn.innerText = "Logout Admin";
+            if (badge) badge.style.display = "inline";
+            showToast("Welcome Administrator", "success");
+        } else {
+            showToast("Wrong password!", "error");
+            return;
+        }
+    } else {
+        isAdmin = false;
+        btn.innerText = "Admin Login";
+        if (badge) badge.style.display = "none";
+        showToast("Admin Logout", "info");
+    }
+    renderTable();
+}
+
+// 8. TOAST NOTIFICATION SYSTEM
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+
+    if (type === 'success') toast.style.borderLeftColor = '#22c55e';
+    if (type === 'error') toast.style.borderLeftColor = '#ef4444';
+    if (type === 'warning') toast.style.borderLeftColor = '#f59e0b';
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// 9. DATA REPORT GENERATOR: EXPORT TO CSV
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
