@@ -53,6 +53,10 @@
         .counter-card { background: #0f172a; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #334155; }
         .counter-val { font-size: 1.4rem; font-weight: bold; margin-top: 2px; }
         .status-locked { color: var(--danger); font-weight: bold; text-align: center; margin-top: 10px; display: none; background: #451a03; padding: 10px; border-radius: 6px; border: 1px solid var(--danger); }
+        
+        /* Gaya Input Max Slot */
+        .max-slot-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 2px; }
+        .max-slot-container input { width: 60px; padding: 2px 5px; text-align: center; font-size: 1.1rem; font-weight: bold; background: #1e293b; border-color: #475569; }
     </style>
 </head>
 <body>
@@ -82,7 +86,11 @@
                 </div>
                 <div class="counter-card">
                     <label style="margin:0; font-size:0.8rem;">Accepted Slots</label>
-                    <div class="counter-val" id="count-accepted" style="color: var(--success);">0 / 35</div>
+                    <div class="max-slot-container">
+                        <span class="counter-val" id="count-accepted" style="color: var(--success);">0</span>
+                        <span style="font-size: 1.2rem; color: #64748b; font-weight: bold;">/</span>
+                        <input type="number" id="in-max-slots" value="35" disabled onchange="changeMaxSlots(this.value)">
+                    </div>
                 </div>
             </div>
 
@@ -155,6 +163,6 @@
     </div>
 </div>
 
-<script src="script.js?v=1"></script>
+<script src="script.js"></script>
 </body>
 </html>
