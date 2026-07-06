@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Transfer Registration</title>
-    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -20,12 +19,86 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            margin: 0; padding: 20px;
+            margin: 0; padding: 15px;
         }
         .container { max-width: 1200px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #334155; padding-bottom: 15px; flex-wrap: wrap; gap: 20px; }
+        
+        /* HEADER FLEX LAYOUT BARU */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #334155; 
+            padding-bottom: 12px; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+        }
+        .header-left { flex: 1; min-width: 250px; }
+        .header-right { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            flex-wrap: wrap; 
+        }
+        .admin-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        
+        /* BOX INFORMASI PRESIDEN MINIMALIS & KECIL */
+        .president-info-box { 
+            background: #111827; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            border: 1px solid #334155; 
+            font-size: 0.8rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .info-item { display: flex; align-items: center; gap: 5px; }
+        .info-label { color: #94a3b8; font-weight: 500; }
+        .info-value { font-weight: bold; color: #3b82f6; }
+        
+        /* INPUT MINI UNTUK ADMIN */
+        .info-input { 
+            width: 85px; 
+            padding: 2px 6px; 
+            font-size: 0.8rem; 
+            background: #1e293b; 
+            border: 1px solid #475569; 
+            color: #fff; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            display: none; 
+            box-sizing: border-box;
+        }
+        .info-input:focus { border-color: var(--primary); outline: none; }
+        #edit-id { width: 95px; } /* Sedikit lebih lebar untuk ID Angka */
+        
+        /* TOMBOL SAVE MINI ADMIN */
+        .btn-save-info {
+            background: var(--success);
+            border: none;
+            color: #fff;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-save-info:hover { opacity: 0.9; }
+
+        /* GRID SYSTEM FORM & DATA */
         .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        @media(max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        @media(max-width: 900px) { 
+            .grid { grid-template-columns: 1fr; } 
+            header { flex-direction: column; align-items: stretch; }
+            .header-right { justify-content: space-between; }
+            .admin-controls { align-items: flex-start; }
+        }
+        
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
@@ -36,7 +109,8 @@
         .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; color: #fff; }
         .btn-primary { background: var(--primary); }
         .btn-primary:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-        .btn-admin { background: #475569; width: auto; padding: 8px 16px; font-size: 0.9rem; }
+        .btn-admin { background: #475569; width: auto; padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; }
+        
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
         th, td { padding: 12px; border-bottom: 1px solid #334155; }
@@ -49,26 +123,13 @@
         .toast { background: #1e293b; border-left: 4px solid var(--primary); padding: 15px 25px; border-radius: 4px; margin-bottom: 10px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s ease; }
         .admin-actions button { padding: 4px 8px; margin-right: 4px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
         
-        /* Gaya Visual Counter */
         .counter-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .counter-card { background: #0f172a; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #334155; }
         .counter-val { font-size: 1.4rem; font-weight: bold; margin-top: 2px; }
         .status-locked { color: var(--danger); font-weight: bold; text-align: center; margin-top: 10px; display: none; background: #451a03; padding: 10px; border-radius: 6px; border: 1px solid var(--danger); }
         
-        /* Gaya Input Max Slot */
         .max-slot-container { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 2px; }
-        .max-slot-container input { width: 60px; padding: 2px 5px; text-align: center; font-size: 1.1rem; font-weight: bold; background: #1e293b; border-color: #475569; }
-
-        /* PANEL INFORMASI KANAN ATAS */
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-        .admin-controls { display: flex; align-items: center; gap: 10px; }
-        .president-info-box { background: var(--card-dark); padding: 12px 15px; border-radius: 6px; border: 1px solid #334155; font-size: 0.85rem; min-width: 220px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
-        .info-row:last-child { margin-bottom: 0; }
-        .info-label { color: #94a3b8; font-weight: 500; }
-        .info-value { font-weight: bold; color: #3b82f6; text-align: right; }
-        .info-input { width: 110px; padding: 2px 6px; font-size: 0.85rem; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 4px; text-align: right; font-weight: bold; display: none; }
-        .info-input:focus { border-color: var(--primary); outline: none; }
+        .max-slot-container input { width: 55px; padding: 2px 4px; text-align: center; font-size: 1.1rem; font-weight: bold; background: #1e293b; border-color: #475569; color:#fff; border-radius:4px; }
     </style>
 </head>
 <body>
@@ -77,44 +138,42 @@
 
 <div class="container">
     <header>
-        <div>
-            <h1 style="margin:0;">Player Transfer Hub</h1>
-            <p style="margin:5px 0 0 0; color:#94a3b8;">Apply your data to immigrate state</p>
+        <div class="header-left">
+            <h1 style="margin:0; font-size: 1.6rem;">Player Transfer Hub</h1>
+            <p style="margin:3px 0 0 0; color:#94a3b8; font-size: 0.85rem;">Apply your data to immigrate state</p>
         </div>
         
-        <!-- PANEL INFORMASI DI KANAN ATAS -->
         <div class="header-right">
-            <div class="admin-controls">
-                <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">Admin Login</button>
-                <span id="admin-badge" style="display:none; color:var(--success); font-weight:bold;">[ADMIN]</span>
-            </div>
-            
             <div class="president-info-box">
-                <div class="info-row">
-                    <span class="info-label">Current President:</span>
+                <div class="info-item">
+                    <span class="info-label">Pres:</span>
                     <span class="info-value" id="val-president">RARA</span>
-                    <input type="text" class="info-input" id="edit-president" onchange="updatePresidentInfo('president', this.value)">
+                    <input type="text" class="info-input" id="edit-president">
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Alliance:</span>
+                <div class="info-item">
+                    <span class="info-label">Alli:</span>
                     <span class="info-value" id="val-alliance" style="color: var(--success);">IDN</span>
-                    <input type="text" class="info-input" id="edit-alliance" onchange="updatePresidentInfo('alliance', this.value)">
+                    <input type="text" class="info-input" id="edit-alliance">
                 </div>
-                <div class="info-row">
+                <div class="info-item">
                     <span class="info-label">ID:</span>
                     <span class="info-value" id="val-id" style="color: var(--warning);">0828402093</span>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" class="info-input" id="edit-id" onchange="updatePresidentInfo('id', this.value)">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" class="info-input" id="edit-id">
                 </div>
+                <button class="btn-save-info" id="save-info-btn" onclick="savePresidentInfo()">💾 Save</button>
+            </div>
+
+            <div class="admin-controls">
+                <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">Admin Login</button>
+                <span id="admin-badge" style="display:none; color:var(--success); font-size:0.75rem; font-weight:bold;">[ADMIN MODE]</span>
             </div>
         </div>
     </header>
 
     <div class="grid">
-        <!-- FORM INPUT -->
         <div class="card">
             <h3>Transfer Form</h3>
             
-            <!-- PANEL COUNTER TAMPILAN -->
             <div class="counter-box">
                 <div class="counter-card">
                     <label style="margin:0; font-size:0.8rem;">Total Applicants</label>
@@ -130,7 +189,6 @@
                 </div>
             </div>
 
-            <!-- Pesan jika kuota penuh -->
             <div id="lock-message" class="status-locked">⚠️ REGISTRATION CLOSED (QUOTA FULL)</div>
 
             <div class="form-group" style="margin-top: 15px;">
@@ -168,7 +226,6 @@
             <button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button>
         </div>
 
-        <!-- DAFTAR TRANSFER -->
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="margin:0; border:none;">Applicants List</h3>
@@ -193,9 +250,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody id="transfer-tbody">
-                        <!-- Data via script.js -->
-                    </tbody>
+                    <tbody id="transfer-tbody"></tbody>
                 </table>
             </div>
         </div>
