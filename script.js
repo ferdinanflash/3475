@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxSlotsInput = document.getElementById('in-max-slots');
     if (maxSlotsInput) maxSlotsInput.value = maxSlots;
 
-    // Load informasi President awal
+    // Ambil data info keterangan awal
     loadPresidentInfo();
 
     loadTransfers();
@@ -30,7 +30,7 @@ function getSupabase() {
     return supabaseClient;
 }
 
-// LOAD INFORMASI PRESIDENT DARI LOCALSTORAGE
+// 1. TAMPILKAN DATA KETERANGAN DARI LOCALSTORAGE
 function loadPresidentInfo() {
     const president = localStorage.getItem('info_president') || "RARA";
     const alliance = localStorage.getItem('info_alliance') || "IDN";
@@ -45,22 +45,30 @@ function loadPresidentInfo() {
     document.getElementById('edit-id').value = idGame;
 }
 
-// UPDATE INFORMASI PRESIDENT OLEH ADMIN
-function updatePresidentInfo(field, value) {
+// 2. TOMBOL ACTION ADMIN: SIMPAN KETERANGAN TERBARU SEMUANYA SEKALIGUS
+function savePresidentInfo() {
     if (!isAdmin) return;
-    const trimmedValue = value.trim();
-    if (!trimmedValue) {
-        showToast("Field cannot be empty!", "warning");
-        loadPresidentInfo();
+
+    const presVal = document.getElementById('edit-president').value.trim();
+    const alliVal = document.getElementById('edit-alliance').value.trim();
+    const idVal = document.getElementById('edit-id').value.trim();
+
+    if (!presVal || !alliVal || !idVal) {
+        showToast("All info fields must be filled!", "warning");
         return;
     }
 
-    localStorage.setItem(`info_${field}`, trimmedValue);
-    showToast(`Info ${field.toUpperCase()} updated!`, "success");
+    localStorage.setItem('info_president', presVal);
+    localStorage.setItem('info_alliance', alliVal);
+    localStorage.setItem('info_id', idVal);
+
+    showToast("Information saved successfully!", "success");
+    
+    // Matikan mode edit sementara (refresh view)
     loadPresidentInfo();
 }
 
-// FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL
+// 3. FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL
 function changeMaxSlots(value) {
     if (!isAdmin) return;
     
@@ -77,7 +85,7 @@ function changeMaxSlots(value) {
     updateCounters();
 }
 
-// 1. INPUT DATA TRANSFER INTO DATABASE
+// INPUT DATA TRANSFER INTO DATABASE
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
@@ -123,7 +131,7 @@ async function submitTransfer() {
     }
 }
 
-// 2. FETCH DATA FROM DATABASE
+// FETCH DATA FROM DATABASE
 async function loadTransfers() {
     const client = getSupabase();
     if (!client) return;
@@ -161,19 +169,22 @@ function updateCounters() {
         maxSlotsInput.disabled = !isAdmin;
     }
 
-    // Tampilkan/Sembunyikan form edit info president berdasarkan status admin
+    // LOGIKA TAMPILAN ELEMEN EDIT KETERANGAN INFO
     const infoValues = document.querySelectorAll('.info-value');
     const infoInputs = document.querySelectorAll('.info-input');
+    const saveInfoBtn = document.getElementById('save-info-btn');
 
     if (isAdmin) {
         infoValues.forEach(span => span.style.display = 'none');
         infoInputs.forEach(input => input.style.display = 'inline-block');
+        if (saveInfoBtn) saveInfoBtn.style.display = 'inline-block';
     } else {
         infoValues.forEach(span => span.style.display = 'inline-block');
         infoInputs.forEach(input => input.style.display = 'none');
+        if (saveInfoBtn) saveInfoBtn.style.display = 'none';
     }
 
-    // LOGIKA PENGUNCIAN FORM JIKA SLOT TERTERIMA >= MAX SLOTS
+    // LOGIKA PENGUNCIAN FORM UTAMA JIKA SLOT TERTERIMA >= MAX SLOTS
     if (acceptedCount >= maxSlots) {
         inputs.forEach(input => {
             if (input.id !== 'in-max-slots' && !input.classList.contains('info-input')) input.disabled = true;
@@ -189,7 +200,7 @@ function updateCounters() {
     }
 }
 
-// 3. RENDER DATA TO APPLICANTS LIST TABLE
+// RENDER DATA TO APPLICANTS LIST TABLE
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
@@ -243,7 +254,7 @@ function renderTable() {
     });
 }
 
-// 4. ACTION ADMIN: UPDATE STATUS
+// ACTION ADMIN: UPDATE STATUS
 async function updateStatus(id, newStatus) {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -283,7 +294,7 @@ async function updateStatus(id, newStatus) {
     }
 }
 
-// 5. ACTION ADMIN: DELETE SINGLE RECORD PERMANENTLY
+// ACTION ADMIN: DELETE SINGLE RECORD PERMANENTLY
 async function deleteRecord(id) {
     if (!isAdmin) return;
     if (!confirm("Delete this record permanently?")) return;
@@ -302,7 +313,7 @@ async function deleteRecord(id) {
     }
 }
 
-// 6. ACTION ADMIN: RESET TRANSFER PHASE
+// ACTION ADMIN: RESET TRANSFER PHASE
 async function resetTransferPhase() {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -338,7 +349,7 @@ async function resetTransferPhase() {
     }
 }
 
-// 7. ADMIN MANAGEMENT: LOGIN & LOGOUT
+// ADMIN MANAGEMENT: LOGIN & LOGOUT
 function handleAdminLogin() {
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
@@ -366,7 +377,7 @@ function handleAdminLogin() {
     renderTable();
 }
 
-// 8. TOAST NOTIFICATION SYSTEM
+// TOAST NOTIFICATION SYSTEM
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -389,7 +400,7 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// 9. DATA REPORT GENERATOR: EXPORT TO CSV
+// DATA REPORT GENERATOR: EXPORT TO CSV
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
