@@ -211,7 +211,7 @@ function renderTable() {
     }
     
     if (transferList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
         return;
     }
     
@@ -234,7 +234,7 @@ function renderTable() {
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
         
-        // Diubah: Hanya menampilkan From State, Nickname, Game ID, Power, dan Status + Tombol Mata Detail
+        // Diubah: Menghilangkan kolom Power dari tampilan tabel utama
         row.innerHTML = `
             <td>
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
@@ -243,7 +243,6 @@ function renderTable() {
             <td>State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
             <td>${item.game_id}</td>
-            <td>${Number(item.power).toLocaleString()}</td>
             <td><span class="${badgeClass}">${item.status}</span></td>
         `;
         tbody.appendChild(row);
