@@ -158,62 +158,104 @@ async function deleteRecord(id) {
         loadTransfers();
     }
 }
+// 1. INPUT DATA TRANSFER (UPDATE)
+async function submitTransfer() {
+    const client = getSupabase();
+    if (!client) return;
 
-// 6. LOGIN ADMIN
-function handleAdminLogin() {
-    const btn = document.getElementById('admin-btn');
-    const badge = document.getElementById('admin-badge');
+    const state = document.getElementById('in-state').value.trim();
+    const nickname = document.getElementById('in-nickname').value.trim();
+    const gameId = document.getElementById('in-gameid').value.trim();
+    const alliance = document.getElementById('in-alliance').value.trim(); // Ambil input baru
+    const furnace = document.getElementById('in-furnace').value.trim();
+    const power = document.getElementById('in-power').value.trim();
+    const heroPower = document.getElementById('in-heropower').value.trim();
+    const totalHero = document.getElementById('in-totalhero').value.trim();
 
-    if (!isAdmin) {
-        const password = prompt("Enter Password Admin:");
-        if (password === "3475") { // Password sama
-            isAdmin = true;
-            btn.innerText = "Logout Admin";
-            badge.style.display = "inline";
-            showToast("Welcome Administrator", "success");
-        } else {
-            showToast("Wrong password!", "error");
-            return;
-        }
-    } else {
-        isAdmin = false;
-        btn.innerText = "Admin Login";
-        badge.style.display = "none";
-        showToast("Admin Logout", "info");
+    if(!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
+        showToast("Please fill all input fields!", "warning");
+        return;
     }
-    renderTable();
+
+    const { error } = await client.from('player_transfers').insert({
+        transfer_from_state: parseInt(state),
+        nickname: nickname,
+        game_id: gameId,
+        desired_alliance: alliance, // Simpan ke database
+        furnace_level: parseInt(furnace),
+        power: parseInt(power),
+        hero_power: parseInt(heroPower),
+        total_hero_power: parseInt(totalHero),
+        status: 'Waiting'
+    });
+
+    if (!error) {
+        showToast("Transfer application sent successfully!", "success");
+        document.querySelectorAll('.form-group input').forEach(input => input.value = "");
+        loadTransfers();
+    } else {
+        showToast("Error submitting: " + error.message, "error");
+    }
 }
 
-// 7. TOAST NOTIFICATION SYSTEM
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
+// 3. TAMPILKAN KE TABEL (UPDATE)
+function renderTable() {
+    const tbody = document.getElementById('transfer-tbody');
+    const thAction = document.getElementById('th-action');
+    if (!tbody) return;
 
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerText = message;
+    tbody.innerHTML = "";
+    thAction.style.display = isAdmin ? "table-cell" : "none";
 
-    if (type === 'success') toast.style.borderLeftColor = '#22c55e';
-    if (type === 'error') toast.style.borderLeftColor = '#ef4444';
-    if (type === 'warning') toast.style.borderLeftColor = '#f59e0b';
+    if (transferList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 10 : 9}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
+        return;
+    }
 
-    container.appendChild(toast);
+    transferList.forEach(item => {
+        const row = document.createElement('tr');
+        
+        let actionCell = "";
+        if (isAdmin) {
+            actionCell = `
+                <td class="admin-actions">
+                    ${item.status === 'Waiting' ? `
+                        <button style="background:#22c55e;" onclick="updateStatus(${item.id}, 'Accepted')">Accept</button>
+                        <button style="background:#ef4444;" onclick="updateStatus(${item.id}, 'Rejected')">Reject</button>
+                    ` : `
+                        <button style="background:#475569;" onclick="deleteRecord(${item.id})">Delete</button>
+                    `}
+                </td>
+            `;
+        }
 
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+        let badgeClass = `badge badge-${item.status.toLowerCase()}`;
+
+        row.innerHTML = `
+            ${isAdmin ? actionCell : ''}
+            <td>State ${item.transfer_from_state}</td>
+            <td><strong>${item.nickname}</strong></td>
+            <td>${item.game_id}</td>
+            <td>${item.desired_alliance || '-'}</td> <!-- Tampilkan Aliansi -->
+            <td>FC ${item.furnace_level}</td>
+            <td>${Number(item.power).toLocaleString()}</td>
+            <td>${Number(item.hero_power).toLocaleString()}</td>
+            <td>${Number(item.total_hero_power).toLocaleString()}</td>
+            <td><span class="${badgeClass}">${item.status}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
-// 8. EXPORT CSV DATA
+// 8. EXPORT CSV DATA (UPDATE)
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
         return;
     }
-    const headers = ["From State", "Nickname", "Game ID", "Furnace", "Power", "Hero Power", "Total Hero Power", "Status"];
+    const headers = ["From State", "Nickname", "Game ID", "Desired Alliance", "Furnace", "Power", "Hero Power", "Total Hero Power", "Status"];
     const rows = transferList.map(p => [
-        p.transfer_from_state, `"${p.nickname}"`, `"${p.game_id}"`, p.furnace_level, p.power, p.hero_power, p.total_hero_power, p.status
+        p.transfer_from_state, `"${p.nickname}"`, `"${p.game_id}"`, `"${p.desired_alliance || '-'}"`, p.furnace_level, p.power, p.hero_power, p.total_hero_power, p.status
     ]);
     const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
