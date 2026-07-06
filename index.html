@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Transfer Registration</title>
-    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=5" defer></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -65,78 +63,75 @@
     </header>
 
     <div class="grid">
-        <!-- FORM INPUT (Update bagian ini di index.html) -->
-<div class="card">
-    <h3>Transfer Form</h3>
-    <div class="form-group">
-        <label>Transfer From State</label>
-        <input type="number" id="in-state" placeholder="e.g. 3475">
-    </div>
-    <div class="form-group">
-        <label>In-Game Nickname</label>
-        <input type="text" id="in-nickname" placeholder="Enter nickname">
-    </div>
-    <div class="form-group">
-        <label>Game ID</label>
-        <input type="text" id="in-gameid" placeholder="Enter Game ID">
-    </div>
-    <!-- INPUT BARU DI SINI -->
-    <div class="form-group">
-        <label>Desired Alliance</label>
-        <input type="text" id="in-alliance" placeholder="e.g. ARX/DRK/IDN/VNX/ZXC">
-    </div>
-    <div class="form-group">
-        <label>Furnace Level</label>
-        <input type="number" id="in-furnace" placeholder="e.g. FC 1-10">
-    </div>
-    <div class="form-group">
-        <label>Power</label>
-        <input type="number" id="in-power" placeholder="Total Power">
-    </div>
-    <div class="form-group">
-        <label>Hero Power</label>
-        <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
-    </div>
-    <div class="form-group">
-        <label>Total Hero Power</label>
-        <input type="number" id="in-totalhero" placeholder="Total Hero Power">
-    </div>
-    <button class="btn btn-primary" onclick="submitTransfer()">Submit Application</button>
-</div>
-
-        <!-- DAFTAR TRANSFER -->
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3>Transfer Form</h3>
+            <div class="form-group">
+                <label>Transfer From State</label>
+                <input type="number" id="in-state" placeholder="e.g. 3475">
+            </div>
+            <div class="form-group">
+                <label>In-Game Nickname</label>
+                <input type="text" id="in-nickname" placeholder="Enter nickname">
+            </div>
+            <div class="form-group">
+                <label>Game ID</label>
+                <input type="text" id="in-gameid" placeholder="Enter Game ID">
+            </div>
+            <div class="form-group">
+                <label>Desired Alliance</label>
+                <input type="text" id="in-alliance" placeholder="e.g. ARX/DRK/IDN/VNX/ZXC">
+            </div>
+            <div class="form-group">
+                <label>Furnace Level</label>
+                <input type="number" id="in-furnace" placeholder="e.g. FC 1-10">
+            </div>
+            <div class="form-group">
+                <label>Power</label>
+                <input type="number" id="in-power" placeholder="Total Power">
+            </div>
+            <div class="form-group">
+                <label>Hero Power</label>
+                <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
+            </div>
+            <div class="form-group">
+                <label>Total Hero Power</label>
+                <input type="number" id="in-totalhero" placeholder="Total Hero Power">
+            </div>
+            <button class="btn btn-primary" onclick="submitTransfer()">Submit Application</button>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="margin:0; border:none;">Applicants List</h3>
-                <button class="btn btn-admin" style="background:#22c55e;" onclick="exportCSV()">Export CSV</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-admin" id="reset-phase-btn" style="background:#ef4444; display:none;" onclick="resetTransferPhase()">Reset Phase</button>
+                    <button class="btn btn-admin" style="background:#22c55e;" onclick="exportCSV()">Export CSV</button>
+                </div>
             </div>
             <div class="table-container">
                 <table>
-                    <!-- Cari bagian <thead> di tabel Anda dan sesuaikan jumlah kolomnya -->
-<thead>
-    <tr>
-        <th id="th-action" style="display:none;">Action</th>
-        <th>From State</th>
-        <th>Nickname</th>
-        <th>Game ID</th>
-        <th>Desired Alliance</th> <!-- Header Baru -->
-        <th>Furnace</th>
-        <th>Power</th>
-        <th>Hero Pwr</th>
-        <th>All Hero Pwr</th>
-        <th>Status</th>
-    </tr>
-</thead>
-
+                    <thead>
+                        <tr>
+                            <th id="th-action" style="display:none;">Action</th>
+                            <th>From State</th>
+                            <th>Nickname</th>
+                            <th>Game ID</th>
+                            <th>Desired Alliance</th>
+                            <th>Furnace</th>
+                            <th>Power</th>
+                            <th>Hero Pwr</th>
+                            <th>All Hero Pwr</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
                     <tbody id="transfer-tbody">
-                        <!-- Data terisi via JS -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<script src="script.js"></script>
+<script src="script.js?v=1"></script>
 </body>
 </html>
