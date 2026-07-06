@@ -62,7 +62,6 @@ function savePresidentInfo() {
     localStorage.setItem('info_id', idVal);
     
     showToast("Information saved successfully!", "success");
-    // Matikan mode edit sementara (refresh view)
     loadPresidentInfo();
 }
 
@@ -212,11 +211,11 @@ function renderTable() {
     }
     
     if (transferList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 10 : 9}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
         return;
     }
     
-    transferList.forEach(item => {
+    transferList.forEach((item, index) => {
         const row = document.createElement('tr');
         let actionCell = "";
         
@@ -235,21 +234,50 @@ function renderTable() {
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
         
-        // Menambahkan class "hide-mobile" di kolom game_id, hero_power, dan total_hero_power agar pas di HP
+        // Diubah: Hanya menampilkan From State, Nickname, Game ID, Power, dan Status + Tombol Mata Detail
         row.innerHTML = `
+            <td>
+                <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
+            </td>
             ${isAdmin ? actionCell : ''}
             <td>State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
-            <td class="hide-mobile">${item.game_id}</td>
-            <td>${item.desired_alliance || '-'}</td>
-            <td>FC ${item.furnace_level}</td>
+            <td>${item.game_id}</td>
             <td>${Number(item.power).toLocaleString()}</td>
-            <td class="hide-mobile">${Number(item.hero_power).toLocaleString()}</td>
-            <td class="hide-mobile">${Number(item.total_hero_power).toLocaleString()}</td>
             <td><span class="${badgeClass}">${item.status}</span></td>
         `;
         tbody.appendChild(row);
     });
+}
+
+// LOGIKA POPUP MODAL UNTUK MENAMPILKAN SEMUA DATA PENDAFTAR SECARA LENGKAP
+function showDetailPopup(index) {
+    const player = transferList[index];
+    if (!player) return;
+
+    document.getElementById('pop-nickname').innerText = `Detail: ${player.nickname}`;
+    document.getElementById('pop-state').innerText = `State ${player.transfer_from_state}`;
+    document.getElementById('pop-gameid').innerText = player.game_id;
+    document.getElementById('pop-alliance').innerText = player.desired_alliance || '-';
+    document.getElementById('pop-furnace').innerText = `FC ${player.furnace_level}`;
+    document.getElementById('pop-power').innerText = Number(player.power).toLocaleString();
+    document.getElementById('pop-heropower').innerText = Number(player.hero_power).toLocaleString();
+    document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
+    document.getElementById('pop-status').innerText = player.status;
+
+    document.getElementById('detail-modal').classList.add('active');
+}
+
+function closeDetailModal() {
+    document.getElementById('detail-modal').classList.remove('active');
+}
+
+// Tutup popup jika user klik di luar kotak modal info
+window.onclick = function(event) {
+    const modal = document.getElementById('detail-modal');
+    if (event.target === modal) {
+        closeDetailModal();
+    }
 }
 
 // ACTION ADMIN: UPDATE STATUS
