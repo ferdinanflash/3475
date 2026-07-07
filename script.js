@@ -515,7 +515,7 @@ async function handleAdminLogin() {
     if (!btn) return;
     
     if (!isAdmin) {
-        const password = prompt("Enter Password Admin:");
+        const password = prompt("Enter Password President:");
         if (!password) return;
 
         const client = getSupabase();
@@ -539,9 +539,9 @@ async function handleAdminLogin() {
         }
     } else {
         isAdmin = false;
-        btn.innerText = "Admin Login";
+        btn.innerText = "President Login";
         if (badge) badge.style.display = "none";
-        showToast("Admin Logout", "info");
+        showToast("President Logout", "info");
     }
     updateCounters();
     renderTable();
