@@ -6,13 +6,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let isAdmin = false;
 let transferList = [];
-let maxSlots = parseInt(localStorage.getItem('max_slots')) || 35;
+let maxSlots = 35; // Default nilai awal, akan otomatis diperbarui dari database Supabase
 
 document.addEventListener("DOMContentLoaded", () => {
-    const maxSlotsInput = document.getElementById('in-max-slots');
-    if (maxSlotsInput) maxSlotsInput.value = maxSlots;
-    
-    // Ambil data info keterangan awal
+    // Info awal dan data pendaftaran dimuat langsung dari database
     loadPresidentInfo();
     loadTransfers();
     setInterval(loadTransfers, 30000); // Polling update otomatis setiap 30 detik
@@ -71,8 +68,8 @@ function savePresidentInfo() {
     loadPresidentInfo();
 }
 
-// 3. FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL
-function changeMaxSlots(value) {
+// 3. FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL (DIUBAH KESUPABASE)
+async function changeMaxSlots(value) {
     if (!isAdmin) return;
     
     const parsedValue = parseInt(value);
@@ -82,10 +79,28 @@ function changeMaxSlots(value) {
         return;
     }
     
-    maxSlots = parsedValue;
-    localStorage.setItem('max_slots', maxSlots);
-    showToast(`Maximum slots updated to ${maxSlots}`, "success");
-    updateCounters();
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        // Update nilai max_slots ke database Supabase agar tersinkronisasi ke semua user
+        const { error } = await client
+            .from('system_settings')
+            .update({ max_slots: parsedValue })
+            .eq('id', 1);
+
+        if (!error) {
+            maxSlots = parsedValue;
+            showToast(`Maximum slots updated to ${maxSlots}`, "success");
+            updateCounters();
+        } else {
+            throw error;
+        }
+    } catch (err) {
+        console.error("Gagal mengupdate max slots:", err);
+        showToast("Failed to update max slots on server: " + err.message, "error");
+        document.getElementById('in-max-slots').value = maxSlots;
+    }
 }
 
 // INPUT DATA TRANSFER INTO DATABASE
@@ -134,12 +149,26 @@ async function submitTransfer() {
     }
 }
 
-// FETCH DATA FROM DATABASE
+// FETCH DATA FROM DATABASE (DIUBAH UNTUK MENGAMBIL DATA SLOT REAL-TIME)
 async function loadTransfers() {
     const client = getSupabase();
     if (!client) return;
     
     try {
+        // A. AMBIL DATA MAX SLOTS TERBARU DARI DATABASE
+        const { data: settingsData, error: settingsError } = await client
+            .from('system_settings')
+            .select('max_slots')
+            .eq('id', 1)
+            .single();
+            
+        if (!settingsError && settingsData) {
+            maxSlots = settingsData.max_slots;
+            const maxSlotsInput = document.getElementById('in-max-slots');
+            if (maxSlotsInput) maxSlotsInput.value = maxSlots;
+        }
+
+        // B. AMBIL DATA TRANFERS SEPERTI BIASA
         const { data, error } = await client
             .from('player_transfers')
             .select('*')
@@ -240,7 +269,6 @@ function renderTable() {
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
         
-        // Diubah: Ditambahkan trigger onclick="copyToClipboard('${item.game_id}')" dan styling cursor pointer pada Game ID di tabel
         row.innerHTML = `
             <td>
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
@@ -263,7 +291,6 @@ function showDetailPopup(index) {
     document.getElementById('pop-nickname').innerText = `Detail: ${player.nickname}`;
     document.getElementById('pop-state').innerText = `State ${player.transfer_from_state}`;
     
-    // Diubah: Tambahkan trigger klik salin pada elemen Game ID di dalam popup detail
     const popGameId = document.getElementById('pop-gameid');
     popGameId.innerText = `${player.game_id} 📋`;
     popGameId.style.cursor = 'pointer';
@@ -291,7 +318,6 @@ function copyToClipboard(text) {
         showToast(`ID ${text} copied to clipboard!`, "success");
     }).catch(err => {
         console.error('Failed to copy text: ', err);
-        // Fallback jika browser versi lama / HTTP non-secure mendadak memblokir clipboard API
         const textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -306,7 +332,6 @@ function copyToClipboard(text) {
     });
 }
 
-// Tutup popup jika user klik di luar kotak modal info
 window.onclick = function(event) {
     const modal = document.getElementById('detail-modal');
     if (event.target === modal) {
