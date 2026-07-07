@@ -126,7 +126,7 @@ async function savePresidentInfo() {
             .eq('id', 1);
 
         if (!error) {
-            showToast("Information saved successfully onto Cloud!", "success");
+            showToast("Information saved to 3475 Server", "success");
         } else {
             throw error;
         }
@@ -530,11 +530,11 @@ async function handleAdminLogin() {
 
         if (isValid) {
             isAdmin = true;
-            btn.innerText = "Logout Admin";
+            btn.innerText = "Logout President";
             if (badge) badge.style.display = "inline";
-            showToast("Welcome Administrator", "success");
+            showToast("Welcome President", "success");
         } else {
-            showToast("Wrong password!", "error");
+            showToast("❌ Wrong password!", "error");
             return;
         }
     } else {
