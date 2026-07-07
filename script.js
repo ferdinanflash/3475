@@ -9,9 +9,7 @@ let transferList = [];
 let maxSlots = 35; 
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial core table pull
     loadTransfers();
-    // Initialize Realtime Stream Channels to replace the 30s interval wheel
     setupRealtimeChannels();
 });
 
@@ -26,7 +24,7 @@ function getSupabase() {
     return supabaseClient;
 }
 
-// REALTIME BROADCAST ENGINE (Replaces the legacy setInterval polling loop)
+// REALTIME STREAM CHANNELS (Sinkronisasi perubahan database langsung ke layar)
 function setupRealtimeChannels() {
     const client = getSupabase();
     if (!client) return;
@@ -42,11 +40,12 @@ function setupRealtimeChannels() {
         .subscribe();
 }
 
-// 1. DISPLAY GLOBAL CONFIGURATION LOADED FROM SUPABASE (Replaces localStorage)
+// 1. ISI INFORMASI CORE UTAMA YANG DI-LOAD DARI SUPABASE
 function displaySystemSettings(settings) {
     const president = settings.president_name || "RARA";
     const alliance = settings.alliance_name || "IDN";
     const idGame = settings.id_game || "0828402093";
+    const stateInfoText = settings.state_info || "Welcome to our State! No profile rules assigned yet.";
     
     document.getElementById('val-president').innerText = president;
     document.getElementById('val-alliance').innerText = alliance;
@@ -60,9 +59,47 @@ function displaySystemSettings(settings) {
     document.getElementById('edit-president').value = president;
     document.getElementById('edit-alliance').value = alliance;
     document.getElementById('edit-id').value = idGame;
+
+    // Memetakan data deskripsi About State ke elemen popup modal
+    document.getElementById('state-info-text').innerText = stateInfoText;
+    document.getElementById('state-info-edit').value = stateInfoText;
 }
 
-// 2. ADMIN ACTION: SAVE ALL PRESIDENT DETAILS TO CLOUD DATABASE AT ONCE
+// POPUP MODAL CONTROL SECTIONS
+function openStateModal() {
+    document.getElementById('state-info-modal').classList.add('active');
+}
+
+function closeStateModal() {
+    document.getElementById('state-info-modal').classList.remove('active');
+}
+
+// 2. ADMIN ACTION: SAVE DESKRIPSI ABOUT OUR STATE KE SUPABASE
+async function saveStateInfo() {
+    if (!isAdmin) return;
+    
+    const textValue = document.getElementById('state-info-edit').value;
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { error } = await client
+            .from('system_settings')
+            .update({ state_info: textValue })
+            .eq('id', 1);
+
+        if (!error) {
+            showToast("State profile information updated live!", "success");
+        } else {
+            throw error;
+        }
+    } catch (err) {
+        console.error("Cloud failure update metadata:", err);
+        showToast("Failed saving state info text: " + err.message, "error");
+    }
+}
+
+// 3. ADMIN ACTION: SAVE DATA HEADER PRESIDEN SEKALIGUS
 async function savePresidentInfo() {
     if (!isAdmin) return;
     
@@ -99,7 +136,7 @@ async function savePresidentInfo() {
     }
 }
 
-// 3. ADMIN ACTION: MODIFY STIPULATED REGISTRATION SLOTS
+// 4. ADMIN ACTION: MENGUBAH SLOT MAXIMUM QUOTA LIMIT
 async function changeMaxSlots(value) {
     if (!isAdmin) return;
     
@@ -133,7 +170,7 @@ async function changeMaxSlots(value) {
     }
 }
 
-// SUBMIT PLAYER APPLICATIONS TO SUPABASE
+// KIRIM FORM DATA PENDAFTAR BARU
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
@@ -182,13 +219,12 @@ async function submitTransfer() {
     }
 }
 
-// FETCH DATA PIPELINES FROM CLOUD DATABASE
+// AMBIL SEMUA DATA KONDISIONAL DARI DATABASE
 async function loadTransfers() {
     const client = getSupabase();
     if (!client) return;
     
     try {
-        // A. FETCH REALTIME APP SETTINGS MATRIX
         const { data: settingsData, error: settingsError } = await client
             .from('system_settings')
             .select('*')
@@ -200,7 +236,6 @@ async function loadTransfers() {
             displaySystemSettings(settingsData);
         }
 
-        // B. FETCH LIST OF ACTIVE TRANSFERS
         const { data, error } = await client
             .from('player_transfers')
             .select('*')
@@ -215,7 +250,7 @@ async function loadTransfers() {
     }
 }
 
-// CALCULATE RENDER COUNTERS & PROCESS LOCK LOGIC RULES
+// LOGIKA COUNTER & TOGGLE ELEMENT UNTUK VISUAL ADMIN
 function updateCounters() {
     const totalApplicants = transferList.length;
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
@@ -240,10 +275,20 @@ function updateCounters() {
         infoValues.forEach(span => span.style.display = 'none');
         infoInputs.forEach(input => input.style.display = 'inline-block');
         if (saveInfoBtn) saveInfoBtn.style.display = 'inline-block';
+        
+        // Mode admin: Sembunyikan teks polos, tampilkan panel edit text box di popup About State
+        document.getElementById('state-info-text').style.display = 'none';
+        document.getElementById('state-info-edit').style.display = 'block';
+        document.getElementById('save-state-btn').style.display = 'block';
     } else {
         infoValues.forEach(span => span.style.display = 'inline-block');
         infoInputs.forEach(input => input.style.display = 'none');
         if (saveInfoBtn) saveInfoBtn.style.display = 'none';
+        
+        // Mode player biasa: Tampilkan teks deskripsi polos saja, sembunyikan kotak edit
+        document.getElementById('state-info-text').style.display = 'block';
+        document.getElementById('state-info-edit').style.display = 'none';
+        document.getElementById('save-state-btn').style.display = 'none';
     }
     
     if (acceptedCount >= maxSlots) {
@@ -261,7 +306,7 @@ function updateCounters() {
     }
 }
 
-// COMPILE APPLICANT DATA INTO ROWS
+// RENDER TABEL APPLICANT LIST
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
@@ -313,7 +358,6 @@ function renderTable() {
     });
 }
 
-// INITIATE FULL USER METRIC MODAL POPUPs
 function showDetailPopup(index) {
     const player = transferList[index];
     if (!player) return;
@@ -341,7 +385,6 @@ function closeDetailModal() {
     document.getElementById('detail-modal').classList.remove('active');
 }
 
-// CLIPBOARD MANAGER
 function copyToClipboard(text) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -362,14 +405,19 @@ function copyToClipboard(text) {
     });
 }
 
+// EVENT DETECTOR MENUTUP JENDELA MODAL BILA LUAR POPUP DI-KLIK
 window.onclick = function(event) {
-    const modal = document.getElementById('detail-modal');
-    if (event.target === modal) {
+    const detailModal = document.getElementById('detail-modal');
+    const stateModal = document.getElementById('state-info-modal');
+    if (event.target === detailModal) {
         closeDetailModal();
+    }
+    if (event.target === stateModal) {
+        closeStateModal();
     }
 }
 
-// ADMIN ACTION: UPDATE ROW REGISTRATION VALUES
+// ADMIN ACTION: UPDATE STATUS PENDAFTAR
 async function updateStatus(id, newStatus) {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -406,7 +454,7 @@ async function updateStatus(id, newStatus) {
     }
 }
 
-// ADMIN ACTION: ERASE TARGET USER ROW PERMANENTLY
+// ADMIN ACTION: HAPUS APPLICANT SINGLE RECORD PERMANEN
 async function deleteRecord(id) {
     if (!isAdmin) return;
     if (!confirm("Delete this record permanently?")) return;
@@ -423,7 +471,7 @@ async function deleteRecord(id) {
     }
 }
 
-// ADMIN ACTION: RESET PHASE DATA CLEANUP (Uses secure RPC password lookup)
+// ADMIN ACTION: MASSIVE DATA CLEANUP RESET TRANSFER PHASE
 async function resetTransferPhase() {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -439,7 +487,6 @@ async function resetTransferPhase() {
     const confirm2 = prompt("Enter Admin Password to execute massive wipe:");
     if (!confirm2) return;
     
-    // Call server-side RPC validation function
     const { data: isValid, error: authError } = await client.rpc('verify_admin_code', { input_code: confirm2 });
     
     if (authError || !isValid) {
@@ -461,7 +508,7 @@ async function resetTransferPhase() {
     }
 }
 
-// ADMINISTRATIVE AUTH SYSTEM (Upgraded to handle hidden Server-side RPC verification checks)
+// ADMIN MANAGEMENT SYSTEM (LOGIN & LOGOUT METHOD)
 async function handleAdminLogin() {
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
@@ -474,7 +521,6 @@ async function handleAdminLogin() {
         const client = getSupabase();
         if (!client) return;
 
-        // Verify key string inside the isolated Supabase environment instead of exposing raw scripts
         const { data: isValid, error } = await client.rpc('verify_admin_code', { input_code: password });
 
         if (error) {
@@ -501,7 +547,7 @@ async function handleAdminLogin() {
     renderTable();
 }
 
-// ACCESSIBLE CONSOLE EXPORT
+// EXPORT TO EXCEL / CSV CONSOLE GENERATOR
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
@@ -530,7 +576,7 @@ function exportCSV() {
     link.click();
 }
 
-// STANDARD CUBIC TOAST ALERTS
+// CUBIC ALERTS POP NOTIFICATION
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
