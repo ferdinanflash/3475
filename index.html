@@ -224,7 +224,6 @@
 
 <div id="toast-container"></div>
 
-<!-- POPUP 1: DETAIL PENDAFTAR -->
 <div class="modal-overlay" id="detail-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -244,7 +243,6 @@
     </div>
 </div>
 
-<!-- POPUP 2: ABOUT OUR STATE (DINAMIS SINKRON SUPABASE) -->
 <div class="modal-overlay" id="state-info-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -252,10 +250,8 @@
             <button class="modal-close" onclick="closeStateModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <!-- Tampilan teks untuk Player biasa -->
             <div id="state-info-text" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; max-height: 300px; overflow-y: auto;"></div>
             
-            <!-- Tampilan Textarea khusus jika Admin Login -->
             <textarea id="state-info-edit" style="height: 180px; font-family: inherit; font-size: 0.95rem; display: none; resize: vertical; margin-bottom: 8px;" placeholder="Write about state rules, requirements, or profile here..."></textarea>
             <button class="btn btn-primary" id="save-state-btn" style="display: none; padding: 10px; font-size: 0.9rem;" onclick="saveStateInfo()">💾 Save State Info</button>
         </div>
@@ -300,6 +296,8 @@
         <div class="card">
             <h3>Transfer Form</h3>
             
+            <button class="btn" id="about-state-btn" style="background: #475569; margin-top: 6px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);" onclick="openStateModal()">ℹ️ About Our State</button>
+
             <div class="counter-box">
                 <div class="counter-card">
                     <label style="margin:0; font-size:0.8rem;">Total Applicants</label>
@@ -350,9 +348,6 @@
                 <input type="number" id="in-totalhero" placeholder="Total Hero Power">
             </div>
             <button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button>
-            
-            <!-- TOMBOL BARU: ABOUT OUR STATE -->
-            <button class="btn" id="about-state-btn" style="background: #475569; margin-top: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);" onclick="openStateModal()">ℹ️ About Our State</button>
         </div>
 
         <div class="card">
