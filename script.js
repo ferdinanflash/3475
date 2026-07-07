@@ -90,6 +90,7 @@ async function saveStateInfo() {
 
         if (!error) {
             showToast("State profile information updated live!", "success");
+            loadTransfers(); // <-- PERBAIKAN: Memaksa UI memuat ulang data terbaru
         } else {
             throw error;
         }
@@ -127,6 +128,7 @@ async function savePresidentInfo() {
 
         if (!error) {
             showToast("Information saved to 3475 Server", "success");
+            loadTransfers(); // <-- PERBAIKAN: Memaksa UI memuat ulang data terbaru
         } else {
             throw error;
         }
@@ -159,7 +161,7 @@ async function changeMaxSlots(value) {
         if (!error) {
             maxSlots = parsedValue;
             showToast(`Maximum slots updated to ${maxSlots}`, "success");
-            updateCounters();
+            loadTransfers(); // <-- PERBAIKAN: Memaksa UI memuat ulang data terbaru
         } else {
             throw error;
         }
@@ -214,6 +216,7 @@ async function submitTransfer() {
                 input.value = "";
             }
         });
+        loadTransfers(); // <-- PERBAIKAN: Menampilkan pendaftar baru langsung di tabel
     } else {
         showToast("Error submitting: " + error.message, "error");
     }
@@ -448,6 +451,7 @@ async function updateStatus(id, newStatus) {
             
         if (error) throw error;
         showToast(`Application ${newStatus} successfully!`, "success");
+        await loadTransfers(); // <-- PERBAIKAN UTAMA: Langsung render ulang tabel setelah tombol diklik tanpa nunggu refresh!
     } catch (err) {
         console.error("Failed altering column parameters:", err);
         showToast("Failed to update status: " + err.message, "error");
@@ -466,6 +470,7 @@ async function deleteRecord(id) {
         const { error } = await client.from('player_transfers').delete().eq('id', id);
         if (error) throw error;
         showToast("Record deleted successfully.", "success");
+        await loadTransfers(); // <-- PERBAIKAN UTAMA: Langsung render ulang tabel setelah record dihapus!
     } catch (err) {
         showToast("Delete failed: " + err.message, "error");
     }
@@ -502,6 +507,7 @@ async function resetTransferPhase() {
             
         if (error) throw error;
         showToast("All transfer records have been cleared!", "success");
+        await loadTransfers(); // <-- PERBAIKAN UTAMA: Langsung kosongkan tabel setelah wipe sukses!
     } catch (err) {
         console.error("Wipe compilation sequence error:", err);
         showToast("Reset failed: " + err.message, "error");
