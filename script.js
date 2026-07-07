@@ -6,13 +6,13 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let isAdmin = false;
 let transferList = [];
-let maxSlots = 35; // Default nilai awal, akan otomatis diperbarui dari database Supabase
+let maxSlots = 35; 
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Info awal dan data pendaftaran dimuat langsung dari database
-    loadPresidentInfo();
+    // Initial core table pull
     loadTransfers();
-    setInterval(loadTransfers, 30000); // Polling update otomatis setiap 30 detik
+    // Initialize Realtime Stream Channels to replace the 30s interval wheel
+    setupRealtimeChannels();
 });
 
 function getSupabase() {
@@ -26,16 +26,31 @@ function getSupabase() {
     return supabaseClient;
 }
 
-// 1. TAMPILKAN DATA KETERANGAN DARI LOCALSTORAGE
-function loadPresidentInfo() {
-    const president = localStorage.getItem('info_president') || "RARA";
-    const alliance = localStorage.getItem('info_alliance') || "IDN";
-    const idGame = localStorage.getItem('info_id') || "0828402093";
+// REALTIME BROADCAST ENGINE (Replaces the legacy setInterval polling loop)
+function setupRealtimeChannels() {
+    const client = getSupabase();
+    if (!client) return;
+
+    client
+        .channel('portal-sync-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_transfers' }, () => {
+            loadTransfers();
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'system_settings', filter: 'id=eq.1' }, () => {
+            loadTransfers();
+        })
+        .subscribe();
+}
+
+// 1. DISPLAY GLOBAL CONFIGURATION LOADED FROM SUPABASE (Replaces localStorage)
+function displaySystemSettings(settings) {
+    const president = settings.president_name || "RARA";
+    const alliance = settings.alliance_name || "IDN";
+    const idGame = settings.id_game || "0828402093";
     
     document.getElementById('val-president').innerText = president;
     document.getElementById('val-alliance').innerText = alliance;
     
-    // Menambahkan style cursor & onclick pada ID Presiden di Header agar bisa dicopy juga
     const valId = document.getElementById('val-id');
     valId.innerText = idGame;
     valId.style.cursor = 'pointer';
@@ -47,8 +62,8 @@ function loadPresidentInfo() {
     document.getElementById('edit-id').value = idGame;
 }
 
-// 2. TOMBOL ACTION ADMIN: SIMPAN KETERANGAN TERBARU SEMUANYA SEKALIGUS
-function savePresidentInfo() {
+// 2. ADMIN ACTION: SAVE ALL PRESIDENT DETAILS TO CLOUD DATABASE AT ONCE
+async function savePresidentInfo() {
     if (!isAdmin) return;
     
     const presVal = document.getElementById('edit-president').value.trim();
@@ -60,15 +75,31 @@ function savePresidentInfo() {
         return;
     }
     
-    localStorage.setItem('info_president', presVal);
-    localStorage.setItem('info_alliance', alliVal);
-    localStorage.setItem('info_id', idVal);
-    
-    showToast("Information saved successfully!", "success");
-    loadPresidentInfo();
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { error } = await client
+            .from('system_settings')
+            .update({
+                president_name: presVal,
+                alliance_name: alliVal,
+                id_game: idVal
+            })
+            .eq('id', 1);
+
+        if (!error) {
+            showToast("Information saved successfully onto Cloud!", "success");
+        } else {
+            throw error;
+        }
+    } catch (err) {
+        console.error("Cloud sync save failure:", err);
+        showToast("Database failed saving information: " + err.message, "error");
+    }
 }
 
-// 3. FUNGSI ADMIN: MENGUBAH JUMLAH SLOT MAKSIMAL (DIUBAH KESUPABASE)
+// 3. ADMIN ACTION: MODIFY STIPULATED REGISTRATION SLOTS
 async function changeMaxSlots(value) {
     if (!isAdmin) return;
     
@@ -83,7 +114,6 @@ async function changeMaxSlots(value) {
     if (!client) return;
 
     try {
-        // Update nilai max_slots ke database Supabase agar tersinkronisasi ke semua user
         const { error } = await client
             .from('system_settings')
             .update({ max_slots: parsedValue })
@@ -97,13 +127,13 @@ async function changeMaxSlots(value) {
             throw error;
         }
     } catch (err) {
-        console.error("Gagal mengupdate max slots:", err);
+        console.error("Failed adjusting system limits:", err);
         showToast("Failed to update max slots on server: " + err.message, "error");
         document.getElementById('in-max-slots').value = maxSlots;
     }
 }
 
-// INPUT DATA TRANSFER INTO DATABASE
+// SUBMIT PLAYER APPLICATIONS TO SUPABASE
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
@@ -142,33 +172,35 @@ async function submitTransfer() {
     
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
-        document.querySelectorAll('.form-group input').forEach(input => input.value = "");
-        loadTransfers();
+        document.querySelectorAll('.form-group input').forEach(input => {
+            if(input.id !== 'in-max-slots' && !input.classList.contains('info-input')) {
+                input.value = "";
+            }
+        });
     } else {
         showToast("Error submitting: " + error.message, "error");
     }
 }
 
-// FETCH DATA FROM DATABASE (DIUBAH UNTUK MENGAMBIL DATA SLOT REAL-TIME)
+// FETCH DATA PIPELINES FROM CLOUD DATABASE
 async function loadTransfers() {
     const client = getSupabase();
     if (!client) return;
     
     try {
-        // A. AMBIL DATA MAX SLOTS TERBARU DARI DATABASE
+        // A. FETCH REALTIME APP SETTINGS MATRIX
         const { data: settingsData, error: settingsError } = await client
             .from('system_settings')
-            .select('max_slots')
+            .select('*')
             .eq('id', 1)
             .single();
             
         if (!settingsError && settingsData) {
             maxSlots = settingsData.max_slots;
-            const maxSlotsInput = document.getElementById('in-max-slots');
-            if (maxSlotsInput) maxSlotsInput.value = maxSlots;
+            displaySystemSettings(settingsData);
         }
 
-        // B. AMBIL DATA TRANFERS SEPERTI BIASA
+        // B. FETCH LIST OF ACTIVE TRANSFERS
         const { data, error } = await client
             .from('player_transfers')
             .select('*')
@@ -179,11 +211,11 @@ async function loadTransfers() {
         updateCounters();
         renderTable();
     } catch (e) {
-        console.error("Database failure:", e);
+        console.error("Database structural access failure:", e);
     }
 }
 
-// UPDATE JUMLAH COUNTER & LOCK LOGIC
+// CALCULATE RENDER COUNTERS & PROCESS LOCK LOGIC RULES
 function updateCounters() {
     const totalApplicants = transferList.length;
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
@@ -200,7 +232,6 @@ function updateCounters() {
         maxSlotsInput.disabled = !isAdmin;
     }
     
-    // LOGIKA TAMPILAN ELEMEN EDIT KETERANGAN INFO
     const infoValues = document.querySelectorAll('.info-value');
     const infoInputs = document.querySelectorAll('.info-input');
     const saveInfoBtn = document.getElementById('save-info-btn');
@@ -215,7 +246,6 @@ function updateCounters() {
         if (saveInfoBtn) saveInfoBtn.style.display = 'none';
     }
     
-    // LOGIKA PENGUNCIAN FORM UTAMA JIKA SLOT TERTERIMA >= MAX SLOTS
     if (acceptedCount >= maxSlots) {
         inputs.forEach(input => {
             if (input.id !== 'in-max-slots' && !input.classList.contains('info-input')) input.disabled = true;
@@ -231,7 +261,7 @@ function updateCounters() {
     }
 }
 
-// RENDER DATA TO APPLICANTS LIST TABLE
+// COMPILE APPLICANT DATA INTO ROWS
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
@@ -283,7 +313,7 @@ function renderTable() {
     });
 }
 
-// LOGIKA POPUP MODAL UNTUK MENAMPILKAN SEMUA DATA PENDAFTAR SECARA LENGKAP
+// INITIATE FULL USER METRIC MODAL POPUPs
 function showDetailPopup(index) {
     const player = transferList[index];
     if (!player) return;
@@ -311,7 +341,7 @@ function closeDetailModal() {
     document.getElementById('detail-modal').classList.remove('active');
 }
 
-// FUNGSI UTAMA UNTUK MENYALIN (COPY) ID KE CLIPBOARD HP / PC
+// CLIPBOARD MANAGER
 function copyToClipboard(text) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -339,7 +369,7 @@ window.onclick = function(event) {
     }
 }
 
-// ACTION ADMIN: UPDATE STATUS
+// ADMIN ACTION: UPDATE ROW REGISTRATION VALUES
 async function updateStatus(id, newStatus) {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -370,14 +400,13 @@ async function updateStatus(id, newStatus) {
             
         if (error) throw error;
         showToast(`Application ${newStatus} successfully!`, "success");
-        await loadTransfers();
     } catch (err) {
-        console.error("Gagal memperbarui status:", err);
+        console.error("Failed altering column parameters:", err);
         showToast("Failed to update status: " + err.message, "error");
     }
 }
 
-// ACTION ADMIN: DELETE SINGLE RECORD PERMANENTLY
+// ADMIN ACTION: ERASE TARGET USER ROW PERMANENTLY
 async function deleteRecord(id) {
     if (!isAdmin) return;
     if (!confirm("Delete this record permanently?")) return;
@@ -389,13 +418,12 @@ async function deleteRecord(id) {
         const { error } = await client.from('player_transfers').delete().eq('id', id);
         if (error) throw error;
         showToast("Record deleted successfully.", "success");
-        await loadTransfers();
     } catch (err) {
         showToast("Delete failed: " + err.message, "error");
     }
 }
 
-// ACTION ADMIN: RESET TRANSFER PHASE
+// ADMIN ACTION: RESET PHASE DATA CLEANUP (Uses secure RPC password lookup)
 async function resetTransferPhase() {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -408,9 +436,14 @@ async function resetTransferPhase() {
     const confirm1 = confirm("⚠️ WARNING: Are you sure you want to RESET the entire Transfer Phase?\nThis action cannot be undone!");
     if (!confirm1) return;
     
-    const confirm2 = prompt("Type '3475' to confirm massive deletion:");
-    if (confirm2 !== "3475") {
-        showToast("Reset canceled. Verification code incorrect.", "warning");
+    const confirm2 = prompt("Enter Admin Password to execute massive wipe:");
+    if (!confirm2) return;
+    
+    // Call server-side RPC validation function
+    const { data: isValid, error: authError } = await client.rpc('verify_admin_code', { input_code: confirm2 });
+    
+    if (authError || !isValid) {
+        showToast("Reset canceled. Verification security check failed.", "warning");
         return;
     }
     
@@ -422,22 +455,34 @@ async function resetTransferPhase() {
             
         if (error) throw error;
         showToast("All transfer records have been cleared!", "success");
-        await loadTransfers();
     } catch (err) {
-        console.error("Gagal melakukan reset phase:", err);
+        console.error("Wipe compilation sequence error:", err);
         showToast("Reset failed: " + err.message, "error");
     }
 }
 
-// ADMIN MANAGEMENT: LOGIN & LOGOUT
-function handleAdminLogin() {
+// ADMINISTRATIVE AUTH SYSTEM (Upgraded to handle hidden Server-side RPC verification checks)
+async function handleAdminLogin() {
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
     if (!btn) return;
     
     if (!isAdmin) {
         const password = prompt("Enter Password Admin:");
-        if (password === "3475") {
+        if (!password) return;
+
+        const client = getSupabase();
+        if (!client) return;
+
+        // Verify key string inside the isolated Supabase environment instead of exposing raw scripts
+        const { data: isValid, error } = await client.rpc('verify_admin_code', { input_code: password });
+
+        if (error) {
+            showToast("Verification transaction error: " + error.message, "error");
+            return;
+        }
+
+        if (isValid) {
             isAdmin = true;
             btn.innerText = "Logout Admin";
             if (badge) badge.style.display = "inline";
@@ -456,30 +501,7 @@ function handleAdminLogin() {
     renderTable();
 }
 
-// TOAST NOTIFICATION SYSTEM
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerText = message;
-    
-    if (type === 'success') toast.style.borderLeftColor = '#22c55e';
-    if (type === 'error') toast.style.borderLeftColor = '#ef4444';
-    if (type === 'warning') toast.style.borderLeftColor = '#f59e0b';
-    
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(-10px)';
-        toast.style.transition = 'all 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// DATA REPORT GENERATOR: EXPORT TO CSV
+// ACCESSIBLE CONSOLE EXPORT
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
@@ -506,4 +528,27 @@ function exportCSV() {
     link.href = url;
     link.download = "Transfer_Players_Export.csv";
     link.click();
+}
+
+// STANDARD CUBIC TOAST ALERTS
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+    
+    if (type === 'success') toast.style.borderLeftColor = '#22c55e';
+    if (type === 'error') toast.style.borderLeftColor = '#ef4444';
+    if (type === 'warning') toast.style.borderLeftColor = '#f59e0b';
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
