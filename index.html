@@ -107,8 +107,8 @@
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #94a3b8; }
-        input { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; box-sizing: border-box; transition: border-color 0.2s; }
-        input:focus { border-color: var(--primary); outline: none; }
+        input, textarea { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; box-sizing: border-box; transition: border-color 0.2s; }
+        input:focus, textarea:focus { border-color: var(--primary); outline: none; }
         input:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; border-color: #334155; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; color: #fff; transition: opacity 0.2s; }
         .btn:active { opacity: 0.8; }
@@ -224,6 +224,7 @@
 
 <div id="toast-container"></div>
 
+<!-- POPUP 1: DETAIL PENDAFTAR -->
 <div class="modal-overlay" id="detail-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -239,6 +240,24 @@
             <div class="detail-row"><span class="detail-label">Hero Power</span><span class="detail-value" id="pop-heropower">-</span></div>
             <div class="detail-row"><span class="detail-label">Total Hero Power</span><span class="detail-value" id="pop-totalhero">-</span></div>
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" id="pop-status">-</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP 2: ABOUT OUR STATE (DINAMIS SINKRON SUPABASE) -->
+<div class="modal-overlay" id="state-info-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>ℹ️ About Our State</h4>
+            <button class="modal-close" onclick="closeStateModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Tampilan teks untuk Player biasa -->
+            <div id="state-info-text" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; color: #f8fafc; max-height: 300px; overflow-y: auto;"></div>
+            
+            <!-- Tampilan Textarea khusus jika Admin Login -->
+            <textarea id="state-info-edit" style="height: 180px; font-family: inherit; font-size: 0.95rem; display: none; resize: vertical; margin-bottom: 8px;" placeholder="Write about state rules, requirements, or profile here..."></textarea>
+            <button class="btn btn-primary" id="save-state-btn" style="display: none; padding: 10px; font-size: 0.9rem;" onclick="saveStateInfo()">💾 Save State Info</button>
         </div>
     </div>
 </div>
@@ -331,6 +350,9 @@
                 <input type="number" id="in-totalhero" placeholder="Total Hero Power">
             </div>
             <button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button>
+            
+            <!-- TOMBOL BARU: ABOUT OUR STATE -->
+            <button class="btn" id="about-state-btn" style="background: #475569; margin-top: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);" onclick="openStateModal()">ℹ️ About Our State</button>
         </div>
 
         <div class="card">
@@ -359,6 +381,6 @@
     </div>
 </div>
 
-<script src="script.js?v=15"></script>
+<script src="script.js?v=16"></script>
 </body>
 </html>
