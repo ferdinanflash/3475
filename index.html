@@ -48,22 +48,23 @@
         }
         .admin-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         
-        /* BOX INFORMASI PRESIDEN MINIMALIS & KECIL */
-        .president-info-box { 
-            background: #111827; 
-            padding: 8px 12px; 
-            border-radius: 6px; 
-            border: 1px solid #334155; 
-            font-size: 0.8rem; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .info-item { display: flex; align-items: center; gap: 5px; }
-        .info-label { color: #94a3b8; font-weight: 500; }
-        .info-value { font-weight: bold; color: #3b82f6; }
-        
+        /* BOX INFORMASI PRESIDEN MINIMALIS - UPDATED FOR MOBILE RESPONSIVE */
+.president-info-box { 
+    background: #111827; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    border: 1px solid #334155; 
+    font-size: 0.8rem; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    gap: 12px; 
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    max-width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap; /* Supaya otomatis turun ke bawah jika layar terlalu sempit */
+}
+
         /* INPUT MINI UNTUK ADMIN */
         .info-input { 
             width: 85px; 
@@ -99,12 +100,42 @@
         .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
         
         @media(max-width: 900px) { 
-            .grid { grid-template-columns: 1fr; gap: 15px; } 
-            header { flex-direction: column; align-items: center; text-align: center; }
-            .header-right { width: 100%; flex-direction: column; gap: 10px; }
-            .admin-controls { align-items: center; width: 100%; }
-            .btn-admin { width: 100%; text-align: center; padding: 10px !important; }
-        }
+    .grid { grid-template-columns: 1fr; gap: 15px; } 
+    header { flex-direction: column; align-items: center; text-align: center; }
+    .header-right { width: 100%; flex-direction: column; gap: 12px; }
+    
+    /* Perbaikan Khusus Form President saat Login di Mobile */
+    .president-info-box {
+        width: 100%;
+        padding: 12px;
+        flex-direction: column; /* Membuat susunan input menjadi vertikal/ke bawah di mobile */
+        align-items: stretch;
+        gap: 10px;
+    }
+    .info-item {
+        display: flex;
+        justify-content: space-between; /* Label di kiri, Input/Value di kanan */
+        align-items: center;
+        width: 100%;
+        gap: 10px;
+    }
+    .info-input {
+        width: 65% !important; /* Memberikan ruang input yang lebih lega di mobile */
+        max-width: 200px;
+        padding: 6px 8px; /* Sedikit dipertebal agar mudah ditap jari */
+        font-size: 0.85rem;
+    }
+    .btn-save-info {
+        width: 100%; /* Tombol save memenuhi box di paling bawah saat mobile */
+        padding: 8px;
+        font-size: 0.85rem;
+        text-align: center;
+    }
+
+    .admin-controls { align-items: center; width: 100%; }
+    .btn-admin { width: 100%; text-align: center; padding: 10px !important; }
+}
+
         
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
@@ -410,7 +441,7 @@
     </div>
 </div>
 
-<script src="script.js?v=18"></script>
+<script src="script.js?v=19"></script>
 
 <!-- Script Inisialisasi Efek Salju Kecil & Perlahan -->
 <script>
