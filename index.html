@@ -22,8 +22,11 @@
             color: var(--text-main);
             margin: 0; padding: 12px;
             -webkit-tap-highlight-color: transparent;
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
         
         /* HEADER FLEX LAYOUT */
         header { 
@@ -218,9 +221,39 @@
         }
         .detail-label { color: #94a3b8; }
         .detail-value { font-weight: bold; color: #f8fafc; text-align: right; }
+
+        /* ================= EFEK SALJU KECIL PERLAHAN ================= */
+        .snowflake {
+            position: fixed;
+            top: -10px;
+            z-index: 1; /* Di bawah teks/kontainer utama (z-index: 2) tapi di atas background */
+            width: 4px;
+            height: 4px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            opacity: 0.7;
+            pointer-events: none; /* Supaya tidak mengganggu klik form/tombol */
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% {
+                top: -10px;
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(15px); /* Memberikan efek ayunan angin lembut */
+            }
+            100% {
+                top: 100vh;
+                transform: translateX(-15px);
+            }
+        }
     </style>
 </head>
 <body>
+
+<!-- Kontainer untuk menampung elemen salju -->
+<div id="snow-container"></div>
 
 <div id="toast-container"></div>
 
@@ -296,9 +329,8 @@
         <div class="card">
             <h3>Transfer Form</h3>
             <button class="btn" id="about-state-btn" style="background: #475569; margin-top: 6px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); font-family: inherit;" onclick="openStateModal()">
-    📜 <span class="animated-title" style="font-size: 0.95rem !important; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block;">About Our State</span>
-</button>
-
+                📜 <span class="animated-title" style="font-size: 0.95rem !important; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block;">About Our State</span>
+            </button>
 
             <div class="counter-box">
                 <div class="counter-card">
@@ -378,6 +410,31 @@
     </div>
 </div>
 
-<script src="script.js?v=17"></script>
+<script src="script.js?v=18"></script>
+
+<!-- Script Inisialisasi Efek Salju Kecil & Perlahan -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const snowContainer = document.getElementById('snow-container');
+        const flakeCount = 45; // Jumlah butiran salju yang aktif di layar sekaligus
+
+        for (let i = 0; i < flakeCount; i++) {
+            const flake = document.createElement('div');
+            flake.classList.add('snowflake');
+            
+            // Mengacak posisi horizontal awal, durasi jatuh bebas, delay, dan ukurannya yang mini
+            flake.style.left = Math.random() * 100 + 'vw';
+            flake.style.animationDuration = (Math.random() * 6 + 9) + 's'; // Jatuh lambat antara 9s s/d 15s
+            flake.style.animationDelay = Math.random() * 12 + 's'; // Pembagian waktu spawn acak
+            
+            const size = (Math.random() * 2.5 + 2) + 'px'; // Ukuran super kecil (2px hingga 4.5px)
+            flake.style.width = size;
+            flake.style.height = size;
+            flake.style.opacity = Math.random() * 0.5 + 0.4; // Transparansi bervariasi agar terlihat alami
+
+            snowContainer.appendChild(flake);
+        }
+    });
+</script>
 </body>
 </html>
