@@ -9,6 +9,15 @@ let transferList = [];
 let maxSlots = 35; 
 
 document.addEventListener("DOMContentLoaded", () => {
+    // [PERBAIKAN] Cek apakah sebelumnya sudah login sebagai President di browser ini
+    if (localStorage.getItem("isPresident") === "true") {
+        isAdmin = true;
+        const btn = document.getElementById('admin-btn');
+        const badge = document.getElementById('admin-badge');
+        if (btn) btn.innerText = "Logout President";
+        if (badge) badge.style.display = "inline";
+    }
+
     loadTransfers();
     setupRealtimeChannels();
 });
@@ -90,7 +99,7 @@ async function saveStateInfo() {
 
         if (!error) {
             showToast("State profile information updated live!", "success");
-            loadTransfers(); // <-- PERBAIKAN: Memaksa UI memuat ulang data terbaru
+            loadTransfers();
         } else {
             throw error;
         }
@@ -128,7 +137,7 @@ async function savePresidentInfo() {
 
         if (!error) {
             showToast("Information saved to 3475 Server", "success");
-            loadTransfers(); // <-- PERBAIKAN: Memaksa UI memuat ulang data terbaru
+            loadTransfers();
         } else {
             throw error;
         }
@@ -161,7 +170,7 @@ async function changeMaxSlots(value) {
         if (!error) {
             maxSlots = parsedValue;
             showToast(`Maximum slots updated to ${maxSlots}`, "success");
-            loadTransfers(); // <-- PERBAIKAN: Memaksa UI memuat ulang data terbaru
+            loadTransfers();
         } else {
             throw error;
         }
@@ -216,7 +225,7 @@ async function submitTransfer() {
                 input.value = "";
             }
         });
-        loadTransfers(); // <-- PERBAIKAN: Menampilkan pendaftar baru langsung di tabel
+        loadTransfers();
     } else {
         showToast("Error submitting: " + error.message, "error");
     }
@@ -279,7 +288,6 @@ function updateCounters() {
         infoInputs.forEach(input => input.style.display = 'inline-block');
         if (saveInfoBtn) saveInfoBtn.style.display = 'inline-block';
         
-        // Mode admin: Sembunyikan teks polos, tampilkan panel edit text box di popup About State
         document.getElementById('state-info-text').style.display = 'none';
         document.getElementById('state-info-edit').style.display = 'block';
         document.getElementById('save-state-btn').style.display = 'block';
@@ -288,7 +296,6 @@ function updateCounters() {
         infoInputs.forEach(input => input.style.display = 'none');
         if (saveInfoBtn) saveInfoBtn.style.display = 'none';
         
-        // Mode player biasa: Tampilkan teks deskripsi polos saja, sembunyikan kotak edit
         document.getElementById('state-info-text').style.display = 'block';
         document.getElementById('state-info-edit').style.display = 'none';
         document.getElementById('save-state-btn').style.display = 'none';
@@ -451,7 +458,7 @@ async function updateStatus(id, newStatus) {
             
         if (error) throw error;
         showToast(`Application ${newStatus} successfully!`, "success");
-        await loadTransfers(); // <-- PERBAIKAN UTAMA: Langsung render ulang tabel setelah tombol diklik tanpa nunggu refresh!
+        await loadTransfers();
     } catch (err) {
         console.error("Failed altering column parameters:", err);
         showToast("Failed to update status: " + err.message, "error");
@@ -470,7 +477,7 @@ async function deleteRecord(id) {
         const { error } = await client.from('player_transfers').delete().eq('id', id);
         if (error) throw error;
         showToast("Record deleted successfully.", "success");
-        await loadTransfers(); // <-- PERBAIKAN UTAMA: Langsung render ulang tabel setelah record dihapus!
+        await loadTransfers();
     } catch (err) {
         showToast("Delete failed: " + err.message, "error");
     }
@@ -507,14 +514,14 @@ async function resetTransferPhase() {
             
         if (error) throw error;
         showToast("All transfer records have been cleared!", "success");
-        await loadTransfers(); // <-- PERBAIKAN UTAMA: Langsung kosongkan tabel setelah wipe sukses!
+        await loadTransfers();
     } catch (err) {
         console.error("Wipe compilation sequence error:", err);
         showToast("Reset failed: " + err.message, "error");
     }
 }
 
-// ADMIN MANAGEMENT SYSTEM (LOGIN & LOGOUT METHOD)
+// [PERBAIKAN LOGIKA] ADMIN MANAGEMENT SYSTEM (LOGIN & LOGOUT METHOD)
 async function handleAdminLogin() {
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
@@ -536,6 +543,10 @@ async function handleAdminLogin() {
 
         if (isValid) {
             isAdmin = true;
+            
+            // Simpan status login ke localStorage agar persisten saat di-refresh
+            localStorage.setItem("isPresident", "true");
+            
             btn.innerText = "Logout President";
             if (badge) badge.style.display = "inline";
             showToast("Welcome President", "success");
@@ -545,6 +556,10 @@ async function handleAdminLogin() {
         }
     } else {
         isAdmin = false;
+        
+        // Hapus status login dari localStorage saat logout manual
+        localStorage.removeItem("isPresident");
+        
         btn.innerText = "President Login";
         if (badge) badge.style.display = "none";
         showToast("President Logout", "info");
