@@ -15,8 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
         isAdmin = true;
         const btn = document.getElementById('admin-btn');
         const badge = document.getElementById('admin-badge');
+        const specialBtn = document.getElementById('special-notes-btn');
+        
         if (btn) btn.innerText = "Logout President";
         if (badge) badge.style.display = "inline";
+        if (specialBtn) specialBtn.style.display = "inline-block";
     }
 
     loadTransfers();
@@ -81,6 +84,63 @@ function openStateModal() {
 
 function closeStateModal() {
     document.getElementById('state-info-modal').classList.remove('active');
+}
+
+// SPECIAL NOTES MODAL CONTROLS (HANYA ADMIN)
+function openSpecialNotesModal() {
+    if (!isAdmin) return;
+    document.getElementById('admin-special-notes-modal').classList.add('active');
+    loadSpecialNotes();
+}
+
+function closeSpecialNotesModal() {
+    document.getElementById('admin-special-notes-modal').classList.remove('active');
+}
+
+// LOAD SPECIAL NOTES DARI SYSTEM_SETTINGS
+async function loadSpecialNotes() {
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { data, error } = await client
+            .from('system_settings')
+            .select('special_notes')
+            .eq('id', 1)
+            .single();
+
+        if (!error && data) {
+            document.getElementById('admin-special-notes-edit').value = data.special_notes || '';
+        }
+    } catch (err) {
+        console.error("Failed loading special notes:", err);
+    }
+}
+
+// SAVE SPECIAL NOTES KE SYSTEM_SETTINGS SUPABASE
+async function saveSpecialNotes() {
+    if (!isAdmin) return;
+
+    const content = document.getElementById('admin-special-notes-edit').value;
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { error } = await client
+            .from('system_settings')
+            .update({ special_notes: content })
+            .eq('id', 1);
+
+        if (!error) {
+            showToast("Special Notes saved to server!", "success");
+            closeSpecialNotesModal();
+        } else {
+            throw error;
+        }
+    } catch (err) {
+        console.error("Failed saving special notes:", err);
+        showToast("Error saving special notes: " + err.message, "error");
+    }
 }
 
 // 2. ADMIN ACTION: SIMPAN DESKRIPSI ABOUT OUR STATE
@@ -274,9 +334,14 @@ function updateCounters() {
     const submitBtn = document.getElementById('submit-btn');
     const lockMessage = document.getElementById('lock-message');
     const maxSlotsInput = document.getElementById('in-max-slots');
+    const specialNotesBtn = document.getElementById('special-notes-btn');
     
     if (maxSlotsInput) {
         maxSlotsInput.disabled = !isAdmin;
+    }
+
+    if (specialNotesBtn) {
+        specialNotesBtn.style.display = isAdmin ? 'inline-block' : 'none';
     }
     
     const infoValues = document.querySelectorAll('.info-value');
@@ -327,7 +392,6 @@ function renderTable() {
     if (!tbody) return;
     tbody.innerHTML = "";
     
-    // Toggle visibilitas header khusus admin
     if (thAction) thAction.style.display = isAdmin ? "table-cell" : "none";
     if (thNotes) thNotes.style.display = isAdmin ? "table-cell" : "none";
     if (thBlacklist) thBlacklist.style.display = isAdmin ? "table-cell" : "none";
@@ -408,7 +472,6 @@ function showDetailPopup(index) {
     document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
     document.getElementById('pop-status').innerText = player.status;
 
-    // Menangani section Admin Notes & Blacklist Notes di modal detail
     const notesContainer = document.getElementById('pop-notes-container');
     const notesInput = document.getElementById('pop-notes-input');
     const saveNoteBtn = document.getElementById('pop-notes-save-btn');
@@ -418,12 +481,10 @@ function showDetailPopup(index) {
     const saveBlacklistBtn = document.getElementById('pop-blacklist-save-btn');
 
     if (isAdmin) {
-        // Admin Notes
         notesContainer.style.display = 'flex';
         notesInput.value = player.notes || '';
         saveNoteBtn.onclick = () => savePlayerNote(player.id);
         
-        // Blacklist Notes
         if (blacklistContainer) {
             blacklistContainer.style.display = 'flex';
             blacklistInput.value = player.blacklist_notes || '';
@@ -518,12 +579,11 @@ function copyToClipboard(text) {
 window.onclick = function(event) {
     const detailModal = document.getElementById('detail-modal');
     const stateModal = document.getElementById('state-info-modal');
-    if (event.target === detailModal) {
-        closeDetailModal();
-    }
-    if (event.target === stateModal) {
-        closeStateModal();
-    }
+    const specialModal = document.getElementById('admin-special-notes-modal');
+
+    if (event.target === detailModal) closeDetailModal();
+    if (event.target === stateModal) closeStateModal();
+    if (event.target === specialModal) closeSpecialNotesModal();
 }
 
 // ADMIN ACTION: UPDATE STATUS PENDAFTAR
@@ -624,6 +684,7 @@ async function resetTransferPhase() {
 async function handleAdminLogin() {
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
+    const specialBtn = document.getElementById('special-notes-btn');
     if (!btn) return;
     
     if (!isAdmin) {
@@ -642,12 +703,11 @@ async function handleAdminLogin() {
 
         if (isValid) {
             isAdmin = true;
-            
-            // Simpan status login ke localStorage
             localStorage.setItem("isPresident", "true");
             
             btn.innerText = "Logout President";
             if (badge) badge.style.display = "inline";
+            if (specialBtn) specialBtn.style.display = "inline-block";
             showToast("Welcome President", "success");
         } else {
             showToast("❌ Wrong password!", "error");
@@ -655,19 +715,18 @@ async function handleAdminLogin() {
         }
     } else {
         isAdmin = false;
-        
-        // Hapus status login dari localStorage
         localStorage.removeItem("isPresident");
         
         btn.innerText = "President Login";
         if (badge) badge.style.display = "none";
+        if (specialBtn) specialBtn.style.display = "none";
         showToast("President Logout", "info");
     }
     updateCounters();
     renderTable();
 }
 
-// EXPORT TO EXCEL / CSV CONSOLE GENERATOR (TERMASUK NOTES & BLACKLIST JIKA ADMIN)
+// EXPORT TO EXCEL / CSV CONSOLE GENERATOR
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
