@@ -217,6 +217,9 @@
             transform: translateY(-20px);
             transition: transform 0.25s ease;
             overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
         .modal-overlay.active .modal-content {
             transform: translateY(0);
@@ -240,6 +243,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            overflow-y: auto;
         }
         .detail-row {
             display: flex;
@@ -307,6 +311,13 @@
                 <span class="detail-label">Admin Notes:</span>
                 <textarea id="pop-notes-input" style="height: 70px; font-size: 0.85rem; resize: vertical;" placeholder="Add private note for this applicant..."></textarea>
                 <button class="btn btn-primary" id="pop-notes-save-btn" style="padding: 6px; font-size: 0.8rem;">💾 Save Note</button>
+            </div>
+
+            <!-- AREA BLACKLIST PADA POPUP DETAIL (HANYA DITAMPILKAN KETIKA ADMIN LOGGED IN) -->
+            <div class="detail-row" id="pop-blacklist-container" style="display:none; flex-direction: column; gap: 6px; align-items: stretch; border-bottom: none; margin-top: 5px;">
+                <span class="detail-label" style="color: var(--danger);">🚨 Blacklist Notes:</span>
+                <textarea id="pop-blacklist-input" style="height: 70px; font-size: 0.85rem; resize: vertical; border: 1px solid var(--danger);" placeholder="Add blacklist reason or warning..."></textarea>
+                <button class="btn" id="pop-blacklist-save-btn" style="background: var(--danger); padding: 6px; font-size: 0.8rem; color: white;">💾 Save Blacklist Note</button>
             </div>
         </div>
     </div>
@@ -438,6 +449,7 @@
                             <th>Nickname</th>
                             <th>Game ID</th>
                             <th id="th-notes" style="display:none;">Notes</th> <!-- HEADER NOTES KHUSUS ADMIN -->
+                            <th id="th-blacklist" style="display:none; color: var(--danger);">Blacklist</th> <!-- HEADER BLACKLIST KHUSUS ADMIN -->
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -448,7 +460,7 @@
     </div>
 </div>
 
-<script src="script.js?v=23"></script>
+<script src="script.js?v=24"></script>
 
 <!-- Script Inisialisasi Efek Salju Kecil & Perlahan -->
 <script>
