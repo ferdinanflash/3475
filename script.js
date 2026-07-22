@@ -316,11 +316,12 @@ function updateCounters() {
     }
 }
 
-// RENDER TABEL APPLICANT LIST (TERMASUK DUKUNGAN KOLOM NOTES ADMIN)
+// RENDER TABEL APPLICANT LIST (TERMASUK DUKUNGAN KOLOM NOTES & BLACKLIST ADMIN)
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
     const thNotes = document.getElementById('th-notes');
+    const thBlacklist = document.getElementById('th-blacklist');
     const resetBtn = document.getElementById('reset-phase-btn');
     
     if (!tbody) return;
@@ -329,13 +330,14 @@ function renderTable() {
     // Toggle visibilitas header khusus admin
     if (thAction) thAction.style.display = isAdmin ? "table-cell" : "none";
     if (thNotes) thNotes.style.display = isAdmin ? "table-cell" : "none";
+    if (thBlacklist) thBlacklist.style.display = isAdmin ? "table-cell" : "none";
     
     if (resetBtn) {
         resetBtn.style.display = isAdmin ? "inline-block" : "none";
     }
     
     if (transferList.length === 0) {
-        const totalCols = isAdmin ? 7 : 5;
+        const totalCols = isAdmin ? 8 : 5;
         tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
         return;
     }
@@ -344,6 +346,7 @@ function renderTable() {
         const row = document.createElement('tr');
         let actionCell = "";
         let notesCell = "";
+        let blacklistCell = "";
         
         if (isAdmin) {
             actionCell = `
@@ -359,6 +362,9 @@ function renderTable() {
             
             const noteText = item.notes ? item.notes : '<span style="color:#64748b; font-style:italic;">None</span>';
             notesCell = `<td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${item.notes || ''}">${noteText}</td>`;
+            
+            const blacklistText = item.blacklist_notes ? item.blacklist_notes : '<span style="color:#64748b; font-style:italic;">None</span>';
+            blacklistCell = `<td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ef4444;" title="${item.blacklist_notes || ''}">${blacklistText}</td>`;
         }
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
@@ -372,13 +378,14 @@ function renderTable() {
             <td><strong>${item.nickname}</strong></td>
             <td onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer; font-weight:500;" title="Click to copy ID">${item.game_id} 📋</td>
             ${isAdmin ? notesCell : ''}
+            ${isAdmin ? blacklistCell : ''}
             <td><span class="${badgeClass}">${item.status}</span></td>
         `;
         tbody.appendChild(row);
     });
 }
 
-// SHOW DETAIL POPUP (TERMASUK EDITOR NOTES ADMIN)
+// SHOW DETAIL POPUP (TERMASUK EDITOR NOTES & BLACKLIST ADMIN)
 function showDetailPopup(index) {
     const player = transferList[index];
     if (!player) return;
@@ -401,17 +408,30 @@ function showDetailPopup(index) {
     document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
     document.getElementById('pop-status').innerText = player.status;
 
-    // Menangani section Admin Notes di modal detail
+    // Menangani section Admin Notes & Blacklist Notes di modal detail
     const notesContainer = document.getElementById('pop-notes-container');
     const notesInput = document.getElementById('pop-notes-input');
     const saveNoteBtn = document.getElementById('pop-notes-save-btn');
+    
+    const blacklistContainer = document.getElementById('pop-blacklist-container');
+    const blacklistInput = document.getElementById('pop-blacklist-input');
+    const saveBlacklistBtn = document.getElementById('pop-blacklist-save-btn');
 
     if (isAdmin) {
+        // Admin Notes
         notesContainer.style.display = 'flex';
         notesInput.value = player.notes || '';
         saveNoteBtn.onclick = () => savePlayerNote(player.id);
+        
+        // Blacklist Notes
+        if (blacklistContainer) {
+            blacklistContainer.style.display = 'flex';
+            blacklistInput.value = player.blacklist_notes || '';
+            saveBlacklistBtn.onclick = () => saveBlacklistNote(player.id);
+        }
     } else {
         notesContainer.style.display = 'none';
+        if (blacklistContainer) blacklistContainer.style.display = 'none';
     }
 
     document.getElementById('detail-modal').classList.add('active');
@@ -445,6 +465,32 @@ async function savePlayerNote(playerId) {
     } catch (err) {
         console.error("Failed to save note:", err);
         showToast("Error saving note: " + err.message, "error");
+    }
+}
+
+// ADMIN ACTION: SIMPAN RECORD BLACKLIST PENDAFTAR KE SUPABASE
+async function saveBlacklistNote(playerId) {
+    if (!isAdmin || !playerId) return;
+
+    const blacklistText = document.getElementById('pop-blacklist-input').value;
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { error } = await client
+            .from('player_transfers')
+            .update({ blacklist_notes: blacklistText })
+            .eq('id', playerId);
+
+        if (!error) {
+            showToast("Blacklist note saved successfully!", "success");
+            loadTransfers();
+        } else {
+            throw error;
+        }
+    } catch (err) {
+        console.error("Failed to save blacklist note:", err);
+        showToast("Error saving blacklist note: " + err.message, "error");
     }
 }
 
@@ -621,7 +667,7 @@ async function handleAdminLogin() {
     renderTable();
 }
 
-// EXPORT TO EXCEL / CSV CONSOLE GENERATOR (TERMASUK NOTES JIKA LOGGED IN AS ADMIN)
+// EXPORT TO EXCEL / CSV CONSOLE GENERATOR (TERMASUK NOTES & BLACKLIST JIKA ADMIN)
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
@@ -629,7 +675,10 @@ function exportCSV() {
     }
     
     const headers = ["From State", "Nickname", "Game ID", "Desired Alliance", "Furnace", "Power", "Hero Power", "Total Hero Power", "Status"];
-    if (isAdmin) headers.push("Admin Notes");
+    if (isAdmin) {
+        headers.push("Admin Notes");
+        headers.push("Blacklist Notes");
+    }
 
     const rows = transferList.map(p => {
         const row = [
@@ -645,6 +694,7 @@ function exportCSV() {
         ];
         if (isAdmin) {
             row.push(`"${(p.notes || '').replace(/"/g, '""')}"`);
+            row.push(`"${(p.blacklist_notes || '').replace(/"/g, '""')}"`);
         }
         return row;
     });
