@@ -46,9 +46,10 @@
             gap: 15px; 
             flex-wrap: wrap; 
         }
-        .admin-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .admin-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .admin-controls-buttons { display: flex; gap: 6px; align-items: center; }
         
-        /* BOX INFORMASI PRESIDEN MINIMALIS - UPDATED FOR MOBILE RESPONSIVE */
+        /* BOX INFORMASI PRESIDEN MINIMALIS */
         .president-info-box { 
             background: #111827; 
             padding: 8px 12px; 
@@ -132,7 +133,8 @@
             }
 
             .admin-controls { align-items: center; width: 100%; }
-            .btn-admin { width: 100%; text-align: center; padding: 10px !important; }
+            .admin-controls-buttons { width: 100%; justify-content: center; }
+            .btn-admin { flex: 1; text-align: center; padding: 10px !important; }
         }
 
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
@@ -180,7 +182,6 @@
 
         #toast-container { position: fixed; top: 15px; left: 15px; right: 15px; z-index: 9999; }
         .toast { background: #1e293b; border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 4px; margin-bottom: 10px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 0.9rem; }
-        .admin-actions button { padding: 6px 10px; margin-right: 4px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
         
         .counter-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .counter-card { background: #0f172a; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #334155; }
@@ -255,41 +256,30 @@
         .detail-label { color: #94a3b8; }
         .detail-value { font-weight: bold; color: #f8fafc; text-align: right; }
 
-        /* ================= EFEK SALJU KECIL PERLAHAN ================= */
+        /* ================= EFEK SALJU ================= */
         .snowflake {
             position: fixed;
             top: -10px;
             z-index: 1;
-            width: 4px;
-            height: 4px;
+            width: 4px; height: 4px;
             background-color: #ffffff;
             border-radius: 50%;
-            opacity: 0.7;
-            pointer-events: none;
+            opacity: 0.7; pointer-events: none;
             animation: fall linear infinite;
         }
         @keyframes fall {
-            0% {
-                top: -10px;
-                transform: translateX(0);
-            }
-            50% {
-                transform: translateX(15px);
-            }
-            100% {
-                top: 100vh;
-                transform: translateX(-15px);
-            }
+            0% { top: -10px; transform: translateX(0); }
+            50% { transform: translateX(15px); }
+            100% { top: 100vh; transform: translateX(-15px); }
         }
     </style>
 </head>
 <body>
 
-<!-- Kontainer untuk menampung elemen salju -->
 <div id="snow-container"></div>
-
 <div id="toast-container"></div>
 
+<!-- Modal Detail Player -->
 <div class="modal-overlay" id="detail-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -306,14 +296,12 @@
             <div class="detail-row"><span class="detail-label">Total Hero Power</span><span class="detail-value" id="pop-totalhero">-</span></div>
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" id="pop-status">-</span></div>
             
-            <!-- AREA NOTES PADA POPUP DETAIL (HANYA DITAMPILKAN KETIKA ADMIN LOGGED IN) -->
             <div class="detail-row" id="pop-notes-container" style="display:none; flex-direction: column; gap: 6px; align-items: stretch; border-bottom: none;">
                 <span class="detail-label">Admin Notes:</span>
                 <textarea id="pop-notes-input" style="height: 70px; font-size: 0.85rem; resize: vertical;" placeholder="Add private note for this applicant..."></textarea>
                 <button class="btn btn-primary" id="pop-notes-save-btn" style="padding: 6px; font-size: 0.8rem;">💾 Save Note</button>
             </div>
 
-            <!-- AREA BLACKLIST PADA POPUP DETAIL (HANYA DITAMPILKAN KETIKA ADMIN LOGGED IN) -->
             <div class="detail-row" id="pop-blacklist-container" style="display:none; flex-direction: column; gap: 6px; align-items: stretch; border-bottom: none; margin-top: 5px;">
                 <span class="detail-label" style="color: var(--danger);">🚨 Blacklist Notes:</span>
                 <textarea id="pop-blacklist-input" style="height: 70px; font-size: 0.85rem; resize: vertical; border: 1px solid var(--danger);" placeholder="Add blacklist reason or warning..."></textarea>
@@ -323,6 +311,7 @@
     </div>
 </div>
 
+<!-- Modal About State -->
 <div class="modal-overlay" id="state-info-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -334,6 +323,23 @@
             
             <textarea id="state-info-edit" style="height: 180px; font-family: inherit; font-size: 0.95rem; display: none; resize: vertical; margin-bottom: 8px;" placeholder="Write about state rules, requirements, or profile here..."></textarea>
             <button class="btn btn-primary" id="save-state-btn" style="display: none; padding: 10px; font-size: 0.9rem;" onclick="saveStateInfo()">💾 Save State Info</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal SPECIAL NOTES (Hanya Admin) -->
+<div class="modal-overlay" id="admin-special-notes-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>📝 Admin Special Notes</h4>
+            <button class="modal-close" onclick="closeSpecialNotesModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid var(--warning); padding: 10px; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 10px;">
+                Catatan khusus ini bersifat privat dan hanya dapat dilihat serta diubah oleh Admin.
+            </div>
+            <textarea id="admin-special-notes-edit" style="height: 250px; font-family: inherit; font-size: 0.95rem; resize: vertical; margin-bottom: 8px; background: #0f172a;" placeholder="Tulis catatan, to-do list, atau pengingat transfer di sini..."></textarea>
+            <button class="btn btn-primary" id="save-special-notes-btn" style="padding: 10px; font-size: 0.9rem;" onclick="saveSpecialNotes()">💾 Save Special Notes</button>
         </div>
     </div>
 </div>
@@ -366,7 +372,10 @@
             </div>
 
             <div class="admin-controls">
-                <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">👑</button>
+                <div class="admin-controls-buttons">
+                    <button class="btn btn-admin" id="special-notes-btn" style="display:none; background: var(--warning); color: #000; font-weight: bold;" onclick="openSpecialNotesModal()">📝 Special Notes</button>
+                    <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">👑</button>
+                </div>
                 <span id="admin-badge" style="display:none; color:var(--success); font-size:0.75rem; font-weight:bold;">[President Mode]</span>
             </div>
         </div>
@@ -433,7 +442,7 @@
 
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin:0; border:none;">Applicants List (Real-time status, You can check anytime when Invitation ticket was sent)</h3>
+                <h3 style="margin:0; border:none;">Applicants List (Real-time status)</h3>
                 <div style="display: flex; gap: 8px; width: 100%; justify-content: space-between;">
                     <button class="btn btn-admin" id="reset-phase-btn" style="background:#ef4444; display:none; flex: 1;" onclick="resetTransferPhase()">Reset Phase</button>
                     <button class="btn btn-admin" style="background:#22c55e; flex: 1;" onclick="exportCSV()">Export CSV</button>
@@ -448,8 +457,8 @@
                             <th>From State</th>
                             <th>Nickname</th>
                             <th>Game ID</th>
-                            <th id="th-notes" style="display:none;">Notes</th> <!-- HEADER NOTES KHUSUS ADMIN -->
-                            <th id="th-blacklist" style="display:none; color: var(--danger);">Blacklist</th> <!-- HEADER BLACKLIST KHUSUS ADMIN -->
+                            <th id="th-notes" style="display:none;">Notes</th>
+                            <th id="th-blacklist" style="display:none; color: var(--danger);">Blacklist</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -460,9 +469,8 @@
     </div>
 </div>
 
-<script src="script.js?v=24"></script>
+<script src="script.js?v=25"></script>
 
-<!-- Script Inisialisasi Efek Salju Kecil & Perlahan -->
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const snowContainer = document.getElementById('snow-container');
@@ -471,16 +479,12 @@
         for (let i = 0; i < flakeCount; i++) {
             const flake = document.createElement('div');
             flake.classList.add('snowflake');
-            
             flake.style.left = Math.random() * 100 + 'vw';
             flake.style.animationDuration = (Math.random() * 6 + 9) + 's';
             flake.style.animationDelay = Math.random() * 12 + 's';
-            
             const size = (Math.random() * 2.5 + 2) + 'px';
-            flake.style.width = size;
-            flake.style.height = size;
+            flake.style.width = size; flake.style.height = size;
             flake.style.opacity = Math.random() * 0.5 + 0.4;
-
             snowContainer.appendChild(flake);
         }
     });
