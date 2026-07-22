@@ -7,9 +7,10 @@ let supabaseClient = null;
 let isAdmin = false;
 let transferList = [];
 let maxSlots = 35; 
+let currentSelectedPlayerId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // [PERBAIKAN] Cek apakah sebelumnya sudah login sebagai President di browser ini
+    // Cek status persistent login President
     if (localStorage.getItem("isPresident") === "true") {
         isAdmin = true;
         const btn = document.getElementById('admin-btn');
@@ -33,7 +34,7 @@ function getSupabase() {
     return supabaseClient;
 }
 
-// REALTIME STREAM CHANNELS (Sinkronisasi perubahan database langsung ke layar)
+// REALTIME STREAM CHANNELS (Sinkronisasi otomatis saat ada perubahan database)
 function setupRealtimeChannels() {
     const client = getSupabase();
     if (!client) return;
@@ -49,7 +50,7 @@ function setupRealtimeChannels() {
         .subscribe();
 }
 
-// 1. ISI INFORMASI CORE UTAMA YANG DI-LOAD DARI SUPABASE
+// 1. TAMPILKAN METADATA SISTEM DARI SUPABASE
 function displaySystemSettings(settings) {
     const president = settings.president_name || "RARA";
     const alliance = settings.alliance_name || "IDN";
@@ -69,7 +70,6 @@ function displaySystemSettings(settings) {
     document.getElementById('edit-alliance').value = alliance;
     document.getElementById('edit-id').value = idGame;
 
-    // Memetakan data deskripsi About State ke elemen popup modal
     document.getElementById('state-info-text').innerText = stateInfoText;
     document.getElementById('state-info-edit').value = stateInfoText;
 }
@@ -83,7 +83,7 @@ function closeStateModal() {
     document.getElementById('state-info-modal').classList.remove('active');
 }
 
-// 2. ADMIN ACTION: SAVE DESKRIPSI ABOUT OUR STATE KE SUPABASE
+// 2. ADMIN ACTION: SIMPAN DESKRIPSI ABOUT OUR STATE
 async function saveStateInfo() {
     if (!isAdmin) return;
     
@@ -109,7 +109,7 @@ async function saveStateInfo() {
     }
 }
 
-// 3. ADMIN ACTION: SAVE DATA HEADER PRESIDEN SEKALIGUS
+// 3. ADMIN ACTION: SIMPAN DATA HEADER PRESIDEN SEKALIGUS
 async function savePresidentInfo() {
     if (!isAdmin) return;
     
@@ -316,28 +316,34 @@ function updateCounters() {
     }
 }
 
-// RENDER TABEL APPLICANT LIST
+// RENDER TABEL APPLICANT LIST (TERMASUK DUKUNGAN KOLOM NOTES ADMIN)
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
+    const thNotes = document.getElementById('th-notes');
     const resetBtn = document.getElementById('reset-phase-btn');
     
     if (!tbody) return;
     tbody.innerHTML = "";
-    thAction.style.display = isAdmin ? "table-cell" : "none";
+    
+    // Toggle visibilitas header khusus admin
+    if (thAction) thAction.style.display = isAdmin ? "table-cell" : "none";
+    if (thNotes) thNotes.style.display = isAdmin ? "table-cell" : "none";
     
     if (resetBtn) {
         resetBtn.style.display = isAdmin ? "inline-block" : "none";
     }
     
     if (transferList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
+        const totalCols = isAdmin ? 7 : 5;
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
         return;
     }
     
     transferList.forEach((item, index) => {
         const row = document.createElement('tr');
         let actionCell = "";
+        let notesCell = "";
         
         if (isAdmin) {
             actionCell = `
@@ -350,6 +356,9 @@ function renderTable() {
                     `}
                 </td>
             `;
+            
+            const noteText = item.notes ? item.notes : '<span style="color:#64748b; font-style:italic;">None</span>';
+            notesCell = `<td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${item.notes || ''}">${noteText}</td>`;
         }
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
@@ -362,15 +371,19 @@ function renderTable() {
             <td>State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
             <td onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer; font-weight:500;" title="Click to copy ID">${item.game_id} 📋</td>
+            ${isAdmin ? notesCell : ''}
             <td><span class="${badgeClass}">${item.status}</span></td>
         `;
         tbody.appendChild(row);
     });
 }
 
+// SHOW DETAIL POPUP (TERMASUK EDITOR NOTES ADMIN)
 function showDetailPopup(index) {
     const player = transferList[index];
     if (!player) return;
+
+    currentSelectedPlayerId = player.id;
 
     document.getElementById('pop-nickname').innerText = `Detail: ${player.nickname}`;
     document.getElementById('pop-state').innerText = `State ${player.transfer_from_state}`;
@@ -388,11 +401,51 @@ function showDetailPopup(index) {
     document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
     document.getElementById('pop-status').innerText = player.status;
 
+    // Menangani section Admin Notes di modal detail
+    const notesContainer = document.getElementById('pop-notes-container');
+    const notesInput = document.getElementById('pop-notes-input');
+    const saveNoteBtn = document.getElementById('pop-notes-save-btn');
+
+    if (isAdmin) {
+        notesContainer.style.display = 'flex';
+        notesInput.value = player.notes || '';
+        saveNoteBtn.onclick = () => savePlayerNote(player.id);
+    } else {
+        notesContainer.style.display = 'none';
+    }
+
     document.getElementById('detail-modal').classList.add('active');
 }
 
 function closeDetailModal() {
     document.getElementById('detail-modal').classList.remove('active');
+    currentSelectedPlayerId = null;
+}
+
+// ADMIN ACTION: SIMPAN RECORD NOTE PENDAFTAR KE SUPABASE
+async function savePlayerNote(playerId) {
+    if (!isAdmin || !playerId) return;
+
+    const noteText = document.getElementById('pop-notes-input').value;
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { error } = await client
+            .from('player_transfers')
+            .update({ notes: noteText })
+            .eq('id', playerId);
+
+        if (!error) {
+            showToast("Admin note saved successfully!", "success");
+            loadTransfers();
+        } else {
+            throw error;
+        }
+    } catch (err) {
+        console.error("Failed to save note:", err);
+        showToast("Error saving note: " + err.message, "error");
+    }
 }
 
 function copyToClipboard(text) {
@@ -521,7 +574,7 @@ async function resetTransferPhase() {
     }
 }
 
-// [PERBAIKAN LOGIKA] ADMIN MANAGEMENT SYSTEM (LOGIN & LOGOUT METHOD)
+// ADMIN MANAGEMENT SYSTEM (LOGIN & LOGOUT METHOD)
 async function handleAdminLogin() {
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
@@ -544,7 +597,7 @@ async function handleAdminLogin() {
         if (isValid) {
             isAdmin = true;
             
-            // Simpan status login ke localStorage agar persisten saat di-refresh
+            // Simpan status login ke localStorage
             localStorage.setItem("isPresident", "true");
             
             btn.innerText = "Logout President";
@@ -557,7 +610,7 @@ async function handleAdminLogin() {
     } else {
         isAdmin = false;
         
-        // Hapus status login dari localStorage saat logout manual
+        // Hapus status login dari localStorage
         localStorage.removeItem("isPresident");
         
         btn.innerText = "President Login";
@@ -568,7 +621,7 @@ async function handleAdminLogin() {
     renderTable();
 }
 
-// EXPORT TO EXCEL / CSV CONSOLE GENERATOR
+// EXPORT TO EXCEL / CSV CONSOLE GENERATOR (TERMASUK NOTES JIKA LOGGED IN AS ADMIN)
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
@@ -576,17 +629,25 @@ function exportCSV() {
     }
     
     const headers = ["From State", "Nickname", "Game ID", "Desired Alliance", "Furnace", "Power", "Hero Power", "Total Hero Power", "Status"];
-    const rows = transferList.map(p => [
-        p.transfer_from_state,
-        `"${p.nickname}"`,
-        `"${p.game_id}"`,
-        `"${p.desired_alliance || '-'}"`,
-        p.furnace_level,
-        p.power,
-        p.hero_power,
-        p.total_hero_power,
-        p.status
-    ]);
+    if (isAdmin) headers.push("Admin Notes");
+
+    const rows = transferList.map(p => {
+        const row = [
+            p.transfer_from_state,
+            `"${p.nickname}"`,
+            `"${p.game_id}"`,
+            `"${p.desired_alliance || '-'}"`,
+            p.furnace_level,
+            p.power,
+            p.hero_power,
+            p.total_hero_power,
+            p.status
+        ];
+        if (isAdmin) {
+            row.push(`"${(p.notes || '').replace(/"/g, '""')}"`);
+        }
+        return row;
+    });
     
     const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -597,7 +658,7 @@ function exportCSV() {
     link.click();
 }
 
-// CUBIC ALERTS POP NOTIFICATION
+// POPUP NOTIFICATION TOAST
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
