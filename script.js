@@ -55,9 +55,9 @@ function setupRealtimeChannels() {
 
 // 1. TAMPILKAN METADATA SISTEM DARI SUPABASE
 function displaySystemSettings(settings) {
-    const president = settings.president_name || "RARA";
-    const alliance = settings.alliance_name || "IDN";
-    const idGame = settings.id_game || "0828402093";
+    const president = settings.president_name || "-";
+    const alliance = settings.alliance_name || "-";
+    const idGame = settings.id_game || "-";
     const stateInfoText = settings.state_info || "Welcome to our State! No profile rules assigned yet.";
     
     document.getElementById('val-president').innerText = president;
