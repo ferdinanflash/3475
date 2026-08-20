@@ -180,28 +180,43 @@
             .btn-view-detail { padding: 2px 4px; font-size: 0.75rem; }
         }
 
-        /* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
-        .admin-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
+/* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
+.admin-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
 
-        .admin-actions button {
-            padding: 3px 2px !important;
-            font-size: 0.68rem !important;
-            border: none;
-            border-radius: 3px;
-            color: #fff;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-            white-space: nowrap;
-        }
+.admin-actions button {
+    padding: 4px 6px !important;
+    font-size: 0.72rem !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Memastikan warna background solid dan tidak hilang */
+.admin-actions button[onclick*="'Accepted'"] {
+    background-color: var(--success) !important;
+}
+
+.admin-actions button[onclick*="'Rejected'"] {
+    background-color: var(--danger) !important;
+}
+
+.admin-actions button[onclick*="deleteRecord"] {
+    background-color: #475569 !important;
+}
+
 
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; width: 100%; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
@@ -540,7 +555,7 @@
     </div>
 </div>
 
-<script src="script.js?v=31"></script>
+<script src="script.js?v=32"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
