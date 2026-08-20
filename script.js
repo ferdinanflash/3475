@@ -260,6 +260,7 @@ async function submitTransfer() {
     const power = document.getElementById('in-power').value.trim();
     const heroPower = document.getElementById('in-heropower').value.trim();
     const totalHero = document.getElementById('in-totalhero').value.trim();
+    const referrer = document.getElementById('in-referrer').value.trim();
     
     if (!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
         showToast("Please fill all input fields!", "warning");
@@ -275,6 +276,7 @@ async function submitTransfer() {
         power: parseInt(power),
         hero_power: parseInt(heroPower),
         total_hero_power: parseInt(totalHero),
+        referrer: referrer || null,
         status: 'Waiting'
     });
     
@@ -438,7 +440,7 @@ function renderTable() {
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
             </td>
             ${isAdmin ? actionCell : ''}
-            <td>State ${item.transfer_from_state}</td>
+            <td class="hide-mobile">State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
             <td onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer; font-weight:500;" title="Click to copy ID">${item.game_id} 📋</td>
             ${isAdmin ? notesCell : ''}
@@ -470,6 +472,7 @@ function showDetailPopup(index) {
     document.getElementById('pop-power').innerText = Number(player.power).toLocaleString();
     document.getElementById('pop-heropower').innerText = Number(player.hero_power).toLocaleString();
     document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
+    document.getElementById('pop-referrer').innerText = player.referrer || '-';
     document.getElementById('pop-status').innerText = player.status;
 
     const notesContainer = document.getElementById('pop-notes-container');
@@ -733,7 +736,7 @@ function exportCSV() {
         return;
     }
     
-    const headers = ["From State", "Nickname", "Game ID", "Desired Alliance", "Furnace", "Power", "Hero Power", "Total Hero Power", "Status"];
+    const headers = ["From State", "Nickname", "Game ID", "Desired Alliance", "Furnace", "Power", "Hero Power", "Total Hero Power", "Referrer", "Status"];
     if (isAdmin) {
         headers.push("Admin Notes");
         headers.push("Blacklist Notes");
@@ -749,6 +752,7 @@ function exportCSV() {
             p.power,
             p.hero_power,
             p.total_hero_power,
+            `"${p.referrer || '-'}"`,
             p.status
         ];
         if (isAdmin) {
