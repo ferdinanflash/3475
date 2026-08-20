@@ -62,7 +62,7 @@
     }
     
     .card {
-        padding: 12px !important;
+        padding: 10px !important;
     }
 
     /* === Sembunyikan Kolom Tabel yang Terlalu Panjang di HP === */
@@ -80,11 +80,11 @@
     table {
         table-layout: auto !important;
         width: 100% !important;
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
     }
 
     th, td {
-        padding: 8px 6px !important;
+        padding: 6px 3px !important;
         white-space: nowrap;
     }
 }
