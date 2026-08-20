@@ -427,16 +427,16 @@ function renderTable() {
             `;
             
             const noteText = item.notes ? item.notes : '<span style="color:#64748b; font-style:italic;">None</span>';
-            notesCell = `<td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${item.notes || ''}">${noteText}</td>`;
+            notesCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${item.notes || ''}">${noteText}</td>`;
             
             const blacklistText = item.blacklist_notes ? item.blacklist_notes : '<span style="color:#64748b; font-style:italic;">None</span>';
-            blacklistCell = `<td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ef4444;" title="${item.blacklist_notes || ''}">${blacklistText}</td>`;
+            blacklistCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ef4444;" title="${item.blacklist_notes || ''}">${blacklistText}</td>`;
         }
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
         
         row.innerHTML = `
-            <td>
+            <td style="text-align: center;">
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
             </td>
             ${isAdmin ? actionCell : ''}
@@ -445,7 +445,7 @@ function renderTable() {
             <td onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer; font-weight:500;" title="Click to copy ID">${item.game_id} 📋</td>
             ${isAdmin ? notesCell : ''}
             ${isAdmin ? blacklistCell : ''}
-            <td><span class="${badgeClass}">${item.status}</span></td>
+            <td style="text-align: center;"><span class="${badgeClass}">${item.status}</span></td>
         `;
         tbody.appendChild(row);
     });
@@ -765,10 +765,11 @@ function exportCSV() {
     const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "Transfer_Players_Export.csv";
-    link.click();
+    const link = document.length ? URL.createObjectURL(blob) : URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Transfer_Players_Export.csv";
+    a.click();
 }
 
 // POPUP NOTIFICATION TOAST
