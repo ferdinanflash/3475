@@ -436,13 +436,13 @@ function renderTable() {
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
         
         row.innerHTML = `
-            <td style="text-align: center;">
+            <td class="col-detail">
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
             </td>
             ${isAdmin ? actionCell : ''}
             <td class="hide-mobile">State ${item.transfer_from_state}</td>
             <td><strong>${item.nickname}</strong></td>
-            <td onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer; font-weight:500;" title="Click to copy ID">${item.game_id} 📋</td>
+            <td class="game-id-cell" onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer;" title="Click to copy ID">${item.game_id} 📋</td>
             ${isAdmin ? notesCell : ''}
             ${isAdmin ? blacklistCell : ''}
             <td style="text-align: center;"><span class="${badgeClass}">${item.status}</span></td>
