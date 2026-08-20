@@ -133,8 +133,8 @@
             }
 
             .admin-controls { align-items: center; width: 100%; }
-            .admin-controls-buttons { width: 100%; justify-content: center; }
-            .btn-admin { flex: 1; text-align: center; padding: 10px !important; }
+            .admin-controls-buttons { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .btn-admin { flex: 1 1 auto; min-width: 0; text-align: center; padding: 10px !important; }
 
             /* TABEL: pastikan kolom penting (Status) tidak terpotong di layar HP */
             .table-container { width: 100%; max-width: 100%; box-sizing: border-box; }
@@ -465,9 +465,9 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="margin:0; border:none;">Applicants List (Real-time status)</h3>
-                <div style="display: flex; gap: 8px; width: 100%; justify-content: space-between;">
-                    <button class="btn btn-admin" id="reset-phase-btn" style="background:#ef4444; display:none; flex: 1;" onclick="resetTransferPhase()">Reset Phase</button>
-                    <button class="btn btn-admin" style="background:#22c55e; flex: 1;" onclick="exportCSV()">Export CSV</button>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; justify-content: space-between;">
+                    <button class="btn btn-admin" id="reset-phase-btn" style="background:#ef4444; display:none; flex: 1 1 120px; min-width: 0;" onclick="resetTransferPhase()">Reset Phase</button>
+                    <button class="btn btn-admin" style="background:#22c55e; flex: 1 1 120px; min-width: 0;" onclick="exportCSV()">Export CSV</button>
                 </div>
             </div>
             <div class="table-container">
