@@ -161,62 +161,53 @@
                 white-space: nowrap;
             }
 
-            .table-container { width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: hidden; }
+            .table-container { width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: auto; }
             
-            /* Sembunyikan kolom yang memakan tempat horizontal saat mode admin di HP */
+            /* Sembunyikan kolom Notes dan Blacklist di mobile agar tidak terlalu lebar */
             .admin-extra-col {
                 display: none !important;
             }
 
-            /* Pengaturan lebar spesifik kolom tabel agar pas 1 layar di HP */
-            th:nth-child(1), td:nth-child(1) { width: 12%; text-align: center; } /* Detail */
-            th:nth-child(2), td:nth-child(2) { width: 28%; text-align: center; } /* Action */
-            th:nth-child(4), td:nth-child(4) { width: 25%; } /* Nickname */
-            th:nth-child(5), td:nth-child(5) { width: 22%; } /* Game ID */
-            th:last-child, td:last-child { width: 13%; text-align: center; } /* Status */
-
-            td strong { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-            .badge { padding: 2px 4px; font-size: 0.65rem; white-space: nowrap; }
-            .btn-view-detail { padding: 2px 4px; font-size: 0.75rem; }
+            td strong { display: inline-block; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+            .badge { padding: 3px 6px; font-size: 0.72rem; white-space: nowrap; }
+            .btn-view-detail { padding: 3px 6px; font-size: 0.8rem; }
         }
 
-/* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
-.admin-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-}
+        /* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
+        .admin-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            align-items: center;
+            justify-content: center;
+            min-width: 65px;
+        }
 
-.admin-actions button {
-    padding: 4px 6px !important;
-    font-size: 0.72rem !important;
-    border: none !important;
-    border-radius: 4px !important;
-    color: #ffffff !important;
-    font-weight: bold !important;
-    cursor: pointer;
-    width: 100%;
-    text-align: center;
-    white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
+        .admin-actions button {
+            padding: 4px 8px !important;
+            font-size: 0.72rem !important;
+            border: none !important;
+            border-radius: 4px !important;
+            color: #ffffff !important;
+            font-weight: bold !important;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
 
-/* Memastikan warna background solid dan tidak hilang */
-.admin-actions button[onclick*="'Accepted'"] {
-    background-color: var(--success) !important;
-}
+        .admin-actions button.btn-accept {
+            background-color: var(--success) !important;
+        }
 
-.admin-actions button[onclick*="'Rejected'"] {
-    background-color: var(--danger) !important;
-}
+        .admin-actions button.btn-reject {
+            background-color: var(--danger) !important;
+        }
 
-.admin-actions button[onclick*="deleteRecord"] {
-    background-color: #475569 !important;
-}
-
+        .admin-actions button.btn-delete {
+            background-color: #475569 !important;
+        }
 
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; width: 100%; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
@@ -236,9 +227,10 @@
             border-radius: 6px;
             border: 1px solid #334155;
             width: 100%;
-            overflow-x: hidden;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; white-space: nowrap; table-layout: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; white-space: nowrap; }
         th, td { padding: 10px 8px; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: #94a3b8; }
         .badge { padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
