@@ -163,38 +163,61 @@
 
             .table-container { width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: auto; }
             
-            /* Sembunyikan kolom Notes dan Blacklist di mobile agar tidak terlalu lebar */
+            /* Sembunyikan kolom Notes dan Blacklist di mobile */
             .admin-extra-col {
                 display: none !important;
             }
 
-            td strong { display: inline-block; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-            .badge { padding: 3px 6px; font-size: 0.72rem; white-space: nowrap; }
-            .btn-view-detail { padding: 3px 6px; font-size: 0.8rem; }
+            /* Nickname dibatasi agar tidak memakan ruang ID */
+            td strong { display: inline-block; max-width: 85px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+            .badge { padding: 3px 5px; font-size: 0.7rem; white-space: nowrap; }
         }
+
+        /* MEMPERPERSEMPIT KOLOM & TOMBOL DETAIL MATA */
+        .col-detail {
+            width: 32px !important;
+            padding: 4px 2px !important;
+            text-align: center !important;
+        }
+
+        .btn-view-detail {
+            background: #475569;
+            color: #fff;
+            border: none;
+            padding: 3px 5px !important;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .btn-view-detail:hover { background: var(--primary); }
 
         /* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
         .admin-actions {
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 2px;
             align-items: center;
             justify-content: center;
-            min-width: 65px;
+            min-width: 55px;
+            padding: 2px !important;
         }
 
         .admin-actions button {
-            padding: 4px 8px !important;
-            font-size: 0.72rem !important;
+            padding: 3px 4px !important;
+            font-size: 0.68rem !important;
             border: none !important;
-            border-radius: 4px !important;
+            border-radius: 3px !important;
             color: #ffffff !important;
             font-weight: bold !important;
             cursor: pointer;
             width: 100%;
             text-align: center;
             white-space: nowrap;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .admin-actions button.btn-accept {
@@ -207,6 +230,13 @@
 
         .admin-actions button.btn-delete {
             background-color: #475569 !important;
+        }
+
+        /* PENGATURAN TEKS GAME ID AGAR LENGKAP DIPANDANG */
+        .game-id-cell {
+            font-size: 0.78rem !important;
+            letter-spacing: -0.2px;
+            font-weight: 600;
         }
 
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; width: 100%; }
@@ -231,27 +261,12 @@
             -webkit-overflow-scrolling: touch;
         }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; white-space: nowrap; }
-        th, td { padding: 10px 8px; border-bottom: 1px solid #334155; }
+        th, td { padding: 8px 5px; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: #94a3b8; }
         .badge { padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
         .badge-waiting { background: var(--warning); color: #000; }
         .badge-accepted { background: var(--success); color: #fff; }
         .badge-rejected { background: var(--danger); color: #fff; }
-        
-        /* STYLE KHAS TOMBOL MATA DETAIL */
-        .btn-view-detail {
-            background: #475569;
-            color: #fff;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-view-detail:hover { background: var(--primary); }
 
         #toast-container { position: fixed; top: 15px; left: 15px; right: 15px; z-index: 9999; }
         .toast { background: #1e293b; border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 4px; margin-bottom: 10px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 0.9rem; }
@@ -530,7 +545,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Detail</th>
+                            <th class="col-detail">Detail</th>
                             <th id="th-action" style="display:none;">Action</th>
                             <th class="hide-mobile">From State</th>
                             <th>Nickname</th>
@@ -547,7 +562,7 @@
     </div>
 </div>
 
-<script src="script.js?v=32"></script>
+<script src="script.js?v=33"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
