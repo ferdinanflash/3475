@@ -16,6 +16,9 @@
             --danger: #ef4444;
             --warning: #f59e0b;
         }
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
@@ -25,8 +28,16 @@
             position: relative;
             min-height: 100vh;
             overflow-x: hidden;
+            width: 100%;
         }
-        .container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            position: relative; 
+            z-index: 2; 
+            width: 100%;
+            overflow-x: hidden;
+        }
         
         /* HEADER FLEX LAYOUT */
         header { 
@@ -38,16 +49,18 @@
             padding-bottom: 16px; 
             flex-wrap: wrap; 
             gap: 15px; 
+            width: 100%;
         }
-        .header-left { flex: 1; min-width: 250px; }
+        .header-left { flex: 1; min-width: 200px; width: 100%; }
         .header-right { 
             display: flex; 
             align-items: center; 
             gap: 15px; 
             flex-wrap: wrap; 
+            width: 100%;
         }
-        .admin-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-        .admin-controls-buttons { display: flex; gap: 6px; align-items: center; }
+        .admin-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; width: 100%; }
+        .admin-controls-buttons { display: flex; gap: 6px; align-items: center; width: 100%; }
         
         /* BOX INFORMASI PRESIDEN MINIMALIS */
         .president-info-box { 
@@ -61,7 +74,7 @@
             justify-content: center;
             gap: 12px; 
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-            max-width: 100%;
+            width: 100%;
             box-sizing: border-box;
             flex-wrap: wrap;
         }
@@ -98,7 +111,7 @@
         .btn-save-info:hover { opacity: 0.9; }
 
         /* GRID SYSTEM FORM & DATA */
-        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; width: 100%; }
         
         @media(max-width: 900px) { 
             .grid { grid-template-columns: 1fr; gap: 15px; } 
@@ -120,8 +133,8 @@
                 gap: 10px;
             }
             .info-input {
-                width: 55% !important;
-                max-width: 180px;
+                width: 50% !important;
+                max-width: 160px;
                 padding: 4px 6px !important;
                 font-size: 0.8rem !important;
             }
@@ -143,50 +156,54 @@
                 flex: 1 1 50% !important; 
                 min-width: 0; 
                 text-align: center; 
-                padding: 8px 6px !important; 
-                font-size: 0.8rem !important;
+                padding: 8px 4px !important; 
+                font-size: 0.78rem !important;
                 white-space: nowrap;
             }
 
-            /* TABEL: pastikan kolom penting tidak terpotong di layar HP */
-            .table-container { width: 100%; max-width: 100%; box-sizing: border-box; }
-            table { table-layout: auto; }
-            th, td { white-space: nowrap; }
-            td strong { display: inline-block; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-            .badge { padding: 3px 6px; font-size: 0.72rem; white-space: nowrap; }
-            .btn-view-detail { padding: 3px 6px; font-size: 0.8rem; }
-
-            .mobile-scroll-hint {
-                display: block;
-                text-align: center;
-                color: #64748b;
-                font-size: 0.75rem;
-                margin: 6px 0 0 0;
+            .table-container { width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: hidden; }
+            
+            /* Sembunyikan kolom yang memakan tempat horizontal saat mode admin di HP */
+            .admin-extra-col {
+                display: none !important;
             }
+
+            /* Pengaturan lebar spesifik kolom tabel agar pas 1 layar di HP */
+            th:nth-child(1), td:nth-child(1) { width: 12%; text-align: center; } /* Detail */
+            th:nth-child(2), td:nth-child(2) { width: 28%; text-align: center; } /* Action */
+            th:nth-child(4), td:nth-child(4) { width: 25%; } /* Nickname */
+            th:nth-child(5), td:nth-child(5) { width: 22%; } /* Game ID */
+            th:last-child, td:last-child { width: 13%; text-align: center; } /* Status */
+
+            td strong { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+            .badge { padding: 2px 4px; font-size: 0.65rem; white-space: nowrap; }
+            .btn-view-detail { padding: 2px 4px; font-size: 0.75rem; }
         }
-        .mobile-scroll-hint { display: none; }
 
         /* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
         .admin-actions {
             display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-            min-width: 100px;
+            flex-direction: column;
+            gap: 2px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
         }
 
         .admin-actions button {
-            padding: 4px 6px !important;
-            font-size: 0.72rem !important;
+            padding: 3px 2px !important;
+            font-size: 0.68rem !important;
             border: none;
-            border-radius: 4px;
+            border-radius: 3px;
             color: #fff;
             font-weight: bold;
             cursor: pointer;
-            flex: 1;
+            width: 100%;
+            text-align: center;
             white-space: nowrap;
         }
 
-        .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
+        .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; width: 100%; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #94a3b8; }
@@ -201,15 +218,15 @@
         
         /* TABLE RESPONSIVE CONTAINER */
         .table-container { 
-            overflow-x: auto; 
             border-radius: 6px;
             border: 1px solid #334155;
-            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            overflow-x: hidden;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; white-space: nowrap; }
-        th, td { padding: 12px; border-bottom: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; white-space: nowrap; table-layout: auto; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: #94a3b8; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        .badge { padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
         .badge-waiting { background: var(--warning); color: #000; }
         .badge-accepted { background: var(--success); color: #fff; }
         .badge-rejected { background: var(--danger); color: #fff; }
@@ -222,7 +239,7 @@
             padding: 4px 8px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -511,20 +528,19 @@
                             <th class="hide-mobile">From State</th>
                             <th>Nickname</th>
                             <th>Game ID</th>
-                            <th id="th-notes" style="display:none;">Notes</th>
-                            <th id="th-blacklist" style="display:none; color: var(--danger);">Blacklist</th>
+                            <th id="th-notes" class="admin-extra-col" style="display:none;">Notes</th>
+                            <th id="th-blacklist" class="admin-extra-col" style="display:none; color: var(--danger);">Blacklist</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="transfer-tbody"></tbody>
                 </table>
             </div>
-            <p class="mobile-scroll-hint">⇆ Swipe table left/right to see more</p>
         </div>
     </div>
 </div>
 
-<script src="script.js?v=30"></script>
+<script src="script.js?v=31"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
