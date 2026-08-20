@@ -418,10 +418,10 @@ function renderTable() {
             actionCell = `
                 <td class="admin-actions">
                     ${item.status === 'Waiting' ? `
-                        <button style="background:#22c55e;" onclick="updateStatus(${item.id}, 'Accepted')">Accept</button>
-                        <button style="background:#ef4444;" onclick="updateStatus(${item.id}, 'Rejected')">Reject</button>
+                        <button class="btn-accept" onclick="updateStatus(${item.id}, 'Accepted')">Accept</button>
+                        <button class="btn-reject" onclick="updateStatus(${item.id}, 'Rejected')">Reject</button>
                     ` : `
-                        <button style="background:#475569;" onclick="deleteRecord(${item.id})">Delete</button>
+                        <button class="btn-delete" onclick="deleteRecord(${item.id})">Delete</button>
                     `}
                 </td>
             `;
@@ -765,7 +765,6 @@ function exportCSV() {
     const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.length ? URL.createObjectURL(blob) : URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "Transfer_Players_Export.csv";
