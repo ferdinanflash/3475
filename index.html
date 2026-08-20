@@ -107,10 +107,10 @@
             
             .president-info-box {
                 width: 100%;
-                padding: 12px;
-                flex-direction: column;
+                padding: 10px !important;
+                flex-direction: column !important;
                 align-items: stretch;
-                gap: 10px;
+                gap: 8px !important;
             }
             .info-item {
                 display: flex;
@@ -120,23 +120,35 @@
                 gap: 10px;
             }
             .info-input {
-                width: 65% !important;
-                max-width: 200px;
-                padding: 6px 8px;
-                font-size: 0.85rem;
+                width: 55% !important;
+                max-width: 180px;
+                padding: 4px 6px !important;
+                font-size: 0.8rem !important;
             }
             .btn-save-info {
                 width: 100%;
-                padding: 8px;
-                font-size: 0.85rem;
+                padding: 6px !important;
+                font-size: 0.8rem !important;
                 text-align: center;
             }
 
             .admin-controls { align-items: center; width: 100%; }
-            .admin-controls-buttons { width: 100%; justify-content: center; flex-wrap: wrap; }
-            .btn-admin { flex: 1 1 auto; min-width: 0; text-align: center; padding: 10px !important; }
+            .admin-controls-buttons { 
+                display: flex !important; 
+                width: 100%; 
+                gap: 6px !important; 
+                justify-content: space-between;
+            }
+            .btn-admin { 
+                flex: 1 1 50% !important; 
+                min-width: 0; 
+                text-align: center; 
+                padding: 8px 6px !important; 
+                font-size: 0.8rem !important;
+                white-space: nowrap;
+            }
 
-            /* TABEL: pastikan kolom penting (Status) tidak terpotong di layar HP */
+            /* TABEL: pastikan kolom penting tidak terpotong di layar HP */
             .table-container { width: 100%; max-width: 100%; box-sizing: border-box; }
             table { table-layout: auto; }
             th, td { white-space: nowrap; }
@@ -153,6 +165,26 @@
             }
         }
         .mobile-scroll-hint { display: none; }
+
+        /* MERAPIKAN ACTION BUTTONS TABEL KHUSUS ADMIN */
+        .admin-actions {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            min-width: 100px;
+        }
+
+        .admin-actions button {
+            padding: 4px 6px !important;
+            font-size: 0.72rem !important;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            flex: 1;
+            white-space: nowrap;
+        }
 
         .card { background: var(--card-dark); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; }
         h3 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
@@ -492,7 +524,7 @@
     </div>
 </div>
 
-<script src="script.js?v=2"></script>
+<script src="script.js?v=30"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
