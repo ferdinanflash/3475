@@ -3,28 +3,97 @@ const SUPABASE_URL = 'https://pwqkpeykjyujhnreleax.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWtwZXlranl1amhucmVsZWF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzgxNDgsImV4cCI6MjA5ODgxNDE0OH0.6u2CKOPHcMtVeA2ph0QWTqgtvs-4BQJpsz6v2kCyOEY';
 // =================================================================
 
+// Supabase Auth requires an email address, but this app only wants a plain
+// username + password. Uses the same email domain as res.js/troops.js so
+// accounts can be shared across pages, but this page only grants admin
+// access to the usernames listed below — a session from another page as any
+// OTHER staff account is simply ignored here, it does not unlock President
+// controls on this page.
+const STAFF_EMAIL_DOMAIN = '@3475-staff.internal';
+const ALLOWED_ADMIN_USERNAMES = ['president', 'demon', 'phoenix']; // <-- only these usernames get admin here
+
+function usernameToStaffEmail(username) {
+    return username.trim().toLowerCase().replace(/\s+/g, '') + STAFF_EMAIL_DOMAIN;
+}
+
+function staffEmailToUsername(email) {
+    return (email || '').endsWith(STAFF_EMAIL_DOMAIN)
+        ? email.slice(0, -STAFF_EMAIL_DOMAIN.length)
+        : email;
+}
+
+function isPresidentUsername(username) {
+    return !!username && ALLOWED_ADMIN_USERNAMES.includes(username.trim().toLowerCase());
+}
+
+// ================= SECURITY: HTML ESCAPING =================
+// Semua data yang berasal dari user (nickname, game id, notes, dst) WAJIB
+// lewat fungsi ini sebelum dimasukkan ke innerHTML, supaya tidak bisa
+// dipakai untuk stored XSS (contoh: nickname berisi <img onerror=...>).
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 let supabaseClient = null;
 let isAdmin = false;
+let currentStaffUsername = null;
 let transferList = [];
 let maxSlots = 35; 
 let currentSelectedPlayerId = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    // Cek status persistent login President
-    if (localStorage.getItem("isPresident") === "true") {
-        isAdmin = true;
-        const btn = document.getElementById('admin-btn');
-        const badge = document.getElementById('admin-badge');
-        const specialBtn = document.getElementById('special-notes-btn');
-        
-        if (btn) btn.innerText = "Logout President";
-        if (badge) badge.style.display = "inline";
-        if (specialBtn) specialBtn.style.display = "inline-block";
+document.addEventListener("DOMContentLoaded", async () => {
+    const client = getSupabase();
+    if (client) {
+        // Restore session from Supabase's own encrypted storage instead of
+        // trusting a plain localStorage flag anyone could set by hand.
+        const { data: { session } } = await client.auth.getSession();
+        applyAuthSession(session);
+
+        // Keep isAdmin in sync if the session refreshes, expires, or the
+        // user signs in/out in another tab (or on another page sharing the
+        // same Supabase project/account).
+        client.auth.onAuthStateChange((_event, session) => {
+            applyAuthSession(session);
+        });
     }
 
     loadTransfers();
     setupRealtimeChannels();
 });
+
+// Applies (or clears) admin UI/state from a Supabase Auth session. This is
+// the single source of truth for isAdmin now — never set it directly.
+// A session belonging to any staff account NOT in ALLOWED_ADMIN_USERNAMES
+// (e.g. one restored from another page's login) is deliberately treated as
+// "not admin" here — it's a valid session, just not authorized on this page.
+function applyAuthSession(session) {
+    const sessionUsername = session ? staffEmailToUsername(session.user.email) : null;
+    isAdmin = isPresidentUsername(sessionUsername);
+    currentStaffUsername = isAdmin ? sessionUsername : null;
+
+    const btn = document.getElementById('admin-btn');
+    const badge = document.getElementById('admin-badge');
+    const specialBtn = document.getElementById('special-notes-btn');
+
+    if (isAdmin) {
+        if (btn) btn.innerText = `Logout (${currentStaffUsername.toUpperCase()})`;
+        if (badge) badge.style.display = "inline";
+        if (specialBtn) specialBtn.style.display = "inline-block";
+    } else {
+        if (btn) btn.innerText = "President Login";
+        if (badge) badge.style.display = "none";
+        if (specialBtn) specialBtn.style.display = "none";
+    }
+
+    updateCounters();
+    renderTable();
+}
 
 function getSupabase() {
     if (!supabaseClient) {
@@ -426,11 +495,11 @@ function renderTable() {
                 </td>
             `;
             
-            const noteText = item.notes ? item.notes : '<span style="color:#64748b; font-style:italic;">None</span>';
-            notesCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${item.notes || ''}">${noteText}</td>`;
+            const noteText = item.notes ? escapeHtml(item.notes) : '<span style="color:#64748b; font-style:italic;">None</span>';
+            notesCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${escapeHtml(item.notes || '')}">${noteText}</td>`;
             
-            const blacklistText = item.blacklist_notes ? item.blacklist_notes : '<span style="color:#64748b; font-style:italic;">None</span>';
-            blacklistCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ef4444;" title="${item.blacklist_notes || ''}">${blacklistText}</td>`;
+            const blacklistText = item.blacklist_notes ? escapeHtml(item.blacklist_notes) : '<span style="color:#64748b; font-style:italic;">None</span>';
+            blacklistCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ef4444;" title="${escapeHtml(item.blacklist_notes || '')}">${blacklistText}</td>`;
         }
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
@@ -440,12 +509,12 @@ function renderTable() {
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
             </td>
             ${isAdmin ? actionCell : ''}
-            <td class="hide-mobile">State ${item.transfer_from_state}</td>
-            <td><strong>${item.nickname}</strong></td>
-            <td class="game-id-cell" onclick="copyToClipboard('${item.game_id}')" style="cursor:pointer;" title="Click to copy ID">${item.game_id} 📋</td>
+            <td class="hide-mobile">State ${escapeHtml(item.transfer_from_state)}</td>
+            <td><strong>${escapeHtml(item.nickname)}</strong></td>
+            <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="Click to copy ID">${escapeHtml(item.game_id)} 📋</td>
             ${isAdmin ? notesCell : ''}
             ${isAdmin ? blacklistCell : ''}
-            <td style="text-align: center;"><span class="${badgeClass}">${item.status}</span></td>
+            <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(item.status)}</span></td>
         `;
         tbody.appendChild(row);
     });
@@ -583,10 +652,12 @@ window.onclick = function(event) {
     const detailModal = document.getElementById('detail-modal');
     const stateModal = document.getElementById('state-info-modal');
     const specialModal = document.getElementById('admin-special-notes-modal');
+    const loginModal = document.getElementById('login-modal');
 
     if (event.target === detailModal) closeDetailModal();
     if (event.target === stateModal) closeStateModal();
     if (event.target === specialModal) closeSpecialNotesModal();
+    if (event.target === loginModal) closeLoginModal();
 }
 
 // ADMIN ACTION: UPDATE STATUS PENDAFTAR
@@ -684,49 +755,94 @@ async function resetTransferPhase() {
 }
 
 // ADMIN MANAGEMENT SYSTEM (LOGIN & LOGOUT METHOD)
-async function handleAdminLogin() {
-    const btn = document.getElementById('admin-btn');
-    const badge = document.getElementById('admin-badge');
-    const specialBtn = document.getElementById('special-notes-btn');
-    if (!btn) return;
-    
-    if (!isAdmin) {
-        const password = prompt("Enter Password President:");
-        if (!password) return;
-
-        const client = getSupabase();
-        if (!client) return;
-
-        const { data: isValid, error } = await client.rpc('verify_admin_code', { input_code: password });
-
-        if (error) {
-            showToast("Verification transaction error: " + error.message, "error");
-            return;
-        }
-
-        if (isValid) {
-            isAdmin = true;
-            localStorage.setItem("isPresident", "true");
-            
-            btn.innerText = "Logout President";
-            if (badge) badge.style.display = "inline";
-            if (specialBtn) specialBtn.style.display = "inline-block";
-            showToast("Welcome President", "success");
-        } else {
-            showToast("❌ Wrong password!", "error");
-            return;
-        }
-    } else {
-        isAdmin = false;
-        localStorage.removeItem("isPresident");
-        
-        btn.innerText = "President Login";
-        if (badge) badge.style.display = "none";
-        if (specialBtn) specialBtn.style.display = "none";
-        showToast("President Logout", "info");
+// Real authentication now happens on Supabase's servers via
+// auth.signInWithPassword, which returns a verified session token. Access to
+// write endpoints (player_transfers, system_settings) must be enforced with
+// Row Level Security policies tied to auth.role() = 'authenticated' — this
+// client-side isAdmin flag is only used to show/hide UI, never to authorize
+// writes.
+function handleAdminLogin() {
+    if (isAdmin) {
+        handleStaffLogout();
+        return;
     }
-    updateCounters();
-    renderTable();
+    const userInput = document.getElementById('input-login-username');
+    const passInput = document.getElementById('input-login-password');
+    if (userInput) userInput.value = '';
+    if (passInput) passInput.value = '';
+    document.getElementById('login-modal').classList.add('active');
+    if (userInput) userInput.focus();
+}
+
+function closeLoginModal() {
+    document.getElementById('login-modal').classList.remove('active');
+}
+
+async function submitStaffLogin() {
+    const client = getSupabase();
+    if (!client) return;
+
+    const username = document.getElementById('input-login-username').value.trim();
+    const password = document.getElementById('input-login-password').value;
+
+    if (!username || !password) {
+        showToast("Please enter both username and password!", "warning");
+        return;
+    }
+
+    // This page is President-only — don't even attempt a sign-in for any
+    // other staff username, so a valid staff password never accidentally
+    // opens a real session here.
+    if (!isPresidentUsername(username)) {
+        showToast("This page is for the President account only.", "error");
+        return;
+    }
+
+    const submitBtn = document.getElementById('login-submit-btn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Signing in...';
+    }
+
+    const { data, error } = await client.auth.signInWithPassword({
+        email: usernameToStaffEmail(username),
+        password
+    });
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = '🔐 Login';
+    }
+
+    if (error) {
+        showToast("Login failed: incorrect username or password", "error");
+        return;
+    }
+
+    applyAuthSession(data.session);
+    closeLoginModal();
+    showToast("Welcome back, President!", "success");
+}
+
+async function handleStaffLogout() {
+    const client = getSupabase();
+    if (client) {
+        await client.auth.signOut();
+    }
+    applyAuthSession(null);
+    showToast("President Logout", "info");
+}
+
+// Membungkus nilai untuk 1 sel CSV: escape tanda kutip ganda dengan benar,
+// dan cegah CSV/Formula Injection dengan prefix apostrof kalau value diawali
+// karakter =, +, -, atau @ (bisa dieksekusi sebagai formula di Excel/Sheets).
+function sanitizeCsvField(value) {
+    let str = String(value ?? '-');
+    if (/^[=+\-@]/.test(str)) {
+        str = `'${str}`;
+    }
+    str = str.replace(/"/g, '""');
+    return `"${str}"`;
 }
 
 // EXPORT TO EXCEL / CSV CONSOLE GENERATOR
@@ -744,20 +860,20 @@ function exportCSV() {
 
     const rows = transferList.map(p => {
         const row = [
-            p.transfer_from_state,
-            `"${p.nickname}"`,
-            `"${p.game_id}"`,
-            `"${p.desired_alliance || '-'}"`,
-            p.furnace_level,
-            p.power,
-            p.hero_power,
-            p.total_hero_power,
-            `"${p.referrer || '-'}"`,
-            p.status
+            sanitizeCsvField(p.transfer_from_state),
+            sanitizeCsvField(p.nickname),
+            sanitizeCsvField(p.game_id),
+            sanitizeCsvField(p.desired_alliance || '-'),
+            sanitizeCsvField(p.furnace_level),
+            sanitizeCsvField(p.power),
+            sanitizeCsvField(p.hero_power),
+            sanitizeCsvField(p.total_hero_power),
+            sanitizeCsvField(p.referrer || '-'),
+            sanitizeCsvField(p.status)
         ];
         if (isAdmin) {
-            row.push(`"${(p.notes || '').replace(/"/g, '""')}"`);
-            row.push(`"${(p.blacklist_notes || '').replace(/"/g, '""')}"`);
+            row.push(sanitizeCsvField(p.notes || ''));
+            row.push(sanitizeCsvField(p.blacklist_notes || ''));
         }
         return row;
     });

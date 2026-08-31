@@ -433,6 +433,27 @@
     </div>
 </div>
 
+<!-- Modal President Login (Supabase Auth) -->
+<div class="modal-overlay" id="login-modal">
+    <div class="modal-content" style="max-width: 360px;">
+        <div class="modal-header">
+            <h4>👑 President Login</h4>
+            <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Username</label>
+                <input type="text" id="input-login-username" placeholder="Username" autocomplete="username">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Password</label>
+                <input type="password" id="input-login-password" placeholder="Password" autocomplete="current-password">
+            </div>
+            <button class="btn btn-primary" id="login-submit-btn" style="padding: 10px; font-size: 0.9rem;" onclick="submitStaffLogin()">🔐 Login</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <header>
         <div class="header-left">
@@ -579,6 +600,13 @@
             flake.style.width = size; flake.style.height = size;
             flake.style.opacity = Math.random() * 0.5 + 0.4;
             snowContainer.appendChild(flake);
+        }
+
+        const loginPasswordInput = document.getElementById('input-login-password');
+        if (loginPasswordInput) {
+            loginPasswordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') submitStaffLogin();
+            });
         }
     });
 </script>
