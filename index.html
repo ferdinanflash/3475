@@ -537,53 +537,55 @@
 
             <div id="lock-message" class="status-locked">⚠️ REGISTRATION CLOSED (QUOTA FULL)</div>
 
-            <div class="form-group" style="margin-top: 15px;">
-                <label>Transfer From State</label>
-                <input type="number" id="in-state" placeholder="e.g. 1234">
-            </div>
-            <div class="form-group">
-                <label>In-Game Nickname</label>
-                <input type="text" id="in-nickname" placeholder="Enter nickname">
-            </div>
-            <div class="form-group">
-                <label>Game ID</label>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="in-gameid" placeholder="Enter Game ID">
-            </div>
-            <div class="form-group">
-                <label>Desired Alliance</label>
-                <input type="text" id="in-alliance" placeholder="e.g. ARX/CAT/IDN/VNX/ZXC">
-            </div>
-            <div class="form-group">
-                <label>Furnace Level</label>
-                <select id="in-furnace">
-                    <option value="" disabled selected>Select furnace level</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Power</label>
-                <input type="number" id="in-power" placeholder="Your Power">
-            </div>
-            <div class="form-group">
-                <label>Hero Power</label>
-                <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
-            </div>
-            <div class="form-group">
-                <label>Total Hero Power</label>
-                <input type="number" id="in-totalhero" placeholder="Total Hero Power">
-            </div>
-            <div class="form-group">
-                <label>Referrer (Optional)</label>
-                <input type="text" id="in-referrer" placeholder="Who referred you? (optional)">
+            <div id="transfer-form-fields">
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Transfer From State</label>
+                    <input type="number" id="in-state" placeholder="e.g. 1234">
+                </div>
+                <div class="form-group">
+                    <label>In-Game Nickname</label>
+                    <input type="text" id="in-nickname" placeholder="Enter nickname">
+                </div>
+                <div class="form-group">
+                    <label>Game ID</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="in-gameid" placeholder="Enter Game ID">
+                </div>
+                <div class="form-group">
+                    <label>Desired Alliance</label>
+                    <input type="text" id="in-alliance" placeholder="e.g. ARX/CAT/IDN/VNX/ZXC">
+                </div>
+                <div class="form-group">
+                    <label>Furnace Level</label>
+                    <select id="in-furnace">
+                        <option value="" disabled selected>Select furnace level</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Power</label>
+                    <input type="number" id="in-power" placeholder="Your Power">
+                </div>
+                <div class="form-group">
+                    <label>Hero Power</label>
+                    <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
+                </div>
+                <div class="form-group">
+                    <label>Total Hero Power</label>
+                    <input type="number" id="in-totalhero" placeholder="Total Hero Power">
+                </div>
+                <div class="form-group">
+                    <label>Referrer (Optional)</label>
+                    <input type="text" id="in-referrer" placeholder="Who referred you? (optional)">
+                </div>
             </div>
             <button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button>
         </div>

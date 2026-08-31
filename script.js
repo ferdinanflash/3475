@@ -384,7 +384,7 @@ async function submitTransfer() {
     
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
-        document.querySelectorAll('.form-group input, .form-group select').forEach(input => {
+        document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
             if(input.id !== 'in-max-slots' && !input.classList.contains('info-input')) {
                 input.value = "";
             }
@@ -436,7 +436,11 @@ function updateCounters() {
     document.getElementById('count-total').innerText = totalApplicants;
     document.getElementById('count-accepted').innerText = acceptedCount;
     
-    const inputs = document.querySelectorAll('.form-group input, .form-group select');
+    // Scoped to #transfer-form-fields only — NOT a page-wide '.form-group'
+    // selector, which would also grab (and disable) unrelated inputs like
+    // the President Login modal's username/password fields whenever the
+    // registration quota is full.
+    const inputs = document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select');
     const submitBtn = document.getElementById('submit-btn');
     const lockMessage = document.getElementById('lock-message');
     const maxSlotsInput = document.getElementById('in-max-slots');
