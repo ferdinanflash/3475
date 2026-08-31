@@ -119,31 +119,69 @@ function setupRealtimeChannels() {
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'system_settings', filter: 'id=eq.1' }, () => {
             loadTransfers();
         })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'footer_settings', filter: 'id=eq.main' }, () => {
+            loadFooterInfo();
+        })
         .subscribe();
 }
 
-// 1. TAMPILKAN METADATA SISTEM DARI SUPABASE
+// 1. TAMPILKAN METADATA SISTEM DARI SUPABASE (state_info dkk, dari system_settings)
 function displaySystemSettings(settings) {
-    const president = settings.president_name || "-";
-    const alliance = settings.alliance_name || "-";
-    const idGame = settings.id_game || "-";
     const stateInfoText = settings.state_info || "Welcome to our State! No profile rules assigned yet.";
-    
+    document.getElementById('state-info-text').innerText = stateInfoText;
+    document.getElementById('state-info-edit').value = stateInfoText;
+}
+
+// 1b. TAMPILKAN PRESIDENT / ALLIANCE / ID GAME DARI footer_settings
+// Mengikuti pola res.js: tampilkan versi cache dari localStorage dulu (biar
+// langsung muncul tanpa nunggu network), lalu timpa begitu data asli dari
+// Supabase datang. Ini juga yang membuat halaman ini sekarang konsisten
+// dengan res.js, karena keduanya baca/tulis dari tabel yang sama:
+// footer_settings (id = 'main').
+function loadFooterInfo() {
+    const cachedPresident = localStorage.getItem('cached_president_name');
+    const cachedGuild = localStorage.getItem('cached_guild_name');
+    const cachedIdGame = localStorage.getItem('cached_id_game');
+
+    if (cachedPresident) applyPresidentDisplay(cachedPresident, cachedGuild || '-', cachedIdGame || '-');
+
+    const client = getSupabase();
+    if (!client) return;
+
+    client
+        .from('footer_settings')
+        .select('president_name, guild_name, id_game')
+        .eq('id', 'main')
+        .single()
+        .then(({ data, error }) => {
+            if (error || !data) return;
+            const president = data.president_name || "-";
+            const guild = data.guild_name || "-";
+            const idGame = data.id_game || "-";
+
+            applyPresidentDisplay(president, guild, idGame);
+
+            if (data.president_name) localStorage.setItem('cached_president_name', data.president_name);
+            if (data.guild_name) localStorage.setItem('cached_guild_name', data.guild_name);
+            if (data.id_game) localStorage.setItem('cached_id_game', data.id_game);
+        })
+        .catch(err => console.error("Error loading footer info from database:", err));
+}
+
+// Helper: taruh nilai president/guild/id ke semua elemen tampilan + form edit
+function applyPresidentDisplay(president, alliance, idGame) {
     document.getElementById('val-president').innerText = president;
     document.getElementById('val-alliance').innerText = alliance;
-    
+
     const valId = document.getElementById('val-id');
     valId.innerText = idGame;
     valId.style.cursor = 'pointer';
     valId.title = 'Click to copy ID';
     valId.onclick = () => copyToClipboard(idGame);
-    
-    document.getElementById('edit-president').value = president;
-    document.getElementById('edit-alliance').value = alliance;
-    document.getElementById('edit-id').value = idGame;
 
-    document.getElementById('state-info-text').innerText = stateInfoText;
-    document.getElementById('state-info-edit').value = stateInfoText;
+    document.getElementById('edit-president').value = president === '-' ? '' : president;
+    document.getElementById('edit-alliance').value = alliance === '-' ? '' : alliance;
+    document.getElementById('edit-id').value = idGame === '-' ? '' : idGame;
 }
 
 // POPUP MODAL CONTROL SECTIONS
@@ -239,6 +277,9 @@ async function saveStateInfo() {
 }
 
 // 3. ADMIN ACTION: SIMPAN DATA HEADER PRESIDEN SEKALIGUS
+// Sekarang menulis ke footer_settings (id = 'main'), tabel yang sama dengan
+// yang dipakai res.js, supaya President/Alliance/ID Game konsisten di kedua
+// halaman.
 async function savePresidentInfo() {
     if (!isAdmin) return;
     
@@ -256,17 +297,22 @@ async function savePresidentInfo() {
 
     try {
         const { error } = await client
-            .from('system_settings')
+            .from('footer_settings')
             .update({
                 president_name: presVal,
-                alliance_name: alliVal,
-                id_game: idVal
+                guild_name: alliVal,
+                id_game: idVal,
+                updated_at: new Date().toISOString()
             })
-            .eq('id', 1);
+            .eq('id', 'main');
 
         if (!error) {
+            localStorage.setItem('cached_president_name', presVal);
+            localStorage.setItem('cached_guild_name', alliVal);
+            localStorage.setItem('cached_id_game', idVal);
+
             showToast("Information saved to 3475 Server", "success");
-            loadTransfers();
+            loadFooterInfo();
         } else {
             throw error;
         }
@@ -378,6 +424,8 @@ async function loadTransfers() {
             maxSlots = settingsData.max_slots;
             displaySystemSettings(settingsData);
         }
+
+        loadFooterInfo();
 
         const { data, error } = await client
             .from('player_transfers')
