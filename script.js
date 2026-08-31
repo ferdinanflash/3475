@@ -361,6 +361,13 @@ async function submitTransfer() {
         showToast("Please enter valid, non-negative numbers for State, Furnace, Power, and Hero Power fields!", "warning");
         return;
     }
+
+    // Furnace Level is a controlled 1-10 dropdown in the UI, but re-check the
+    // range here too in case someone bypasses the dropdown via devtools.
+    if (furnaceNum < 1 || furnaceNum > 10) {
+        showToast("Furnace Level must be between 1 and 10!", "warning");
+        return;
+    }
     
     const { error } = await client.from('player_transfers').insert({
         transfer_from_state: stateNum,
@@ -377,7 +384,7 @@ async function submitTransfer() {
     
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
-        document.querySelectorAll('.form-group input').forEach(input => {
+        document.querySelectorAll('.form-group input, .form-group select').forEach(input => {
             if(input.id !== 'in-max-slots' && !input.classList.contains('info-input')) {
                 input.value = "";
             }
@@ -429,7 +436,7 @@ function updateCounters() {
     document.getElementById('count-total').innerText = totalApplicants;
     document.getElementById('count-accepted').innerText = acceptedCount;
     
-    const inputs = document.querySelectorAll('.form-group input');
+    const inputs = document.querySelectorAll('.form-group input, .form-group select');
     const submitBtn = document.getElementById('submit-btn');
     const lockMessage = document.getElementById('lock-message');
     const maxSlotsInput = document.getElementById('in-max-slots');
