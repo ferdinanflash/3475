@@ -1,4 +1,4 @@
-/* ================= ANIMASI TULISAN EMAS (GOLD SHIMMER) ================= */
+/* ================= GOLD SHIMMER TEXT ANIMATION ================= */
 .animated-title {
     margin: 0; 
     font-size: 1.8rem;
@@ -6,7 +6,7 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     
-    /* Warna Dasar Gradasi Emas */
+    /* Base gold gradient color */
     background: linear-gradient(
         to right, 
         #bf953f 0%, 
@@ -17,32 +17,32 @@
     );
     background-size: 200% auto;
     
-    /* Trik Kliping Teks */
+    /* Text clipping trick */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-fill-color: transparent;
     
-    /* Efek Bayangan Belakang & Animasi Bergerak */
+    /* Background shadow effect & moving animation */
     filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
     animation: goldShimmer 4s linear infinite;
 }
 
-/* Pergerakan Efek Kilau Cahaya */
+/* Shimmer light movement */
 @keyframes goldShimmer {
     0% { background-position: 0% center; }
     100% { background-position: 200% center; }
 }
 
-/* ================= OPTIMALISASI LAYAR HP (MOBILE) ================= */
+/* ================= MOBILE SCREEN OPTIMIZATION ================= */
 @media (max-width: 600px) {
     .animated-title {
-        font-size: 1.35rem; /* Ukuran judul pas di HP */
+        font-size: 1.35rem; /* Title size that fits on mobile */
         text-align: center;
         letter-spacing: 0.5px;
     }
     
-    /* Mencegah iOS/Android auto-zoom saat klik input */
+    /* Prevent iOS/Android auto-zoom when tapping an input */
     input {
         font-size: 16px !important; 
         padding: 8px 10px !important;
@@ -65,12 +65,12 @@
         padding: 10px !important;
     }
 
-    /* === Sembunyikan Kolom Tabel yang Terlalu Panjang di HP === */
+    /* === Hide table columns that are too long on mobile === */
     .hide-mobile {
         display: none !important;
     }
 
-    /* Kontainer Tabel Fleksibel */
+    /* Flexible table container */
     .table-container {
         width: 100% !important;
         overflow-x: auto !important;

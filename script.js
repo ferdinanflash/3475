@@ -1,46 +1,10 @@
-// ================= SUPABASE PUBLIC CONFIGURATION =================
-const SUPABASE_URL = 'https://pwqkpeykjyujhnreleax.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWtwZXlranl1amhucmVsZWF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzgxNDgsImV4cCI6MjA5ODgxNDE0OH0.6u2CKOPHcMtVeA2ph0QWTqgtvs-4BQJpsz6v2kCyOEY';
-// =================================================================
+// ================= SHARED CODE LIVES IN common.js =================
+// Supabase credentials, the President-login rules (STAFF_EMAIL_DOMAIN,
+// ALLOWED_ADMIN_USERNAMES, usernameToStaffEmail, staffEmailToUsername,
+// isPresidentUsername), escapeHtml, sanitizeCsvField, getSupabase, and
+// copyToClipboard are all defined once in common.js and shared with res.js.
+// Make sure index.html loads common.js BEFORE this file.
 
-// Supabase Auth requires an email address, but this app only wants a plain
-// username + password. Uses the same email domain as res.js/troops.js so
-// accounts can be shared across pages, but this page only grants admin
-// access to the usernames listed below — a session from another page as any
-// OTHER staff account is simply ignored here, it does not unlock President
-// controls on this page.
-const STAFF_EMAIL_DOMAIN = '@3475-staff.internal';
-const ALLOWED_ADMIN_USERNAMES = ['president', 'demon', 'phoenix']; // <-- only these usernames get admin here
-
-function usernameToStaffEmail(username) {
-    return username.trim().toLowerCase().replace(/\s+/g, '') + STAFF_EMAIL_DOMAIN;
-}
-
-function staffEmailToUsername(email) {
-    return (email || '').endsWith(STAFF_EMAIL_DOMAIN)
-        ? email.slice(0, -STAFF_EMAIL_DOMAIN.length)
-        : email;
-}
-
-function isPresidentUsername(username) {
-    return !!username && ALLOWED_ADMIN_USERNAMES.includes(username.trim().toLowerCase());
-}
-
-// ================= SECURITY: HTML ESCAPING =================
-// Semua data yang berasal dari user (nickname, game id, notes, dst) WAJIB
-// lewat fungsi ini sebelum dimasukkan ke innerHTML, supaya tidak bisa
-// dipakai untuk stored XSS (contoh: nickname berisi <img onerror=...>).
-function escapeHtml(value) {
-    if (value === null || value === undefined) return '';
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-let supabaseClient = null;
 let isAdmin = false;
 let currentStaffUsername = null;
 let transferList = [];
@@ -65,6 +29,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     loadTransfers();
     setupRealtimeChannels();
+
+    const resetPasswordInput = document.getElementById('reset-password-input');
+    if (resetPasswordInput) {
+        resetPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') confirmResetTransferPhase();
+        });
+    }
 });
 
 // Applies (or clears) admin UI/state from a Supabase Auth session. This is
@@ -95,18 +66,7 @@ function applyAuthSession(session) {
     renderTable();
 }
 
-function getSupabase() {
-    if (!supabaseClient) {
-        if (typeof window.supabase !== 'undefined') {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            console.error("Supabase CDN library failed to load");
-        }
-    }
-    return supabaseClient;
-}
-
-// REALTIME STREAM CHANNELS (Sinkronisasi otomatis saat ada perubahan database)
+// REALTIME STREAM CHANNELS (auto-sync whenever the database changes)
 function setupRealtimeChannels() {
     const client = getSupabase();
     if (!client) return;
@@ -125,19 +85,19 @@ function setupRealtimeChannels() {
         .subscribe();
 }
 
-// 1. TAMPILKAN METADATA SISTEM DARI SUPABASE (state_info dkk, dari system_settings)
+// 1. DISPLAY SYSTEM METADATA FROM SUPABASE (state_info etc., from system_settings)
 function displaySystemSettings(settings) {
     const stateInfoText = settings.state_info || "Welcome to our State! No profile rules assigned yet.";
     document.getElementById('state-info-text').innerText = stateInfoText;
     document.getElementById('state-info-edit').value = stateInfoText;
 }
 
-// 1b. TAMPILKAN PRESIDENT / ALLIANCE / ID GAME DARI footer_settings
-// Mengikuti pola res.js: tampilkan versi cache dari localStorage dulu (biar
-// langsung muncul tanpa nunggu network), lalu timpa begitu data asli dari
-// Supabase datang. Ini juga yang membuat halaman ini sekarang konsisten
-// dengan res.js, karena keduanya baca/tulis dari tabel yang sama:
-// footer_settings (id = 'main').
+// 1b. DISPLAY PRESIDENT / ALLIANCE / ID GAME FROM footer_settings
+// Follows the same pattern as res.js: show the cached localStorage version
+// first (so it appears instantly without waiting on the network), then
+// overwrite it once the real data comes back from Supabase. This is also
+// what keeps this page consistent with res.js now, since both read/write
+// from the same table: footer_settings (id = 'main').
 function loadFooterInfo() {
     const cachedPresident = localStorage.getItem('cached_president_name');
     const cachedGuild = localStorage.getItem('cached_guild_name');
@@ -168,7 +128,7 @@ function loadFooterInfo() {
         .catch(err => console.error("Error loading footer info from database:", err));
 }
 
-// Helper: taruh nilai president/guild/id ke semua elemen tampilan + form edit
+// Helper: apply president/guild/id values to every display element + edit form
 function applyPresidentDisplay(president, alliance, idGame) {
     document.getElementById('val-president').innerText = president;
     document.getElementById('val-alliance').innerText = alliance;
@@ -193,7 +153,7 @@ function closeStateModal() {
     document.getElementById('state-info-modal').classList.remove('active');
 }
 
-// SPECIAL NOTES MODAL CONTROLS (HANYA ADMIN)
+// SPECIAL NOTES MODAL CONTROLS (ADMIN ONLY)
 function openSpecialNotesModal() {
     if (!isAdmin) return;
     document.getElementById('admin-special-notes-modal').classList.add('active');
@@ -204,7 +164,7 @@ function closeSpecialNotesModal() {
     document.getElementById('admin-special-notes-modal').classList.remove('active');
 }
 
-// LOAD SPECIAL NOTES DARI SYSTEM_SETTINGS
+// LOAD SPECIAL NOTES FROM SYSTEM_SETTINGS
 async function loadSpecialNotes() {
     const client = getSupabase();
     if (!client) return;
@@ -224,7 +184,7 @@ async function loadSpecialNotes() {
     }
 }
 
-// SAVE SPECIAL NOTES KE SYSTEM_SETTINGS SUPABASE
+// SAVE SPECIAL NOTES TO SYSTEM_SETTINGS ON SUPABASE
 async function saveSpecialNotes() {
     if (!isAdmin) return;
 
@@ -250,7 +210,7 @@ async function saveSpecialNotes() {
     }
 }
 
-// 2. ADMIN ACTION: SIMPAN DESKRIPSI ABOUT OUR STATE
+// 2. ADMIN ACTION: SAVE THE ABOUT OUR STATE DESCRIPTION
 async function saveStateInfo() {
     if (!isAdmin) return;
     
@@ -276,10 +236,9 @@ async function saveStateInfo() {
     }
 }
 
-// 3. ADMIN ACTION: SIMPAN DATA HEADER PRESIDEN SEKALIGUS
-// Sekarang menulis ke footer_settings (id = 'main'), tabel yang sama dengan
-// yang dipakai res.js, supaya President/Alliance/ID Game konsisten di kedua
-// halaman.
+// 3. ADMIN ACTION: SAVE PRESIDENT HEADER DATA ALL AT ONCE
+// Now writes to footer_settings (id = 'main'), the same table used by
+// res.js, so President/Alliance/ID Game stay consistent across both pages.
 async function savePresidentInfo() {
     if (!isAdmin) return;
     
@@ -322,7 +281,7 @@ async function savePresidentInfo() {
     }
 }
 
-// 4. ADMIN ACTION: MENGUBAH SLOT MAXIMUM QUOTA LIMIT
+// 4. ADMIN ACTION: CHANGE THE MAXIMUM SLOT QUOTA LIMIT
 async function changeMaxSlots(value) {
     if (!isAdmin) return;
     
@@ -356,7 +315,7 @@ async function changeMaxSlots(value) {
     }
 }
 
-// KIRIM FORM DATA PENDAFTAR BARU
+// SUBMIT NEW APPLICANT FORM DATA
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
@@ -381,16 +340,37 @@ async function submitTransfer() {
         showToast("Please fill all input fields!", "warning");
         return;
     }
+
+    if (!/^\d+$/.test(gameId)) {
+        showToast("Game ID must contain numbers only!", "warning");
+        return;
+    }
+
+    // Parse all numeric fields up front and reject the submission if any of
+    // them are not valid non-negative whole numbers, instead of letting
+    // NaN silently reach the database.
+    const stateNum = parseInt(state, 10);
+    const furnaceNum = parseInt(furnace, 10);
+    const powerNum = parseInt(power, 10);
+    const heroPowerNum = parseInt(heroPower, 10);
+    const totalHeroNum = parseInt(totalHero, 10);
+    const numericFields = { stateNum, furnaceNum, powerNum, heroPowerNum, totalHeroNum };
+
+    const hasInvalidNumber = Object.values(numericFields).some(n => !Number.isFinite(n) || n < 0);
+    if (hasInvalidNumber) {
+        showToast("Please enter valid, non-negative numbers for State, Furnace, Power, and Hero Power fields!", "warning");
+        return;
+    }
     
     const { error } = await client.from('player_transfers').insert({
-        transfer_from_state: parseInt(state),
+        transfer_from_state: stateNum,
         nickname: nickname,
         game_id: gameId,
         desired_alliance: alliance,
-        furnace_level: parseInt(furnace),
-        power: parseInt(power),
-        hero_power: parseInt(heroPower),
-        total_hero_power: parseInt(totalHero),
+        furnace_level: furnaceNum,
+        power: powerNum,
+        hero_power: heroPowerNum,
+        total_hero_power: totalHeroNum,
         referrer: referrer || null,
         status: 'Waiting'
     });
@@ -408,7 +388,7 @@ async function submitTransfer() {
     }
 }
 
-// AMBIL SEMUA DATA KONDISIONAL DARI DATABASE
+// FETCH ALL CURRENT DATA FROM THE DATABASE
 async function loadTransfers() {
     const client = getSupabase();
     if (!client) return;
@@ -441,7 +421,7 @@ async function loadTransfers() {
     }
 }
 
-// LOGIKA COUNTER & TOGGLE ELEMENT UNTUK VISUAL ADMIN
+// COUNTER LOGIC & ELEMENT TOGGLES FOR THE ADMIN VIEW
 function updateCounters() {
     const totalApplicants = transferList.length;
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
@@ -500,7 +480,7 @@ function updateCounters() {
     }
 }
 
-// RENDER TABEL APPLICANT LIST (TERMASUK DUKUNGAN KOLOM NOTES & BLACKLIST ADMIN)
+// RENDER APPLICANT LIST TABLE (INCLUDES ADMIN NOTES & BLACKLIST COLUMNS)
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
@@ -568,7 +548,7 @@ function renderTable() {
     });
 }
 
-// SHOW DETAIL POPUP (TERMASUK EDITOR NOTES & BLACKLIST ADMIN)
+// SHOW DETAIL POPUP (INCLUDES ADMIN NOTES & BLACKLIST EDITOR)
 function showDetailPopup(index) {
     const player = transferList[index];
     if (!player) return;
@@ -623,7 +603,7 @@ function closeDetailModal() {
     currentSelectedPlayerId = null;
 }
 
-// ADMIN ACTION: SIMPAN RECORD NOTE PENDAFTAR KE SUPABASE
+// ADMIN ACTION: SAVE APPLICANT NOTE RECORD TO SUPABASE
 async function savePlayerNote(playerId) {
     if (!isAdmin || !playerId) return;
 
@@ -649,7 +629,7 @@ async function savePlayerNote(playerId) {
     }
 }
 
-// ADMIN ACTION: SIMPAN RECORD BLACKLIST PENDAFTAR KE SUPABASE
+// ADMIN ACTION: SAVE APPLICANT BLACKLIST RECORD TO SUPABASE
 async function saveBlacklistNote(playerId) {
     if (!isAdmin || !playerId) return;
 
@@ -675,40 +655,22 @@ async function saveBlacklistNote(playerId) {
     }
 }
 
-function copyToClipboard(text) {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(`ID ${text} copied to clipboard!`, "success");
-    }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            showToast(`ID ${text} copied!`, "success");
-        } catch (e) {
-            showToast("Failed to copy ID automatically.", "error");
-        }
-        document.body.removeChild(textArea);
-    });
-}
-
-// EVENT DETECTOR MENUTUP JENDELA MODAL BILA LUAR POPUP DI-KLIK
+// EVENT LISTENER: CLOSE MODAL WINDOW WHEN CLICKING OUTSIDE THE POPUP
 window.onclick = function(event) {
     const detailModal = document.getElementById('detail-modal');
     const stateModal = document.getElementById('state-info-modal');
     const specialModal = document.getElementById('admin-special-notes-modal');
     const loginModal = document.getElementById('login-modal');
+    const resetPasswordModal = document.getElementById('reset-password-modal');
 
     if (event.target === detailModal) closeDetailModal();
     if (event.target === stateModal) closeStateModal();
     if (event.target === specialModal) closeSpecialNotesModal();
     if (event.target === loginModal) closeLoginModal();
+    if (event.target === resetPasswordModal) closeResetPasswordModal();
 }
 
-// ADMIN ACTION: UPDATE STATUS PENDAFTAR
+// ADMIN ACTION: UPDATE APPLICANT STATUS
 async function updateStatus(id, newStatus) {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
@@ -746,7 +708,7 @@ async function updateStatus(id, newStatus) {
     }
 }
 
-// ADMIN ACTION: HAPUS APPLICANT SINGLE RECORD PERMANEN
+// ADMIN ACTION: PERMANENTLY DELETE A SINGLE APPLICANT RECORD
 async function deleteRecord(id) {
     if (!isAdmin) return;
     if (!confirm("Delete this record permanently?")) return;
@@ -764,41 +726,76 @@ async function deleteRecord(id) {
     }
 }
 
-// ADMIN ACTION: MASSIVE DATA CLEANUP RESET TRANSFER PHASE
-async function resetTransferPhase() {
+// ADMIN ACTION: MASSIVE DATA CLEANUP — RESET TRANSFER PHASE
+// The destructive wipe itself still requires a second admin password,
+// verified server-side via the verify_admin_code RPC. That password is now
+// entered through a proper modal (masked <input type="password">) instead
+// of the browser's plain-text prompt(), for both a safer look-over-your-
+// shoulder posture and visual consistency with the rest of the app's UI.
+function resetTransferPhase() {
     if (!isAdmin) {
         showToast("Unauthorized action!", "error");
         return;
     }
-    
-    const client = getSupabase();
-    if (!client) return;
-    
-    const confirm1 = confirm("⚠️ WARNING: Are you sure you want to RESET the entire Transfer Phase?\nThis action cannot be undone!");
-    if (!confirm1) return;
-    
-    const confirm2 = prompt("Enter Admin Password to execute massive wipe:");
-    if (!confirm2) return;
-    
-    const { data: isValid, error: authError } = await client.rpc('verify_admin_code', { input_code: confirm2 });
-    
-    if (authError || !isValid) {
-        showToast("Reset canceled. Verification security check failed.", "warning");
+
+    if (!confirm("⚠️ WARNING: Are you sure you want to RESET the entire Transfer Phase?\nThis action cannot be undone!")) {
         return;
     }
-    
+
+    const passwordInput = document.getElementById('reset-password-input');
+    if (passwordInput) passwordInput.value = '';
+    document.getElementById('reset-password-modal').classList.add('active');
+    if (passwordInput) passwordInput.focus();
+}
+
+function closeResetPasswordModal() {
+    document.getElementById('reset-password-modal').classList.remove('active');
+}
+
+async function confirmResetTransferPhase() {
+    const passwordInput = document.getElementById('reset-password-input');
+    const password = passwordInput ? passwordInput.value : '';
+
+    if (!password) {
+        showToast("Please enter the admin password!", "warning");
+        return;
+    }
+
+    const client = getSupabase();
+    if (!client) return;
+
+    const confirmBtn = document.getElementById('reset-password-confirm-btn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerText = 'Verifying...';
+    }
+
     try {
+        const { data: isValid, error: authError } = await client.rpc('verify_admin_code', { input_code: password });
+
+        if (authError || !isValid) {
+            showToast("Reset canceled. Verification security check failed.", "warning");
+            return;
+        }
+
         const { error } = await client
             .from('player_transfers')
             .delete()
             .neq('id', 0);
-            
+
         if (error) throw error;
+
         showToast("All transfer records have been cleared!", "success");
+        closeResetPasswordModal();
         await loadTransfers();
     } catch (err) {
         console.error("Wipe compilation sequence error:", err);
         showToast("Reset failed: " + err.message, "error");
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerText = '⚠️ Confirm Wipe';
+        }
     }
 }
 
@@ -881,19 +878,7 @@ async function handleStaffLogout() {
     showToast("President Logout", "info");
 }
 
-// Membungkus nilai untuk 1 sel CSV: escape tanda kutip ganda dengan benar,
-// dan cegah CSV/Formula Injection dengan prefix apostrof kalau value diawali
-// karakter =, +, -, atau @ (bisa dieksekusi sebagai formula di Excel/Sheets).
-function sanitizeCsvField(value) {
-    let str = String(value ?? '-');
-    if (/^[=+\-@]/.test(str)) {
-        str = `'${str}`;
-    }
-    str = str.replace(/"/g, '""');
-    return `"${str}"`;
-}
-
-// EXPORT TO EXCEL / CSV CONSOLE GENERATOR
+// EXPORT TO EXCEL / CSV
 function exportCSV() {
     if (transferList.length === 0) {
         showToast("No data to export", "warning");
