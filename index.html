@@ -365,17 +365,6 @@
     </style>
 </head>
 <body>
-    <!-- STATE 3475 OPENING ANIMATION: overlay only, page layout remains untouched -->
-    <div id="state3475-opening" class="state3475-opening" aria-hidden="true">
-        <div class="state3475-opening__particles"></div>
-        <div class="state3475-opening__flare"></div>
-        <div class="state3475-opening__ring"></div>
-        <div class="state3475-opening__content">
-            <div class="state3475-opening__title">3475</div>
-            <div class="state3475-opening__subtitle">STATE 3475</div>
-        </div>
-    </div>
-
 
 <div id="snow-container"></div>
 <div id="toast-container"></div>
@@ -659,27 +648,6 @@
     });
 </script>
 
-    <script>
-    (function () {
-        function hideState3475Opening() {
-            const overlay = document.getElementById('state3475-opening');
-            if (!overlay) return;
-            // Let the animation complete on every refresh, then remove the overlay.
-            window.setTimeout(function () {
-                overlay.classList.add('state3475-opening--hide');
-                window.setTimeout(function () {
-                    overlay.remove();
-                }, 450);
-            }, 2050);
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', hideState3475Opening, { once: true });
-        } else {
-            hideState3475Opening();
-        }
-    })();
-    </script>
-
+<script src="opening-animation.js"></script>
 </body>
 </html>
