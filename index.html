@@ -398,10 +398,15 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
   .applicants-card.mobile-open .applicants-header .section-subtitle{font-size:.7rem}
   .applicants-card.mobile-open .applicants-tools{width:auto!important;display:flex!important;flex-wrap:nowrap!important;gap:5px!important}
   .applicants-card.mobile-open .applicants-tools .btn-admin{flex:0 0 auto!important;width:auto!important;min-height:34px!important;padding:7px 8px!important;font-size:.68rem!important}
-  .applicants-card.mobile-open .table-container{display:block!important;width:100%;max-width:100%;height:calc(100vh - 78px);overflow-x:auto!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:0}
-  .applicants-card.mobile-open table{width:max-content!important;min-width:620px!important;font-size:.76rem!important}
-  .applicants-card.mobile-open th,.applicants-card.mobile-open td{white-space:nowrap!important;padding:8px 7px!important}
-  .applicants-card.mobile-open .mobile-applicants-list{display:none!important}
+  /* Mobile applicants: use a full-width card list instead of a wide table. */
+  .applicants-card.mobile-open .table-container{display:none!important}
+  .applicants-card.mobile-open .mobile-applicants-list{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;width:100%!important;max-width:100%!important;height:calc(100vh - 78px);overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px!important;box-sizing:border-box}
+  .applicants-card.mobile-open .mobile-applicant{width:100%!important;max-width:100%!important;box-sizing:border-box;margin:0!important;padding:10px 11px!important}
+  .applicants-card.mobile-open .mobile-applicant-top{min-width:0}
+  .applicants-card.mobile-open .mobile-player{min-width:0;max-width:58%;font-size:.88rem}
+  .applicants-card.mobile-open .mobile-meta{margin:5px 0 8px;font-size:.7rem;gap:4px 10px}
+  .applicants-card.mobile-open .mobile-actions{gap:6px}
+  .applicants-card.mobile-open .mobile-actions button{min-width:0;white-space:nowrap}
   .applicants-card.mobile-open .hide-mobile{display:table-cell!important}
   .applicants-card.mobile-open .admin-extra-col{display:table-cell!important}
   .applicants-card.mobile-open .admin-actions{display:flex!important}
