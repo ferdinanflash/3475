@@ -47,6 +47,7 @@ function applyAuthSession(session) {
     const sessionUsername = session ? staffEmailToUsername(session.user.email) : null;
     isAdmin = isPresidentUsername(sessionUsername);
     currentStaffUsername = isAdmin ? sessionUsername : null;
+    document.body.classList.toggle('admin-mode', isAdmin);
 
     const btn = document.getElementById('admin-btn');
     const badge = document.getElementById('admin-badge');
@@ -493,12 +494,11 @@ function updateCounters() {
     }
 }
 
-// RENDER APPLICANT LIST TABLE (INCLUDES ADMIN NOTES & BLACKLIST COLUMNS)
+// RENDER APPLICANT LIST TABLE
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
     const thNotes = document.getElementById('th-notes');
-    const thBlacklist = document.getElementById('th-blacklist');
     const resetBtn = document.getElementById('reset-phase-btn');
     const mobileList = document.getElementById('mobile-applicants-list');
     
@@ -508,14 +508,13 @@ function renderTable() {
     
     if (thAction) thAction.style.display = isAdmin ? "table-cell" : "none";
     if (thNotes) thNotes.style.display = isAdmin ? "table-cell" : "none";
-    if (thBlacklist) thBlacklist.style.display = isAdmin ? "table-cell" : "none";
     
     if (resetBtn) {
         resetBtn.style.display = isAdmin ? "inline-block" : "none";
     }
     
     if (transferList.length === 0) {
-        const totalCols = isAdmin ? 8 : 5;
+        const totalCols = isAdmin ? 7 : 5;
         tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">No applications found</td></tr>`;
         if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">No applications found</div>`;
         return;
@@ -525,7 +524,6 @@ function renderTable() {
         const row = document.createElement('tr');
         let actionCell = "";
         let notesCell = "";
-        let blacklistCell = "";
         
         if (isAdmin) {
             actionCell = `
@@ -542,8 +540,6 @@ function renderTable() {
             const noteText = item.notes ? escapeHtml(item.notes) : '<span style="color:#64748b; font-style:italic;">None</span>';
             notesCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${escapeHtml(item.notes || '')}">${noteText}</td>`;
             
-            const blacklistText = item.blacklist_notes ? escapeHtml(item.blacklist_notes) : '<span style="color:#64748b; font-style:italic;">None</span>';
-            blacklistCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ef4444;" title="${escapeHtml(item.blacklist_notes || '')}">${blacklistText}</td>`;
         }
         
         let badgeClass = `badge badge-${item.status.toLowerCase()}`;
@@ -557,7 +553,6 @@ function renderTable() {
             <td><strong>${escapeHtml(item.nickname)}</strong></td>
             <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="Click to copy ID">${escapeHtml(item.game_id)} 📋</td>
             ${isAdmin ? notesCell : ''}
-            ${isAdmin ? blacklistCell : ''}
             <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(item.status)}</span></td>
         `;
         tbody.appendChild(row);
@@ -567,12 +562,11 @@ function renderTable() {
             card.className = 'mobile-applicant';
             const statusClass = `badge badge-${item.status.toLowerCase()}`;
             const notes = isAdmin && item.notes ? `<div class="mobile-note">📝 ${escapeHtml(item.notes)}</div>` : '';
-            const blacklist = isAdmin && item.blacklist_notes ? `<div class="mobile-note danger">🚨 ${escapeHtml(item.blacklist_notes)}</div>` : '';
             const adminActions = isAdmin ? `<div class="mobile-admin-actions">${item.status === 'Waiting' ? `<button class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')" style="background:var(--success);padding:7px!important;font-size:.72rem!important;">Accept</button><button class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')" style="background:var(--danger);padding:7px!important;font-size:.72rem!important;">Reject</button>` : `<button class="btn btn-delete" onclick="deleteRecord(${item.id})" style="background:#475569;padding:7px!important;font-size:.72rem!important;">Delete</button>`}</div>` : '';
             card.innerHTML = `
                 <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(item.status)}</span></div>
                 <div class="mobile-meta"><span>State ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span>F${escapeHtml(item.furnace_level)}</span></div>
-                ${notes}${blacklist}
+                ${notes}
                 <div class="mobile-actions"><button class="btn btn-view-detail" onclick="showDetailPopup(${index})">👁 Details</button><button class="btn btn-admin" onclick="copyToClipboard(transferList[${index}].game_id)">📋 Copy ID</button></div>
                 ${adminActions}
             `;
@@ -581,7 +575,23 @@ function renderTable() {
     });
 }
 
-// SHOW DETAIL POPUP (INCLUDES ADMIN NOTES & BLACKLIST EDITOR)
+// MOBILE APPLICANTS WINDOW
+function openApplicantsModal() {
+    const card = document.querySelector('.applicants-card');
+    if (!card) return;
+    card.classList.add('mobile-open');
+    document.body.classList.add('applicants-modal-open');
+    // Keep the live list current when the window opens.
+    renderTable();
+}
+
+function closeApplicantsModal() {
+    const card = document.querySelector('.applicants-card');
+    if (card) card.classList.remove('mobile-open');
+    document.body.classList.remove('applicants-modal-open');
+}
+
+// SHOW DETAIL POPUP
 function showDetailPopup(index) {
     const player = transferList[index];
     if (!player) return;
@@ -614,23 +624,13 @@ function showDetailPopup(index) {
     const notesInput = document.getElementById('pop-notes-input');
     const saveNoteBtn = document.getElementById('pop-notes-save-btn');
     
-    const blacklistContainer = document.getElementById('pop-blacklist-container');
-    const blacklistInput = document.getElementById('pop-blacklist-input');
-    const saveBlacklistBtn = document.getElementById('pop-blacklist-save-btn');
-
     if (isAdmin) {
         notesContainer.style.display = 'flex';
         notesInput.value = player.notes || '';
         saveNoteBtn.onclick = () => savePlayerNote(player.id);
         
-        if (blacklistContainer) {
-            blacklistContainer.style.display = 'flex';
-            blacklistInput.value = player.blacklist_notes || '';
-            saveBlacklistBtn.onclick = () => saveBlacklistNote(player.id);
-        }
     } else {
         notesContainer.style.display = 'none';
-        if (blacklistContainer) blacklistContainer.style.display = 'none';
     }
 
     document.getElementById('detail-modal').classList.add('active');
@@ -664,32 +664,6 @@ async function savePlayerNote(playerId) {
     } catch (err) {
         console.error("Failed to save note:", err);
         showToast("Error saving note: " + err.message, "error");
-    }
-}
-
-// ADMIN ACTION: SAVE APPLICANT BLACKLIST RECORD TO SUPABASE
-async function saveBlacklistNote(playerId) {
-    if (!isAdmin || !playerId) return;
-
-    const blacklistText = document.getElementById('pop-blacklist-input').value;
-    const client = getSupabase();
-    if (!client) return;
-
-    try {
-        const { error } = await client
-            .from('player_transfers')
-            .update({ blacklist_notes: blacklistText })
-            .eq('id', playerId);
-
-        if (!error) {
-            showToast("Blacklist note saved successfully!", "success");
-            loadTransfers();
-        } else {
-            throw error;
-        }
-    } catch (err) {
-        console.error("Failed to save blacklist note:", err);
-        showToast("Error saving blacklist note: " + err.message, "error");
     }
 }
 
@@ -929,7 +903,6 @@ function exportCSV() {
     const headers = ["From State", "Nickname", "Game ID", "Desired Alliance", "Furnace", "Power", "Hero Power", "Total Hero Power", "Referrer", "Status"];
     if (isAdmin) {
         headers.push("Admin Notes");
-        headers.push("Blacklist Notes");
     }
 
     const rows = transferList.map(p => {
@@ -947,7 +920,6 @@ function exportCSV() {
         ];
         if (isAdmin) {
             row.push(sanitizeCsvField(p.notes || ''));
-            row.push(sanitizeCsvField(p.blacklist_notes || ''));
         }
         return row;
     });

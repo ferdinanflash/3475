@@ -163,7 +163,7 @@
 
             .table-container { width: 100%; max-width: 100%; box-sizing: border-box; overflow-x: auto; }
             
-            /* Hide Notes and Blacklist columns on mobile */
+            /* Keep admin-only notes compact on mobile */
             .admin-extra-col {
                 display: none !important;
             }
@@ -381,8 +381,36 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
 .mobile-applicants-list{display:none}.game-id-cell{user-select:none}.game-id-cell:hover{color:#fbbf24}
 .modal-header>div{min-width:0}.modal-status-waiting{background:rgba(245,158,11,.18);color:#fbbf24}.modal-status-accepted{background:rgba(34,197,94,.18);color:#4ade80}.modal-status-rejected{background:rgba(239,68,68,.18);color:#f87171}.modal-status-pill{display:inline-block;margin-top:3px;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:999px;background:#334155;color:#cbd5e1}.game-id-detail{cursor:pointer}.game-id-detail::after{content:'  📋';font-size:.75rem}.detail-row:last-of-type{border-bottom:0}
 #toast-container{top:76px;left:auto;right:16px;width:min(380px,calc(100vw - 32px))}.toast{margin-bottom:8px}
+.mobile-view-applicants-btn,.mobile-applicants-back{display:none}
+.applicants-title-wrap{display:flex;align-items:center;gap:8px;min-width:0}
+@media (max-width:600px){
+  body.applicants-modal-open{overflow:hidden}
+  .mobile-view-applicants-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;margin:0 0 15px;padding:12px 16px;border:1px solid #3b82f6;border-radius:12px;background:linear-gradient(135deg,#132b55,#0f2143);color:#f8fafc;font:inherit;font-size:1rem;box-shadow:0 8px 22px rgba(0,0,0,.2),0 0 0 1px rgba(59,130,246,.12) inset;cursor:pointer}
+  .mobile-view-applicants-btn:active{transform:scale(.99)}
+  .mobile-view-applicants-btn>span:first-child{font-size:1.15rem}
+  .mobile-view-arrow{margin-left:auto;font-size:1.8rem;line-height:1;color:#93c5fd}
+  .applicants-card{display:none}
+  .applicants-card.mobile-open{display:block;position:fixed;inset:0;z-index:1000;margin:0;border-radius:0;border:0!important;background:#0f172a;box-shadow:none;overflow:hidden;padding:0!important}
+  .applicants-card.mobile-open .applicants-header{position:sticky;top:0;z-index:2;background:#111c32;border-bottom:1px solid #334155;padding:14px!important;flex-direction:row!important;align-items:center!important;margin:0}
+  .mobile-applicants-back{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;border:1px solid #475569;border-radius:9px;background:#1e293b;color:#f8fafc;font-size:1.7rem;line-height:1;cursor:pointer}
+  .applicants-card.mobile-open .applicants-title-wrap{flex:1}
+  .applicants-card.mobile-open .applicants-header h3{font-size:1.05rem}
+  .applicants-card.mobile-open .applicants-header .section-subtitle{font-size:.7rem}
+  .applicants-card.mobile-open .applicants-tools{width:auto!important;display:flex!important;flex-wrap:nowrap!important;gap:5px!important}
+  .applicants-card.mobile-open .applicants-tools .btn-admin{flex:0 0 auto!important;width:auto!important;min-height:34px!important;padding:7px 8px!important;font-size:.68rem!important}
+  .applicants-card.mobile-open .table-container{display:block!important;width:100%;max-width:100%;height:calc(100vh - 78px);overflow-x:auto!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:0}
+  .applicants-card.mobile-open table{width:max-content!important;min-width:680px!important;font-size:.76rem!important}
+  .applicants-card.mobile-open th,.applicants-card.mobile-open td{white-space:nowrap!important;padding:8px 7px!important}
+  .applicants-card.mobile-open .mobile-applicants-list{display:none!important}
+  .applicants-card.mobile-open .hide-mobile{display:table-cell!important}
+  .applicants-card.mobile-open .admin-extra-col{display:table-cell!important}
+  .applicants-card.mobile-open .admin-actions{display:flex!important}
+  .applicants-card.mobile-open .col-detail{width:44px!important}
+  .applicants-card.mobile-open .btn-view-detail{padding:5px 7px!important}
+  .applicants-card.mobile-open .badge{min-width:68px}
+}
 @media (min-width:901px){.site-header .header-right{max-width:760px}.admin-controls-buttons{width:auto}.admin-controls-buttons .btn-admin{flex:0 0 auto}.form-card{max-height:calc(100vh - 110px);overflow:auto}}
-@media (max-width:900px){body{padding:10px}.site-header{position:relative;top:auto;padding-bottom:10px}.header-left{width:100%;text-align:center}.header-right{width:100%;flex-direction:column;align-items:stretch}.president-info-box{width:100%;justify-content:center}.admin-controls,.admin-controls-buttons{width:100%}.admin-controls-buttons{justify-content:center}.dashboard-grid{grid-template-columns:1fr}.form-card{position:static}.applicants-header{align-items:flex-start}.applicants-tools{width:100%;justify-content:stretch}.applicants-tools .btn-admin{flex:1}.table-container{display:none}.mobile-applicants-list{display:grid;gap:8px}.form-fields-grid{grid-template-columns:1fr 1fr}.mobile-applicant{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:11px}.mobile-applicant-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.mobile-player{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mobile-meta{display:flex;flex-wrap:wrap;gap:5px 12px;color:#94a3b8;font-size:.72rem;margin:6px 0 9px}.mobile-actions{display:flex;gap:6px}.mobile-actions button{flex:1}.mobile-actions .btn-view-detail{padding:8px!important;font-size:.78rem!important}.mobile-admin-actions{display:flex;gap:5px;margin-top:7px}.mobile-admin-actions button{flex:1;padding:7px 5px!important;font-size:.72rem!important}.mobile-note{font-size:.7rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px}.mobile-note.danger{color:#f87171}}
+@media (max-width:900px){body{padding:10px}.site-header{position:relative;top:auto;padding-bottom:10px}.header-left{width:100%;text-align:center}.header-right{width:100%;flex-direction:column;align-items:stretch}.president-info-box{width:100%;justify-content:center}.admin-controls,.admin-controls-buttons{width:100%}.admin-controls-buttons{justify-content:center}.dashboard-grid{grid-template-columns:1fr}.form-card{position:static}.applicants-header{align-items:flex-start}.applicants-tools{width:100%;justify-content:stretch}.applicants-tools .btn-admin{flex:1}.table-container{display:none}.mobile-applicants-list{display:grid;gap:8px}.form-fields-grid{grid-template-columns:1fr 1fr}.mobile-applicant{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:11px}.mobile-applicant-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.mobile-player{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mobile-meta{display:flex;flex-wrap:wrap;gap:5px 12px;color:#94a3b8;font-size:.72rem;margin:6px 0 9px}.mobile-actions{display:flex;gap:6px}.mobile-actions button{flex:1}.mobile-actions .btn-view-detail{padding:8px!important;font-size:.78rem!important}.mobile-admin-actions{display:flex;gap:5px;margin-top:7px}.mobile-admin-actions button{flex:1;padding:7px 5px!important;font-size:.72rem!important}.mobile-note{font-size:.7rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px}}
 @media (max-width:600px){.animated-title{font-size:1.25rem}.president-info-box{padding:8px!important}.info-item{justify-content:space-between}.form-fields-grid{grid-template-columns:1fr}.form-fields-grid .form-group:last-child{grid-column:auto}.counter-box{grid-template-columns:1fr 1fr}.slots-left-card{grid-column:1/-1}.applicants-header{flex-direction:column}.applicants-tools{width:100%}.applicants-tools .btn-admin{min-height:38px}.card{padding:14px!important}.modal-content{max-height:92vh}.modal-body{padding:14px}.detail-row{font-size:.88rem}.modal-header{padding:12px 14px}}
 </style>
 
@@ -416,11 +444,7 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
                 <button class="btn btn-primary" id="pop-notes-save-btn" style="padding: 6px; font-size: 0.8rem;">💾 Save Note</button>
             </div>
 
-            <div class="detail-row" id="pop-blacklist-container" style="display:none; flex-direction: column; gap: 6px; align-items: stretch; border-bottom: none; margin-top: 5px;">
-                <span class="detail-label" style="color: var(--danger);">🚨 Blacklist Notes:</span>
-                <textarea id="pop-blacklist-input" style="height: 70px; font-size: 0.85rem; resize: vertical; border: 1px solid var(--danger);" placeholder="Add blacklist reason or warning..."></textarea>
-                <button class="btn" id="pop-blacklist-save-btn" style="background: var(--danger); padding: 6px; font-size: 0.8rem; color: white;">💾 Save Blacklist Note</button>
-            </div>
+
         </div>
     </div>
 </div>
@@ -531,7 +555,7 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
                     <button class="btn btn-admin" id="special-notes-btn" style="display:none; background: var(--warning); color: #000; font-weight: bold;" onclick="openSpecialNotesModal()">📝 Special Notes</button>
                     <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">👑</button>
                 </div>
-                <span id="admin-badge" style="display:none; color:var(--success); font-size:0.75rem; font-weight:bold;">[President Mode]</span>
+                <span id="admin-badge" class="admin-badge" style="display:none;">● President Mode</span>
             </div>
         </div>
     </header>
@@ -617,9 +641,16 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
             <div class="submit-wrap"><button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button><small class="submit-hint">Your application will appear in the list immediately after submission.</small></div>
         </div>
 
+        <button type="button" class="mobile-view-applicants-btn" onclick="openApplicantsModal()" aria-label="View applicants">
+            <span>👥</span><strong>View Applicants</strong><span class="mobile-view-arrow">›</span>
+        </button>
+
         <div class="card applicants-card">
             <div class="applicants-header">
-                <div><h3>Applicants List</h3><p class="section-subtitle">Real-time application status</p></div>
+                <div class="applicants-title-wrap">
+                    <button type="button" class="mobile-applicants-back" onclick="closeApplicantsModal()" aria-label="Back">‹</button>
+                    <div><h3>Applicants List</h3><p class="section-subtitle">Real-time application status</p></div>
+                </div>
                 <div class="applicants-tools">
                     <button class="btn btn-admin btn-danger-soft" id="reset-phase-btn" style="display:none;" onclick="resetTransferPhase()">⚠️ Reset Phase</button>
                     <button class="btn btn-admin btn-success-soft" onclick="exportCSV()">⇩ Export CSV</button>
@@ -629,13 +660,12 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
                 <table>
                     <thead>
                         <tr>
-                            <th class="col-detail">Detail</th>
-                            <th id="th-action" style="display:none;">Action</th>
+                            <th class="col-detail">View</th>
+                            <th id="th-action" class="admin-action-head" style="display:none;">Action</th>
                             <th class="hide-mobile">From State</th>
                             <th>Nickname</th>
                             <th>Game ID</th>
-                            <th id="th-notes" class="admin-extra-col" style="display:none;">Notes</th>
-                            <th id="th-blacklist" class="admin-extra-col" style="display:none; color: var(--danger);">Blacklist</th>
+                            <th id="th-notes" class="admin-extra-col" style="display:none;">Admin Notes</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -677,5 +707,54 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
 </script>
 
 <script src="opening-animation.js"></script>
+<style>
+/* ===== ADMIN UI POLISH ===== */
+.admin-badge{display:inline-flex;align-items:center;gap:5px;color:#4ade80;font-size:.72rem;font-weight:800;letter-spacing:.3px;white-space:nowrap}
+.admin-mode .site-header{border-bottom-color:#2563eb;box-shadow:0 8px 24px rgba(37,99,235,.08)}
+.admin-mode .applicants-card{border-color:#2563eb55;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.admin-mode .applicants-header{padding-bottom:10px;border-bottom:1px solid #334155}
+.admin-mode .applicants-tools .btn-admin{min-height:34px}
+.admin-mode .table-container{border-color:#3b82f655}
+.admin-mode .table-container th{background:#111c32;color:#a5b4fc;font-size:.73rem;text-transform:uppercase;letter-spacing:.35px}
+.admin-mode .table-container td{font-size:.78rem}
+.admin-mode .table-container tbody tr:hover{background:rgba(59,130,246,.10)}
+.admin-action-head{text-align:center!important}
+.admin-actions{min-width:82px!important;flex-direction:row!important;gap:4px!important}
+.admin-actions button{width:auto!important;min-width:38px;padding:5px 7px!important;font-size:.68rem!important}
+.admin-actions button.btn-accept{background:#15803d!important}
+.admin-actions button.btn-reject{background:#b91c1c!important}
+.admin-actions button.btn-delete{background:#475569!important}
+.admin-extra-col{max-width:150px!important}
+.admin-mode .game-id-cell{color:#f8fafc}
+.admin-mode .mobile-applicant{border-color:#334155}
+.admin-mode .mobile-admin-actions button{min-height:34px}
+/* President info becomes a compact control strip */
+.admin-mode .president-info-box{border-color:#2563eb66;background:#0b1427}
+/* Make the admin note editor cleaner */
+#pop-notes-container{background:#0f172a99;border:1px solid #334155!important;border-radius:8px;padding:10px!important;margin-top:8px}
+#pop-notes-container .detail-label{font-weight:800;color:#cbd5e1}
+#pop-notes-input{min-height:82px!important}
+#pop-notes-save-btn{min-height:36px}
+
+@media (max-width:1100px){
+  .dashboard-grid{grid-template-columns:1fr}
+  .form-card{position:static;max-height:none;overflow:visible}
+  .table-container{display:none}
+  .mobile-applicants-list{display:grid;gap:8px}
+  .admin-mode .applicants-tools{display:grid;grid-template-columns:1fr 1fr}
+  .admin-mode .mobile-admin-actions{display:flex}
+}
+@media(max-width:900px){
+  .admin-mode .applicants-header{gap:8px}
+  .admin-mode .applicants-tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .admin-mode .applicants-tools .btn-admin{width:100%}
+  .admin-mode .mobile-applicant{padding:12px}
+}
+@media(max-width:600px){
+  .admin-mode .applicants-tools{grid-template-columns:1fr 1fr}
+  .admin-mode .admin-badge{font-size:.68rem}
+}
+</style>
+
 </body>
 </html>
