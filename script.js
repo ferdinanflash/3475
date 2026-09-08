@@ -451,6 +451,11 @@ function updateCounters() {
     
     if (maxSlotsInput) {
         maxSlotsInput.disabled = !isAdmin;
+        maxSlotsInput.value = maxSlots;
+    }
+    const maxSlotDisplay = document.getElementById('max-slot-display');
+    if (maxSlotDisplay) {
+        maxSlotDisplay.innerText = maxSlots;
     }
 
     if (specialNotesBtn) {
