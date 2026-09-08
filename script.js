@@ -498,7 +498,6 @@ function updateCounters() {
 function renderTable() {
     const tbody = document.getElementById('transfer-tbody');
     const thAction = document.getElementById('th-action');
-    const thNotes = document.getElementById('th-notes');
     const resetBtn = document.getElementById('reset-phase-btn');
     const mobileList = document.getElementById('mobile-applicants-list');
     
@@ -507,14 +506,13 @@ function renderTable() {
     if (mobileList) mobileList.innerHTML = "";
     
     if (thAction) thAction.style.display = isAdmin ? "table-cell" : "none";
-    if (thNotes) thNotes.style.display = isAdmin ? "table-cell" : "none";
     
     if (resetBtn) {
         resetBtn.style.display = isAdmin ? "inline-block" : "none";
     }
     
     if (transferList.length === 0) {
-        const totalCols = isAdmin ? 7 : 5;
+        const totalCols = isAdmin ? 6 : 5;
         tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">No applications found</td></tr>`;
         if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">No applications found</div>`;
         return;
@@ -537,8 +535,6 @@ function renderTable() {
                 </td>
             `;
             
-            const noteText = item.notes ? escapeHtml(item.notes) : '<span style="color:#64748b; font-style:italic;">None</span>';
-            notesCell = `<td class="admin-extra-col" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem;" title="${escapeHtml(item.notes || '')}">${noteText}</td>`;
             
         }
         
@@ -552,7 +548,6 @@ function renderTable() {
             <td class="hide-mobile from-state-cell">${escapeHtml(item.transfer_from_state)}</td>
             <td><strong>${escapeHtml(item.nickname)}</strong></td>
             <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="Click to copy ID">${escapeHtml(item.game_id)} 📋</td>
-            ${isAdmin ? notesCell : ''}
             <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(item.status)}</span></td>
         `;
         tbody.appendChild(row);
