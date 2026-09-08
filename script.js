@@ -435,6 +435,8 @@ function updateCounters() {
     
     document.getElementById('count-total').innerText = totalApplicants;
     document.getElementById('count-accepted').innerText = acceptedCount;
+    const leftEl = document.getElementById('count-left');
+    if (leftEl) leftEl.innerText = Math.max(0, maxSlots - acceptedCount);
     
     // Scoped to #transfer-form-fields only — NOT a page-wide '.form-group'
     // selector, which would also grab (and disable) unrelated inputs like
@@ -498,9 +500,11 @@ function renderTable() {
     const thNotes = document.getElementById('th-notes');
     const thBlacklist = document.getElementById('th-blacklist');
     const resetBtn = document.getElementById('reset-phase-btn');
+    const mobileList = document.getElementById('mobile-applicants-list');
     
     if (!tbody) return;
     tbody.innerHTML = "";
+    if (mobileList) mobileList.innerHTML = "";
     
     if (thAction) thAction.style.display = isAdmin ? "table-cell" : "none";
     if (thNotes) thNotes.style.display = isAdmin ? "table-cell" : "none";
@@ -512,7 +516,8 @@ function renderTable() {
     
     if (transferList.length === 0) {
         const totalCols = isAdmin ? 8 : 5;
-        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8;">No applications found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">No applications found</td></tr>`;
+        if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">No applications found</div>`;
         return;
     }
     
@@ -556,6 +561,23 @@ function renderTable() {
             <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(item.status)}</span></td>
         `;
         tbody.appendChild(row);
+
+        if (mobileList) {
+            const card = document.createElement('div');
+            card.className = 'mobile-applicant';
+            const statusClass = `badge badge-${item.status.toLowerCase()}`;
+            const notes = isAdmin && item.notes ? `<div class="mobile-note">📝 ${escapeHtml(item.notes)}</div>` : '';
+            const blacklist = isAdmin && item.blacklist_notes ? `<div class="mobile-note danger">🚨 ${escapeHtml(item.blacklist_notes)}</div>` : '';
+            const adminActions = isAdmin ? `<div class="mobile-admin-actions">${item.status === 'Waiting' ? `<button class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')" style="background:var(--success);padding:7px!important;font-size:.72rem!important;">Accept</button><button class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')" style="background:var(--danger);padding:7px!important;font-size:.72rem!important;">Reject</button>` : `<button class="btn btn-delete" onclick="deleteRecord(${item.id})" style="background:#475569;padding:7px!important;font-size:.72rem!important;">Delete</button>`}</div>` : '';
+            card.innerHTML = `
+                <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(item.status)}</span></div>
+                <div class="mobile-meta"><span>State ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span>F${escapeHtml(item.furnace_level)}</span></div>
+                ${notes}${blacklist}
+                <div class="mobile-actions"><button class="btn btn-view-detail" onclick="showDetailPopup(${index})">👁 Details</button><button class="btn btn-admin" onclick="copyToClipboard(transferList[${index}].game_id)">📋 Copy ID</button></div>
+                ${adminActions}
+            `;
+            mobileList.appendChild(card);
+        }
     });
 }
 
@@ -582,6 +604,11 @@ function showDetailPopup(index) {
     document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
     document.getElementById('pop-referrer').innerText = player.referrer || '-';
     document.getElementById('pop-status').innerText = player.status;
+    const statusPill = document.getElementById('pop-status-pill');
+    if (statusPill) {
+        statusPill.innerText = player.status;
+        statusPill.className = `modal-status-pill modal-status-${String(player.status).toLowerCase()}`;
+    }
 
     const notesContainer = document.getElementById('pop-notes-container');
     const notesInput = document.getElementById('pop-notes-input');
@@ -722,7 +749,9 @@ async function updateStatus(id, newStatus) {
 // ADMIN ACTION: PERMANENTLY DELETE A SINGLE APPLICANT RECORD
 async function deleteRecord(id) {
     if (!isAdmin) return;
-    if (!confirm("Delete this record permanently?")) return;
+    const player = transferList.find(p => p.id === id);
+    const playerName = player ? player.nickname : 'this applicant';
+    if (!confirm(`Delete ${playerName} permanently?\n\nThis cannot be undone.`)) return;
     
     const client = getSupabase();
     if (!client) return;
@@ -749,7 +778,8 @@ function resetTransferPhase() {
         return;
     }
 
-    if (!confirm("⚠️ WARNING: Are you sure you want to RESET the entire Transfer Phase?\nThis action cannot be undone!")) {
+    const totalRecords = transferList.length;
+    if (!confirm(`⚠️ WARNING\n\nYou are about to permanently delete ${totalRecords} transfer application${totalRecords === 1 ? '' : 's'}.\n\nThis action cannot be undone.`)) {
         return;
     }
 
@@ -805,7 +835,7 @@ async function confirmResetTransferPhase() {
     } finally {
         if (confirmBtn) {
             confirmBtn.disabled = false;
-            confirmBtn.innerText = '⚠️ Confirm Wipe';
+            confirmBtn.innerText = '⚠️ Delete All Records';
         }
     }
 }

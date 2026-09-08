@@ -1,5 +1,5 @@
 /* STATE 3475 — Opening Animation
-   2.5 seconds, shown on every page refresh.
+   Full animation on first visit; short reveal on subsequent visits.
    Overlay only: does not alter the original page layout.
 */
 (function () {
@@ -74,7 +74,7 @@
     document.head.appendChild(style);
   }
 
-  function createOverlay() {
+  function createOverlay(duration) {
     if (document.getElementById(OVERLAY_ID)) return;
 
     const overlay = document.createElement("div");
@@ -105,18 +105,26 @@
 
     document.body.appendChild(overlay);
 
-    // Total opening duration: 2.5 seconds.
+    // Full animation only on first visit; subsequent refreshes use a short reveal.
     window.setTimeout(function () {
       overlay.classList.add("is-hidden");
       window.setTimeout(function () {
         overlay.remove();
       }, 500);
-    }, 2500);
+    }, duration);
   }
 
   function start() {
     addStyle();
-    createOverlay();
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let firstVisit = false;
+    try {
+      firstVisit = !sessionStorage.getItem('state3475OpeningSeen');
+      sessionStorage.setItem('state3475OpeningSeen', '1');
+    } catch (e) {
+      firstVisit = true;
+    }
+    createOverlay(reduceMotion ? 300 : (firstVisit ? 2500 : 650));
   }
 
   if (document.readyState === "loading") {
