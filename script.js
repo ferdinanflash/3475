@@ -549,7 +549,7 @@ function renderTable() {
                 <button class="btn-view-detail" onclick="showDetailPopup(${index})">👁️</button>
             </td>
             ${isAdmin ? actionCell : ''}
-            <td class="hide-mobile">State ${escapeHtml(item.transfer_from_state)}</td>
+            <td class="hide-mobile from-state-cell">${escapeHtml(item.transfer_from_state)}</td>
             <td><strong>${escapeHtml(item.nickname)}</strong></td>
             <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="Click to copy ID">${escapeHtml(item.game_id)} 📋</td>
             ${isAdmin ? notesCell : ''}
@@ -565,7 +565,7 @@ function renderTable() {
             const adminActions = isAdmin ? `<div class="mobile-admin-actions">${item.status === 'Waiting' ? `<button class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')" style="background:var(--success);padding:7px!important;font-size:.72rem!important;">Accept</button><button class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')" style="background:var(--danger);padding:7px!important;font-size:.72rem!important;">Reject</button>` : `<button class="btn btn-delete" onclick="deleteRecord(${item.id})" style="background:#475569;padding:7px!important;font-size:.72rem!important;">Delete</button>`}</div>` : '';
             card.innerHTML = `
                 <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(item.status)}</span></div>
-                <div class="mobile-meta"><span>State ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span>F${escapeHtml(item.furnace_level)}</span></div>
+                <div class="mobile-meta"><span>From ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span>F${escapeHtml(item.furnace_level)}</span></div>
                 ${notes}
                 <div class="mobile-actions"><button class="btn btn-view-detail" onclick="showDetailPopup(${index})">👁 Details</button><button class="btn btn-admin" onclick="copyToClipboard(transferList[${index}].game_id)">📋 Copy ID</button></div>
                 ${adminActions}
