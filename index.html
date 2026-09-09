@@ -513,6 +513,162 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
 }
 </style>
 
+<style>
+/* ===== FANTASY / GAME-THEMED FORM SKIN ===== */
+body{
+    background:
+        radial-gradient(circle at 50% -10%, rgba(56,90,150,.28), transparent 55%),
+        radial-gradient(circle at 50% 120%, rgba(10,20,40,.9), transparent 60%),
+        repeating-linear-gradient(115deg, rgba(255,255,255,.015) 0 2px, transparent 2px 6px),
+        linear-gradient(180deg, #0c1626 0%, #0a121f 55%, #070d17 100%);
+}
+
+.form-card{
+    background:
+        linear-gradient(180deg, rgba(24,38,63,.92), rgba(9,15,27,.96));
+    border:1px solid rgba(96,165,250,.28) !important;
+    border-radius:18px !important;
+    box-shadow:0 22px 45px rgba(0,0,0,.5), inset 0 0 50px rgba(15,35,70,.3), inset 0 1px 0 rgba(148,197,255,.08) !important;
+    position:relative;
+}
+.form-card::before{
+    content:"";
+    position:absolute; inset:6px;
+    border:1px solid rgba(96,165,250,.12);
+    border-radius:13px;
+    pointer-events:none;
+}
+.section-heading h3{
+    font-size:1.35rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    background:linear-gradient(to right,#bf953f 0%,#fcf6ba 25%,#b38728 50%,#fbf5b7 75%,#aa771c 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+    display:inline-block;
+}
+.section-heading .section-subtitle{color:#94a3b8;}
+
+/* Leather / brass plaque button ("About Our State") */
+.btn-leather{
+    background:linear-gradient(180deg,#3e2c19,#1c130a) !important;
+    border:1px solid #caa458 !important;
+    color:#f0d9a0 !important;
+    border-radius:10px !important;
+    box-shadow:0 4px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,224,160,.15), inset 0 0 14px rgba(0,0,0,.4) !important;
+    margin-top:6px; margin-bottom:16px;
+    font-family:inherit;
+}
+.btn-leather:active{opacity:.85;}
+
+/* Counter cards (Total / Accepted / Left) */
+.counter-card{
+    position:relative;
+    background:#0b1526;
+    border:1px solid #334155;
+    border-radius:10px;
+    overflow:visible;
+}
+.counter-card::before,.counter-card::after{
+    content:""; position:absolute; width:11px; height:11px; border:0 solid transparent; opacity:.95; pointer-events:none;
+}
+.counter-card::before{top:-1px;left:-1px;border-top-width:2px;border-left-width:2px;border-top-left-radius:5px;}
+.counter-card::after{bottom:-1px;right:-1px;border-bottom-width:2px;border-right-width:2px;border-bottom-right-radius:5px;}
+.counter-card.type-total{border-color:rgba(59,130,246,.45);box-shadow:inset 0 0 14px rgba(59,130,246,.12);}
+.counter-card.type-total::before,.counter-card.type-total::after{border-color:#60a5fa;}
+.counter-card.type-total .counter-label{color:#7fb3fb;}
+.counter-card.type-accepted{border-color:rgba(34,197,94,.45);box-shadow:inset 0 0 14px rgba(34,197,94,.12);}
+.counter-card.type-accepted::before,.counter-card.type-accepted::after{border-color:#4ade80;}
+.counter-card.type-accepted .counter-label{color:#6ee7a7;}
+.counter-card.type-left{border-color:rgba(245,158,11,.45);box-shadow:inset 0 0 14px rgba(245,158,11,.12);}
+.counter-card.type-left::before,.counter-card.type-left::after{border-color:#fbbf24;}
+.counter-card.type-left .counter-label{color:#fcd58a;}
+
+/* Icon-badge form inputs */
+.input-icon-wrap{position:relative;}
+.input-icon-wrap input{padding-left:44px !important;}
+.field-icon{
+    position:absolute; left:8px; top:50%; transform:translateY(-50%);
+    width:27px; height:27px; border-radius:50%;
+    background:linear-gradient(150deg,#20345a,#0c1626);
+    border:1px solid rgba(96,165,250,.45);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; line-height:1;
+    box-shadow:inset 0 0 6px rgba(59,130,246,.35), 0 0 5px rgba(59,130,246,.25);
+    pointer-events:none; z-index:2;
+}
+.form-fields-grid input:not([type="range"]),
+.form-fields-grid select{
+    background:linear-gradient(180deg,#142033,#0b1424) !important;
+    border:1px solid rgba(59,130,246,.32) !important;
+    border-radius:10px !important;
+    height:44px;
+    color:#eaf1ff !important;
+    box-shadow:inset 0 1px 0 rgba(148,197,255,.06), inset 0 0 10px rgba(0,0,0,.35) !important;
+}
+.form-fields-grid input:not([type="range"])::placeholder{color:#7c8fb0;}
+.form-fields-grid input:not([type="range"]):focus,
+.form-fields-grid select:focus{
+    border-color:rgba(96,165,250,.9) !important;
+    box-shadow:0 0 0 3px rgba(59,130,246,.18), inset 0 0 10px rgba(0,0,0,.35) !important;
+}
+.form-fields-grid label{color:#eef2fa;font-weight:700;font-size:.82rem;letter-spacing:.2px;}
+.form-fields-grid .form-group.full-row{grid-column:1/-1;}
+
+/* Furnace level slider row */
+.slider-field{
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(180deg,#142033,#0b1424);
+    border:1px solid rgba(59,130,246,.32);
+    border-radius:10px;
+    height:44px;
+    padding:0 12px 0 44px;
+}
+.slider-field .field-icon{left:9px;}
+.slider-field input[type="range"]{
+    flex:1; -webkit-appearance:none; appearance:none;
+    height:6px; border-radius:4px; margin:0;
+    background:linear-gradient(90deg,#2563eb,#60a5fa);
+    outline:none; cursor:pointer;
+}
+.slider-field input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#eaf3ff,#60a5fa 45%,#1d4ed8 100%);
+    border:2px solid #bfe0ff;
+    box-shadow:0 0 8px rgba(96,165,250,.85);
+    cursor:pointer;
+}
+.slider-field input[type="range"]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#eaf3ff,#60a5fa 45%,#1d4ed8 100%);
+    border:2px solid #bfe0ff;
+    box-shadow:0 0 8px rgba(96,165,250,.85);
+    cursor:pointer;
+}
+.range-badge{
+    flex:0 0 auto; font-size:.75rem; font-weight:800; color:#93c5fd;
+    background:#0c1626; border:1px solid rgba(59,130,246,.4); border-radius:6px;
+    padding:3px 8px; min-width:38px; text-align:center;
+}
+
+/* Glowing gradient submit button */
+.btn-glow{
+    background:linear-gradient(180deg,#3ec3fb,#2563eb) !important;
+    border:1px solid rgba(191,224,255,.6) !important;
+    border-radius:12px !important;
+    box-shadow:0 10px 22px rgba(37,99,235,.4), 0 0 0 1px rgba(125,211,252,.35) inset, inset 0 2px 0 rgba(255,255,255,.35) !important;
+    font-size:1.05rem !important;
+    letter-spacing:.3px;
+    position:relative;
+    overflow:hidden;
+}
+.btn-glow::after{
+    content:"✨"; position:absolute; top:4px; right:10px; font-size:.85rem; opacity:.85;
+}
+.btn-glow:active{opacity:.9;}
+</style>
+
 </head>
 <body>
 
@@ -662,16 +818,16 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
     <div class="grid dashboard-grid">
         <div class="card form-card">
             <div class="section-heading"><div><h3>Transfer Form</h3><p class="section-subtitle">Enter your transfer details once. You can check the status below in real time.</p></div></div>
-            <button class="btn" id="about-state-btn" style="background: #475569; margin-top: 6px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); font-family: inherit;" onclick="openStateModal()">
+            <button class="btn btn-leather" id="about-state-btn" onclick="openStateModal()">
                 📜 <span class="animated-title" style="font-size: 0.95rem !important; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block;">About Our State</span>
             </button>
 
             <div class="counter-box" aria-label="Application summary">
-                <div class="counter-card"><span class="counter-icon">👥</span>
+                <div class="counter-card type-total"><span class="counter-icon">👥</span>
                     <label class="counter-label">Total</label>
                     <div class="counter-val" id="count-total" style="color: var(--primary);">0</div>
                 </div>
-                <div class="counter-card"><span class="counter-icon">✓</span>
+                <div class="counter-card type-accepted"><span class="counter-icon">✓</span>
                     <label class="counter-label">Accepted</label>
                     <div class="max-slot-container">
                         <span class="counter-val" id="count-accepted" style="color: var(--success);">0</span>
@@ -680,7 +836,7 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
                         <input type="text" inputmode="numeric" pattern="[0-9]*" id="in-max-slots" value="35" disabled onchange="changeMaxSlots(this.value)">
                     </div>
                 </div>
-                <div class="counter-card slots-left-card"><span class="counter-icon">◷</span>
+                <div class="counter-card type-left slots-left-card"><span class="counter-icon">◷</span>
                     <label class="counter-label">Left</label>
                     <div class="counter-val" id="count-left" style="color: var(--warning);">35</div>
                 </div>
@@ -691,54 +847,46 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,#0f172
             <div id="transfer-form-fields" class="form-fields-grid">
                 <div class="form-group" style="margin-top: 15px;">
                     <label>Transfer From State</label>
-                    <input type="number" id="in-state" placeholder="e.g. 1234">
+                    <div class="input-icon-wrap"><span class="field-icon">🧭</span><input type="number" id="in-state" placeholder="e.g. 1234"></div>
                 </div>
                 <div class="form-group">
                     <label>In-Game Nickname</label>
-                    <input type="text" id="in-nickname" placeholder="Enter nickname">
+                    <div class="input-icon-wrap"><span class="field-icon">🪖</span><input type="text" id="in-nickname" placeholder="Enter nickname"></div>
                 </div>
                 <div class="form-group">
                     <label>Game ID</label>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="in-gameid" placeholder="Enter Game ID">
+                    <div class="input-icon-wrap"><span class="field-icon">🪪</span><input type="text" inputmode="numeric" pattern="[0-9]*" id="in-gameid" placeholder="Enter Game ID"></div>
                 </div>
                 <div class="form-group">
                     <label>Desired Alliance</label>
-                    <input type="text" id="in-alliance" placeholder="e.g. ARX/CAT/IDN/VNX/ZXC">
+                    <div class="input-icon-wrap"><span class="field-icon">🛡️</span><input type="text" id="in-alliance" placeholder="e.g. ARX/CAT/IDN/VNX/ZXC"></div>
                 </div>
-                <div class="form-group">
+                <div class="form-group full-row">
                     <label>Furnace Level</label>
-                    <select id="in-furnace">
-                        <option value="" disabled selected>Select furnace level</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10</option>
-                    </select>
+                    <div class="input-icon-wrap slider-field">
+                        <span class="field-icon">🔥</span>
+                        <input type="range" id="in-furnace" min="1" max="10" step="1" value="1" oninput="document.getElementById('furnace-badge').textContent = 'Lv ' + this.value;">
+                        <span class="range-badge" id="furnace-badge">Lv 1</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Power</label>
-                    <input type="number" id="in-power" placeholder="Your Power">
+                    <div class="input-icon-wrap"><span class="field-icon">⚔️</span><input type="number" id="in-power" placeholder="Your Power"></div>
                 </div>
                 <div class="form-group">
                     <label>Hero Power</label>
-                    <input type="number" id="in-heropower" placeholder="Strongest Hero Power">
+                    <div class="input-icon-wrap"><span class="field-icon">⚔️</span><input type="number" id="in-heropower" placeholder="Strongest Hero Power"></div>
                 </div>
                 <div class="form-group">
                     <label>Total Hero Power</label>
-                    <input type="number" id="in-totalhero" placeholder="Total Hero Power">
+                    <div class="input-icon-wrap"><span class="field-icon">🗡️</span><input type="number" id="in-totalhero" placeholder="Total Hero Power"></div>
                 </div>
                 <div class="form-group">
                     <label>Referrer (Optional)</label>
-                    <input type="text" id="in-referrer" placeholder="Who referred you? (optional)">
+                    <div class="input-icon-wrap"><span class="field-icon">📜</span><input type="text" id="in-referrer" placeholder="Who referred you? (optional)"></div>
                 </div>
             </div>
-            <div class="submit-wrap"><button class="btn btn-primary" id="submit-btn" onclick="submitTransfer()">Submit Application</button><small class="submit-hint">Your application will appear in the list immediately after submission.</small></div>
+            <div class="submit-wrap"><button class="btn btn-primary btn-glow" id="submit-btn" onclick="submitTransfer()">Submit Application</button><small class="submit-hint">Your application will appear in the list immediately after submission.</small></div>
         </div>
 
         <button type="button" class="mobile-view-applicants-btn" onclick="openApplicantsModal()" aria-label="View applicants">
