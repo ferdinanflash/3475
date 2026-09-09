@@ -386,10 +386,19 @@ async function submitTransfer() {
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
         document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
-            if(input.id !== 'in-max-slots' && !input.classList.contains('info-input')) {
+            if(input.id !== 'in-max-slots' && input.id !== 'in-furnace' && !input.classList.contains('info-input')) {
                 input.value = "";
             }
         });
+        // Furnace Level is a slider, not a text field: reset it back to its
+        // default position/label and require it to be touched again.
+        const furnaceReset = document.getElementById('in-furnace');
+        if (furnaceReset) {
+            furnaceReset.value = '1';
+            furnaceReset.dataset.touched = '0';
+            const furnaceBadge = document.getElementById('furnace-badge');
+            if (furnaceBadge) furnaceBadge.textContent = 'FC 1';
+        }
         loadTransfers();
     } else {
         showToast("Error submitting: " + error.message, "error");

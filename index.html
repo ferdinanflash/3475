@@ -667,6 +667,21 @@ body{
     content:"✨"; position:absolute; top:4px; right:10px; font-size:.85rem; opacity:.85;
 }
 .btn-glow:active{opacity:.9;}
+
+/* Fix: effect.css forces `input{padding:8px 10px !important;font-size:16px !important}`
+   on mobile, which was blowing out the tiny max-slot edit box. Override with a
+   higher-specificity + !important rule so the admin slot editor stays compact. */
+.max-slot-container input{
+    padding:2px 4px !important;
+    font-size:1.1rem !important;
+}
+@media (max-width:600px){
+    .max-slot-container input{
+        width:34px !important;
+        padding:1px 2px !important;
+        font-size:1rem !important;
+    }
+}
 </style>
 
 </head>
@@ -865,8 +880,8 @@ body{
                     <label>Furnace Level</label>
                     <div class="input-icon-wrap slider-field">
                         <span class="field-icon">🔥</span>
-                        <input type="range" id="in-furnace" min="1" max="10" step="1" value="1" oninput="document.getElementById('furnace-badge').textContent = 'Lv ' + this.value;">
-                        <span class="range-badge" id="furnace-badge">Lv 1</span>
+                        <input type="range" id="in-furnace" min="1" max="10" step="1" value="1" data-touched="0" oninput="document.getElementById('furnace-badge').textContent = 'FC ' + this.value; this.dataset.touched = '1';">
+                        <span class="range-badge" id="furnace-badge">FC 1</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -886,7 +901,7 @@ body{
                     <div class="input-icon-wrap"><span class="field-icon">📜</span><input type="text" id="in-referrer" placeholder="Who referred you? (optional)"></div>
                 </div>
             </div>
-            <div class="submit-wrap"><button class="btn btn-primary btn-glow" id="submit-btn" onclick="submitTransfer()">Submit Application</button><small class="submit-hint">Your application will appear in the list immediately after submission.</small></div>
+            <div class="submit-wrap"><button class="btn btn-primary btn-glow" id="submit-btn" onclick="handleSubmitClick()">Submit Application</button><small class="submit-hint">Your application will appear in the list immediately after submission.</small></div>
         </div>
 
         <button type="button" class="mobile-view-applicants-btn" onclick="openApplicantsModal()" aria-label="View applicants">
@@ -951,6 +966,23 @@ body{
             });
         }
     });
+
+    // Require the Furnace Level slider to be touched at least once before
+    // the form can be submitted, so nobody accidentally submits at the
+    // default value without realizing it's a slider.
+    function handleSubmitClick() {
+        const furnaceEl = document.getElementById('in-furnace');
+        if (furnaceEl && furnaceEl.dataset.touched !== '1') {
+            if (typeof showToast === 'function') {
+                showToast('Please set your Furnace Level by dragging the slider first!', 'warning');
+            } else {
+                alert('Please set your Furnace Level by dragging the slider first!');
+            }
+            furnaceEl.focus();
+            return;
+        }
+        submitTransfer();
+    }
 </script>
 
 <script src="opening-animation.js"></script>
