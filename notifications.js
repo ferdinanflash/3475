@@ -1,15 +1,21 @@
 // ================= REAL-TIME GUEST NOTIFICATIONS (NO LOGIN) =================
-// Lets an applicant who never logs in still get a live toast whenever the
-// status of THEIR OWN application(s) changes on this device, using nothing
-// but localStorage + a filtered Supabase Realtime subscription.
+// Mirrors the Reservation Portal's js/app-notifications.js architecture:
+//   - ONE Supabase Realtime channel PER tracked application ID (not one
+//     shared channel with multiple filters) — each channel has its own
+//     simple `id=eq.<id>` filter, which is supported on every Realtime
+//     server version (unlike `id=in.(...)`, which silently fails on some).
+//   - Native browser/OS notifications via a Service Worker, so an update
+//     is visible even if the tab is backgrounded — layered on top of an
+//     in-page toast that always fires and needs no permission at all.
+//   - Tracked IDs expire after 10 days (matches the Reservation Portal),
+//     so this device doesn't keep listening forever on old applications.
 //
 // An ID ends up tracked in one of two ways:
 //   1. Automatically — right after submitTransfer() succeeds, if the
-//      "Get Notification?" checkbox on the form was checked. See
-//      trackNewApplication(), called from script.js.
-//   2. Manually — via the "My Application Status" modal's recovery box.
-//      If localStorage gets cleared (new device, browser reset, etc.), the
-//      applicant re-enters their Application ID to resume notifications.
+//      "Get Notification?" checkbox was checked. See trackNewApplication(),
+//      called from script.js.
+//   2. Manually — via the "My Application Status" modal's recovery box,
+//      for when localStorage gets cleared (new device, browser reset).
 //
 // Depends on getSupabase()/escapeHtml() (common.js) and showToast()
 // (script.js) — load this file AFTER both:
@@ -17,148 +23,264 @@
 //   <script src="script.js"></script>
 //   <script src="notifications.js"></script>
 
-const NOTIF_STORAGE_KEY = 'transfer_ids'; // JSON array of player_transfers.id
+const NOTIF_STORAGE_KEY = 'transfer_ids';                       // [{id, savedAt}]
+const NOTIF_PERMISSION_KEY = 'transfer_notifications_enabled';  // 'true' | 'false'
+const NOTIF_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;             // 10 days
 const NOTIF_TABLE = 'player_transfers';
 
-let notifChannel = null;
-// Last known status per tracked id, used purely to stop the SAME status
-// from popping a second toast (e.g. an admin editing notes triggers an
-// UPDATE event too, but that's not a status change).
-let trackedStatusCache = {};
+const trackedChannels = new Map();  // id (string) -> realtime channel
+const lastKnownStatus = new Map();  // id (string) -> last seen status
 
 document.addEventListener('DOMContentLoaded', () => {
-    resubscribeNotificationChannel();
+    cleanupExpiredTrackedIds();
+    startAllTrackedRealtime();
     updateNotifCountBadge();
 });
 
-// ================= LOCALSTORAGE HELPERS =================
-function getTrackedIds() {
+// ================= VALIDATION =================
+function isValidTransferId(value) {
+    return /^\d+$/.test(String(value ?? '').trim());
+}
+
+// ================= LOCALSTORAGE: TRACKED ID RECORDS =================
+function readTrackedRecords() {
     try {
         const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr)
-            ? [...new Set(arr.map(Number).filter(Number.isFinite))]
-            : [];
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+
+        // Transparently migrates the older plain-number-array format
+        // (e.g. [128, 130]) into the {id, savedAt} record format used for
+        // 10-day retention tracking.
+        return parsed.map(item => {
+            if (item && typeof item === 'object' && isValidTransferId(item.id)) {
+                return { id: String(item.id), savedAt: Number(item.savedAt) || Date.now() };
+            }
+            if (isValidTransferId(item)) {
+                return { id: String(item), savedAt: Date.now() };
+            }
+            return null;
+        }).filter(Boolean);
     } catch (e) {
-        console.error('Failed reading tracked transfer IDs from localStorage:', e);
+        console.error('Failed reading tracked transfer IDs:', e);
         return [];
     }
 }
 
-function saveTrackedIds(ids) {
-    const unique = [...new Set(ids.map(Number).filter(Number.isFinite))];
-    localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(unique));
-    return unique;
+function writeTrackedRecords(records) {
+    const unique = new Map();
+    records.forEach(item => {
+        if (!item || !isValidTransferId(item.id)) return;
+        unique.set(String(item.id), { id: String(item.id), savedAt: Number(item.savedAt) || Date.now() });
+    });
+    const clean = [...unique.values()];
+    localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(clean));
+    return clean;
+}
+
+function cleanupExpiredTrackedIds() {
+    const now = Date.now();
+    const records = readTrackedRecords();
+    const active = records.filter(r => (now - r.savedAt) < NOTIF_RETENTION_MS);
+    const expired = records.filter(r => (now - r.savedAt) >= NOTIF_RETENTION_MS);
+    expired.forEach(r => stopRealtimeForId(r.id));
+    writeTrackedRecords(active);
+    return active;
+}
+
+function getTrackedIds() {
+    return cleanupExpiredTrackedIds().map(r => Number(r.id));
 }
 
 function addTrackedId(id) {
-    const numId = Number(id);
-    if (!Number.isFinite(numId)) return;
-    const ids = getTrackedIds();
-    if (!ids.includes(numId)) {
-        ids.push(numId);
-        saveTrackedIds(ids);
+    if (!isValidTransferId(id)) return;
+    const records = cleanupExpiredTrackedIds();
+    if (!records.some(r => r.id === String(id))) {
+        records.push({ id: String(id), savedAt: Date.now() });
+        writeTrackedRecords(records);
     }
     updateNotifCountBadge();
-    resubscribeNotificationChannel();
+    startRealtimeForId(id);
 }
 
 function removeTrackedId(id) {
-    const numId = Number(id);
-    saveTrackedIds(getTrackedIds().filter(x => x !== numId));
-    delete trackedStatusCache[numId];
+    writeTrackedRecords(readTrackedRecords().filter(r => r.id !== String(id)));
+    stopRealtimeForId(id);
     updateNotifCountBadge();
-    resubscribeNotificationChannel();
     renderTrackedList();
 }
 
+// ================= NATIVE BROWSER/OS NOTIFICATIONS =================
+function isNotificationSupported() {
+    return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+function areNotificationsEnabled() {
+    return localStorage.getItem(NOTIF_PERMISSION_KEY) === 'true';
+}
+
+function setNotificationPreference(enabled) {
+    localStorage.setItem(NOTIF_PERMISSION_KEY, enabled ? 'true' : 'false');
+}
+
+async function requestNotificationPermission() {
+    if (!isNotificationSupported()) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    try {
+        return (await Notification.requestPermission()) === 'granted';
+    } catch (e) {
+        console.warn('Notification permission request failed:', e);
+        return false;
+    }
+}
+
+function statusLabel(status) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'accepted') return 'Accepted';
+    if (s === 'rejected') return 'Rejected';
+    if (s === 'waiting') return 'Waiting';
+    return String(status || 'Updated');
+}
+
+// Uses the Service Worker's showNotification() when available (required
+// for OS-level notifications on Android Chrome), falling back to the plain
+// Notification() constructor (works on desktop browsers without a SW).
+async function showNativeStatusNotification(id, status, nickname) {
+    if (!isNotificationSupported() || Notification.permission !== 'granted') return;
+
+    const s = String(status || '').toLowerCase();
+    let title = 'Transfer Application Update';
+    let body = `Application #${id} is now "${statusLabel(status)}".`;
+    if (s === 'accepted') {
+        title = 'Application Accepted 🎉';
+        body = `${nickname || 'Your application'} has been accepted! Welcome to the state.`;
+    } else if (s === 'rejected') {
+        title = 'Application Rejected';
+        body = `${nickname || 'Your application'} was rejected. Check the portal for details.`;
+    }
+
+    const options = {
+        body,
+        icon: './android-chrome-192x192.png',
+        badge: './android-chrome-192x192.png',
+        tag: `transfer-${id}`,
+        renotify: true,
+        data: { application_id: id, status }
+    };
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            if (registration?.showNotification) {
+                await registration.showNotification(title, options);
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn('Service Worker notification failed:', e);
+    }
+
+    try { new Notification(title, options); } catch (e) { console.warn('Browser notification failed:', e); }
+}
+
+// ================= PER-ID REALTIME CHANNELS =================
+// Each tracked application gets its OWN channel (`transfer_application_<id>`)
+// with its OWN `id=eq.<id>` filter. Stopping/removing one ID's channel
+// never disturbs any other tracked application's stream.
+function stopRealtimeForId(id) {
+    const key = String(id);
+    const client = getSupabase();
+    const channel = trackedChannels.get(key);
+    if (client && channel) client.removeChannel(channel);
+    trackedChannels.delete(key);
+    lastKnownStatus.delete(key);
+}
+
+async function startRealtimeForId(id) {
+    const key = String(id);
+    const client = getSupabase();
+    if (!client || !isValidTransferId(id) || trackedChannels.has(key)) return;
+
+    try {
+        const { data: current, error } = await client
+            .from(NOTIF_TABLE)
+            .select('id, nickname, status')
+            .eq('id', key)
+            .maybeSingle();
+
+        if (!error && current) lastKnownStatus.set(key, current.status);
+
+        const channel = client
+            .channel(`transfer_application_${key}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: NOTIF_TABLE,
+                filter: `id=eq.${key}`
+            }, async (payload) => {
+                const row = payload.new;
+                if (!row) return;
+
+                const previous = lastKnownStatus.has(key) ? lastKnownStatus.get(key) : payload.old?.status;
+                lastKnownStatus.set(key, row.status);
+
+                // Ignore UPDATEs that didn't actually change the status
+                // (e.g. an admin editing the notes field on this record).
+                if (String(previous || '').toLowerCase() === String(row.status || '').toLowerCase()) return;
+
+                // In-page toast — always fires, needs no permission at all.
+                const label = row.nickname ? escapeHtml(row.nickname) : `Application #${row.id}`;
+                const toastType = row.status === 'Accepted' ? 'success' : row.status === 'Rejected' ? 'error' : 'info';
+                if (typeof showToast === 'function') {
+                    showToast(`🔔 ${label}: status changed to "${escapeHtml(statusLabel(row.status))}"`, toastType);
+                }
+
+                // Native OS/browser notification — only if permission was
+                // granted, so it's still visible with the tab backgrounded.
+                await showNativeStatusNotification(row.id, row.status, row.nickname);
+
+                if (document.getElementById('status-modal')?.classList.contains('active')) {
+                    renderTrackedList();
+                }
+            })
+            .subscribe((status, err) => {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    console.warn(`[notifications] channel for #${key}:`, status, err);
+                }
+            });
+
+        trackedChannels.set(key, channel);
+    } catch (e) {
+        console.error(`Failed to start realtime for application #${key}:`, e);
+    }
+}
+
+async function startAllTrackedRealtime() {
+    for (const id of getTrackedIds()) await startRealtimeForId(id);
+}
+
+function stopAllTrackedRealtime() {
+    [...trackedChannels.keys()].forEach(stopRealtimeForId);
+}
+
+// ================= ENTRY POINTS (called from script.js / the modal) =================
 // Called from script.js right after a successful submitTransfer() insert,
 // only when the "Get Notification?" checkbox was checked.
-function trackNewApplication(newId) {
+async function trackNewApplication(newId) {
     addTrackedId(newId);
-    if (typeof showToast === 'function') {
-        showToast(`🔔 Notifications enabled for Application #${newId}`, 'success');
-    }
-}
 
-// ================= REALTIME SUBSCRIPTION =================
-// Supabase Realtime filters can't be edited on a live channel, so whenever
-// the tracked-ID list changes we tear down the old channel and open a new
-// one covering exactly the current list.
-//
-// IMPORTANT: this intentionally does NOT use a single `id=in.(1,2,3)`
-// filter. That operator silently fails to deliver events on some Supabase
-// Realtime server versions (no error — the subscription just never fires),
-// which is exactly the "IDs are tracked but no toast ever appears" bug.
-// Instead we bind one `id=eq.<id>` filter per tracked ID on the SAME
-// channel — `eq` is the most basic filter and is guaranteed to work.
-async function resubscribeNotificationChannel() {
-    const client = getSupabase();
-    if (!client) return;
-
-    if (notifChannel) {
-        // Await the teardown before opening a new channel with the same
-        // name — creating the replacement before the old one has fully
-        // unsubscribed can make the server silently ignore the new one.
-        await client.removeChannel(notifChannel);
-        notifChannel = null;
-    }
-
-    const ids = getTrackedIds();
-    if (ids.length === 0) return; // nothing to listen for
-
-    let builder = client.channel('my-applications-channel');
-    ids.forEach(id => {
-        builder = builder.on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: NOTIF_TABLE,
-            filter: `id=eq.${id}`
-        }, (payload) => handleTrackedStatusUpdate(payload));
-    });
-
-    notifChannel = builder.subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-            console.log('[notifications] listening for status updates on:', ids);
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.error('[notifications] realtime subscription failed:', status, err);
-        }
-    });
-}
-
-function handleTrackedStatusUpdate(payload) {
-    const row = payload.new;
-    if (!row) return;
-
-    const previousStatus = trackedStatusCache[row.id];
-    trackedStatusCache[row.id] = row.status;
-
-    // Skip UPDATE events that didn't actually change the status (e.g. an
-    // admin editing the notes field on this same record).
-    if (previousStatus === row.status) return;
-
-    const label = row.nickname ? escapeHtml(row.nickname) : `Application #${row.id}`;
-    const statusText = escapeHtml(row.status || 'Updated');
-    const toastType = row.status === 'Accepted' ? 'success'
-        : row.status === 'Rejected' ? 'error'
-        : 'info';
+    const granted = await requestNotificationPermission();
+    setNotificationPreference(granted);
 
     if (typeof showToast === 'function') {
-        showToast(`🔔 ${label}: status changed to "${statusText}"`, toastType);
+        showToast(
+            granted
+                ? `🔔 Notifications enabled for Application #${newId}`
+                : `🔔 Tracking Application #${newId} (in-app alerts only — browser notifications weren't granted)`,
+            'success'
+        );
     }
-
-    // Keep the modal's list in sync if it's open when the toast fires.
-    if (document.getElementById('status-modal')?.classList.contains('active')) {
-        renderTrackedList();
-    }
-}
-
-function updateNotifCountBadge() {
-    const badge = document.getElementById('notif-count-badge');
-    if (!badge) return;
-    const count = getTrackedIds().length;
-    badge.textContent = String(count);
-    badge.style.display = count > 0 ? 'inline-flex' : 'none';
 }
 
 // ================= "MY APPLICATION STATUS" MODAL =================
@@ -173,12 +295,12 @@ function closeStatusModal() {
 
 // Manual recovery: applicant types in an Application ID (e.g. after
 // clearing browser data), we verify it exists, then start tracking it
-// again — re-adding it to localStorage and re-activating the listener.
+// again — re-adding it to localStorage and re-activating its own channel.
 async function handleCheckStatus() {
     const input = document.getElementById('input-check-transfer-id');
     const rawValue = (input?.value || '').trim();
 
-    if (!rawValue || !/^\d+$/.test(rawValue)) {
+    if (!isValidTransferId(rawValue)) {
         if (typeof showToast === 'function') showToast('Please enter a valid numeric Application ID.', 'warning');
         return;
     }
@@ -198,8 +320,12 @@ async function handleCheckStatus() {
         return;
     }
 
-    trackedStatusCache[data.id] = data.status;
+    lastKnownStatus.set(String(data.id), data.status);
     addTrackedId(data.id);
+
+    const granted = await requestNotificationPermission();
+    setNotificationPreference(granted);
+
     if (input) input.value = '';
     if (typeof showToast === 'function') showToast(`Now tracking Application #${data.id} on this device.`, 'success');
     renderTrackedList();
@@ -232,7 +358,7 @@ async function renderTrackedList() {
 
     const foundIds = new Set((data || []).map(r => r.id));
     const rows = (data || []).map(item => {
-        trackedStatusCache[item.id] = item.status;
+        lastKnownStatus.set(String(item.id), item.status);
         const badgeClass = `badge badge-${(item.status || '').toLowerCase()}`;
         return `
             <div class="tracked-item">
@@ -259,4 +385,12 @@ async function renderTrackedList() {
     });
 
     container.innerHTML = rows.join('');
+}
+
+function updateNotifCountBadge() {
+    const badge = document.getElementById('notif-count-badge');
+    if (!badge) return;
+    const count = getTrackedIds().length;
+    badge.textContent = String(count);
+    badge.style.display = count > 0 ? 'inline-flex' : 'none';
 }
