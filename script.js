@@ -370,7 +370,10 @@ async function submitTransfer() {
         return;
     }
     
-    const { error } = await client.from('player_transfers').insert({
+    // .select('id').single() is added so we can hand the new row's id off
+    // to the real-time notification module (notifications.js) right below
+    // — without it, a successful insert wouldn't tell us which id to track.
+    const { data: insertedRow, error } = await client.from('player_transfers').insert({
         transfer_from_state: stateNum,
         nickname: nickname,
         game_id: gameId,
@@ -381,10 +384,18 @@ async function submitTransfer() {
         total_hero_power: totalHeroNum,
         referrer: referrer || null,
         status: 'Waiting'
-    });
+    }).select('id').single();
     
     if (!error) {
         showToast("Transfer application sent successfully!", "success");
+
+        // Opt-in real-time notifications: only start tracking this
+        // application on this device if the guest checked the box.
+        const notifCheckbox = document.getElementById('in-get-notification');
+        if (notifCheckbox && notifCheckbox.checked && insertedRow && typeof trackNewApplication === 'function') {
+            trackNewApplication(insertedRow.id);
+        }
+
         document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
             if(input.id !== 'in-max-slots' && input.id !== 'in-furnace' && !input.classList.contains('info-input')) {
                 input.value = "";

@@ -793,6 +793,27 @@ body{
     </div>
 </div>
 
+<!-- Modal: My Application Status (guest notification center, no login required) -->
+<div class="modal-overlay" id="status-modal">
+    <div class="modal-content" style="max-width: 440px;">
+        <div class="modal-header">
+            <h4>🔔 My Application Status</h4>
+            <button class="modal-close" onclick="closeStatusModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>Recover / Add Application ID</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-check-transfer-id" placeholder="e.g. 128" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();handleCheckStatus();}">
+                    <button class="btn btn-primary" style="width:auto; padding:10px 16px;" onclick="handleCheckStatus()">Check</button>
+                </div>
+                <small style="color:#64748b; display:block; margin-top:6px;">Lost tracking (new device, cleared browser data)? Enter your Application ID here to resume live notifications.</small>
+            </div>
+            <div id="tracked-list-container"></div>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <header class="site-header">
         <div class="header-left">
@@ -835,6 +856,10 @@ body{
             <div class="section-heading"><div><h3>Transfer Form</h3><p class="section-subtitle">Enter your transfer details once. You can check the status below in real time.</p></div></div>
             <button class="btn btn-leather" id="about-state-btn" onclick="openStateModal()">
                 📜 <span class="animated-title" style="font-size: 0.95rem !important; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block;">About Our State</span>
+            </button>
+            <button class="btn btn-admin notif-bell-btn" id="notif-status-btn" onclick="openStatusModal()" style="margin-top:8px;width:100%;">
+                🔔 My Application Status
+                <span id="notif-count-badge" class="notif-count-badge" style="display:none;">0</span>
             </button>
 
             <div class="counter-box" aria-label="Application summary">
@@ -901,6 +926,12 @@ body{
                     <div class="input-icon-wrap"><span class="field-icon">📜</span><input type="text" id="in-referrer" placeholder="Who referred you? (optional)"></div>
                 </div>
             </div>
+            <div class="form-group full-row notif-optin-row">
+                <label class="notif-optin-label" for="in-get-notification">
+                    <input type="checkbox" id="in-get-notification">
+                    <span>🔔 Get Notification? <small>Track this application's status live on this device</small></span>
+                </label>
+            </div>
             <div class="submit-wrap"><button class="btn btn-primary btn-glow" id="submit-btn" onclick="handleSubmitClick()">Submit Application</button><small class="submit-hint">Your application will appear in the list immediately after submission.</small></div>
         </div>
 
@@ -941,6 +972,7 @@ body{
 
 <script src="common.js"></script>
 <script src="script.js?v=4"></script>
+<script src="notifications.js?v=1"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -1033,6 +1065,29 @@ body{
   .admin-mode .applicants-tools{grid-template-columns:1fr 1fr}
   .admin-mode .admin-badge{font-size:.68rem}
 }
+</style>
+
+<style>
+/* ===== REAL-TIME NOTIFICATIONS (notifications.js) ===== */
+.notif-optin-row{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.notif-optin-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0;font-weight:normal}
+.notif-optin-label input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--primary);cursor:pointer}
+.notif-optin-label span{font-size:.9rem;color:#e2e8f0}
+.notif-optin-label small{display:block;color:#64748b;font-weight:normal;margin-top:2px}
+
+.notif-bell-btn{display:flex;align-items:center;justify-content:center;gap:6px}
+.notif-count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:.68rem;font-weight:800;line-height:1}
+
+#tracked-list-container{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}
+.tracked-empty{color:#64748b;font-size:.85rem;text-align:center;padding:18px 6px}
+.tracked-item{display:flex;align-items:center;gap:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 10px}
+.tracked-item-info{display:flex;flex-direction:column;flex:1;min-width:0}
+.tracked-item-info strong{color:#f8fafc;font-size:.85rem}
+.tracked-item-info span{color:#94a3b8;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tracked-item-missing{opacity:.7;border-style:dashed}
+.tracked-missing-label{color:#64748b;font-style:italic}
+.tracked-remove-btn{background:transparent;border:1px solid #475569;color:#94a3b8;width:26px;height:26px;border-radius:6px;cursor:pointer;flex-shrink:0;font-size:.85rem;line-height:1}
+.tracked-remove-btn:hover{background:var(--danger);border-color:var(--danger);color:#fff}
 </style>
 
 </body>
