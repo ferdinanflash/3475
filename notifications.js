@@ -84,30 +84,46 @@ function trackNewApplication(newId) {
 // ================= REALTIME SUBSCRIPTION =================
 // Supabase Realtime filters can't be edited on a live channel, so whenever
 // the tracked-ID list changes we tear down the old channel and open a new
-// one with a fresh `id=in.(...)` filter covering exactly the current list.
-function resubscribeNotificationChannel() {
+// one covering exactly the current list.
+//
+// IMPORTANT: this intentionally does NOT use a single `id=in.(1,2,3)`
+// filter. That operator silently fails to deliver events on some Supabase
+// Realtime server versions (no error — the subscription just never fires),
+// which is exactly the "IDs are tracked but no toast ever appears" bug.
+// Instead we bind one `id=eq.<id>` filter per tracked ID on the SAME
+// channel — `eq` is the most basic filter and is guaranteed to work.
+async function resubscribeNotificationChannel() {
     const client = getSupabase();
     if (!client) return;
 
     if (notifChannel) {
-        client.removeChannel(notifChannel);
+        // Await the teardown before opening a new channel with the same
+        // name — creating the replacement before the old one has fully
+        // unsubscribed can make the server silently ignore the new one.
+        await client.removeChannel(notifChannel);
         notifChannel = null;
     }
 
     const ids = getTrackedIds();
     if (ids.length === 0) return; // nothing to listen for
 
-    notifChannel = client
-        .channel('my-applications-channel')
-        .on('postgres_changes', {
+    let builder = client.channel('my-applications-channel');
+    ids.forEach(id => {
+        builder = builder.on('postgres_changes', {
             event: 'UPDATE',
             schema: 'public',
             table: NOTIF_TABLE,
-            filter: `id=in.(${ids.join(',')})`
-        }, (payload) => {
-            handleTrackedStatusUpdate(payload);
-        })
-        .subscribe();
+            filter: `id=eq.${id}`
+        }, (payload) => handleTrackedStatusUpdate(payload));
+    });
+
+    notifChannel = builder.subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+            console.log('[notifications] listening for status updates on:', ids);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('[notifications] realtime subscription failed:', status, err);
+        }
+    });
 }
 
 function handleTrackedStatusUpdate(payload) {
