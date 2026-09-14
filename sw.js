@@ -9,16 +9,18 @@
 //   - everything else (Supabase, CDN): never touched, always straight to network
 //
 // >>> Bump CACHE_VERSION on every deploy so old files are dropped. <<<
-const CACHE_VERSION = '2026-09-11-1';
+const CACHE_VERSION = '2026-09-14-1';
 const CACHE_NAME = `transfer3475-${CACHE_VERSION}`;
 const PRECACHE = [
     './',
     './index.html',
     './effect.css',
     './common.js',
-    './script.js',
-    './notifications.js',
+    './script.js?v=5',
+    './notifications.js?v=3',
     './opening-animation.js',
+    './lang.js?v=1',
+    './portal.js?v=1',
     './site.webmanifest',
     './android-chrome-192x192.png',
     './android-chrome-512x512.png'
@@ -80,12 +82,20 @@ self.addEventListener('fetch', (event) => {
 // focuses/opens the app when the user taps it.
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    const applicationId = event.notification?.data?.application_id;
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
             for (const client of clientList) {
-                if ('focus' in client) return client.focus();
+                if ('focus' in client) {
+                    client.focus();
+                    try { client.postMessage({ type: 'OPEN_APPLICATION_STATUS', applicationId }); } catch (_) {}
+                    return;
+                }
             }
-            if (clients.openWindow) return clients.openWindow('./');
+            if (clients.openWindow) {
+                const target = applicationId ? `./?application_id=${encodeURIComponent(applicationId)}` : './';
+                return clients.openWindow(target);
+            }
         })
     );
 });

@@ -27,6 +27,7 @@ const NOTIF_STORAGE_KEY = 'transfer_ids';                       // [{id, savedAt
 const NOTIF_PERMISSION_KEY = 'transfer_notifications_enabled';  // 'true' | 'false'
 const NOTIF_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;             // 10 days
 const NOTIF_TABLE = 'player_transfers';
+const MAX_TRACKED_IDS = 20;
 
 const trackedChannels = new Map();  // id (string) -> realtime channel
 const lastKnownStatus = new Map();  // id (string) -> last seen status
@@ -35,6 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
     cleanupExpiredTrackedIds();
     startAllTrackedRealtime();
     updateNotifCountBadge();
+
+    const checkbox = document.getElementById('in-get-notification');
+    if (checkbox) {
+        checkbox.addEventListener('change', async () => {
+            if (!checkbox.checked) {
+                setNotificationPreference(false);
+                return;
+            }
+            const granted = await requestNotificationPermission();
+            setNotificationPreference(granted);
+            if (!granted && isNotificationSupported() && Notification.permission === 'denied') {
+                checkbox.checked = false;
+                showToast(t('notificationsBlocked'), 'warning');
+            } else if (granted) {
+                showToast(t('notificationsEnabled'), 'success');
+            }
+        });
+    }
 });
 
 // ================= VALIDATION =================
@@ -97,6 +116,11 @@ function addTrackedId(id) {
     const records = cleanupExpiredTrackedIds();
     if (!records.some(r => r.id === String(id))) {
         records.push({ id: String(id), savedAt: Date.now() });
+        records.sort((a, b) => a.savedAt - b.savedAt);
+        while (records.length > MAX_TRACKED_IDS) {
+            const removed = records.shift();
+            if (removed) stopRealtimeForId(removed.id);
+        }
         writeTrackedRecords(records);
     }
     updateNotifCountBadge();
@@ -137,10 +161,16 @@ async function requestNotificationPermission() {
 
 function statusLabel(status) {
     const s = String(status || '').toLowerCase();
-    if (s === 'accepted') return 'Accepted';
-    if (s === 'rejected') return 'Rejected';
-    if (s === 'waiting') return 'Waiting';
-    return String(status || 'Updated');
+    if (typeof t !== 'function') {
+        if (s === 'accepted') return 'Accepted';
+        if (s === 'rejected') return 'Rejected';
+        if (s === 'waiting') return 'Waiting';
+        return String(status || 'Updated');
+    }
+    if (s === 'accepted') return t('statusAccepted');
+    if (s === 'rejected') return t('statusRejected');
+    if (s === 'waiting') return t('statusWaiting');
+    return String(status || t('statusUpdated'));
 }
 
 // Uses the Service Worker's showNotification() when available (required
@@ -150,14 +180,14 @@ async function showNativeStatusNotification(id, status, nickname) {
     if (!isNotificationSupported() || Notification.permission !== 'granted') return;
 
     const s = String(status || '').toLowerCase();
-    let title = 'Transfer Application Update';
-    let body = `Application #${id} is now "${statusLabel(status)}".`;
+    let title = t('nativeUpdateTitle');
+    let body = t('nativeUpdateBody', { id, status: statusLabel(status) });
     if (s === 'accepted') {
-        title = 'Application Accepted 🎉';
-        body = `${nickname || 'Your application'} has been accepted! Welcome to the state.`;
+        title = t('nativeAcceptedTitle');
+        body = t('nativeAcceptedBody', { nickname: nickname || t('yourApplication') });
     } else if (s === 'rejected') {
-        title = 'Application Rejected';
-        body = `${nickname || 'Your application'} was rejected. Check the portal for details.`;
+        title = t('nativeRejectedTitle');
+        body = t('nativeRejectedBody', { nickname: nickname || t('yourApplication') });
     }
 
     const options = {
@@ -269,18 +299,31 @@ function stopAllTrackedRealtime() {
 // only when the "Get Notification?" checkbox was checked.
 async function trackNewApplication(newId) {
     addTrackedId(newId);
-
-    const granted = await requestNotificationPermission();
+    const granted = isNotificationSupported() && Notification.permission === 'granted';
     setNotificationPreference(granted);
-
     if (typeof showToast === 'function') {
         showToast(
-            granted
-                ? `🔔 Notifications enabled for Application #${newId}`
-                : `🔔 Tracking Application #${newId} (in-app alerts only — browser notifications weren't granted)`,
+            granted ? t('notificationTracked', { id: newId }) : t('trackingInApp', { id: newId }),
             'success'
         );
     }
+}
+
+let lastRecoveryCode = '';
+function showRecoveryCodeModal(id, code) {
+    lastRecoveryCode = String(code || '');
+    const idEl = document.getElementById('recovery-app-id');
+    const codeEl = document.getElementById('recovery-code-value');
+    if (idEl) idEl.textContent = String(id);
+    if (codeEl) codeEl.textContent = lastRecoveryCode;
+    document.getElementById('recovery-code-modal')?.classList.add('active');
+}
+function closeRecoveryCodeModal() {
+    document.getElementById('recovery-code-modal')?.classList.remove('active');
+}
+function copyRecoveryCode() {
+    if (!lastRecoveryCode) return;
+    copyToClipboard(lastRecoveryCode);
 }
 
 // ================= "MY APPLICATION STATUS" MODAL =================
@@ -297,37 +340,43 @@ function closeStatusModal() {
 // clearing browser data), we verify it exists, then start tracking it
 // again — re-adding it to localStorage and re-activating its own channel.
 async function handleCheckStatus() {
-    const input = document.getElementById('input-check-transfer-id');
-    const rawValue = (input?.value || '').trim();
+    const idInput = document.getElementById('input-check-transfer-id');
+    const codeInput = document.getElementById('input-recovery-code');
+    const rawId = (idInput?.value || '').trim();
+    const recoveryCode = (codeInput?.value || '').trim().toUpperCase();
 
-    if (!isValidTransferId(rawValue)) {
-        if (typeof showToast === 'function') showToast('Please enter a valid numeric Application ID.', 'warning');
+    if (!isValidTransferId(rawId)) {
+        showToast(t('invalidApplicationId'), 'warning');
+        return;
+    }
+    if (!/^[A-Z0-9]{8}$/.test(recoveryCode)) {
+        showToast(t('invalidRecoveryCode'), 'warning');
         return;
     }
 
-    const id = parseInt(rawValue, 10);
+    const id = parseInt(rawId, 10);
     const client = getSupabase();
     if (!client) return;
 
-    const { data, error } = await client
-        .from(NOTIF_TABLE)
-        .select('id, nickname, status')
-        .eq('id', id)
-        .maybeSingle();
+    const { data, error } = await client.rpc('recover_transfer_application', {
+        p_transfer_id: id,
+        p_recovery_code: recoveryCode
+    });
 
     if (error || !data) {
-        if (typeof showToast === 'function') showToast(`No application found with ID #${id}.`, 'error');
+        showToast(t('recoveryFailed'), 'error');
         return;
     }
 
     lastKnownStatus.set(String(data.id), data.status);
     addTrackedId(data.id);
-
-    const granted = await requestNotificationPermission();
-    setNotificationPreference(granted);
-
-    if (input) input.value = '';
-    if (typeof showToast === 'function') showToast(`Now tracking Application #${data.id} on this device.`, 'success');
+    if (isNotificationSupported() && Notification.permission === 'default') {
+        const granted = await requestNotificationPermission();
+        setNotificationPreference(granted);
+    }
+    if (idInput) idInput.value = '';
+    if (codeInput) codeInput.value = '';
+    showToast(t('trackingRestored', { id: data.id }), 'success');
     renderTrackedList();
 }
 
@@ -337,11 +386,11 @@ async function renderTrackedList() {
 
     const ids = getTrackedIds();
     if (ids.length === 0) {
-        container.innerHTML = `<p class="tracked-empty">No tracked applications on this device yet. Submit the form with "Get Notification?" checked, or recover an ID above.</p>`;
+        container.innerHTML = `<p class="tracked-empty">${t('noTrackedApplications')}</p>`;
         return;
     }
 
-    container.innerHTML = `<p class="tracked-empty">Loading status…</p>`;
+    container.innerHTML = `<p class="tracked-empty">${t('loadingStatus')}</p>`;
 
     const client = getSupabase();
     if (!client) return;
@@ -378,7 +427,7 @@ async function renderTrackedList() {
             <div class="tracked-item tracked-item-missing">
                 <div class="tracked-item-info">
                     <strong>#${id}</strong>
-                    <span class="tracked-missing-label">Record not found</span>
+                    <span class="tracked-missing-label">${escapeHtml(t('recordNotFound'))}</span>
                 </div>
                 <button class="tracked-remove-btn" onclick="removeTrackedId(${id})" title="Stop tracking this ID">✕</button>
             </div>`);

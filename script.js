@@ -54,11 +54,11 @@ function applyAuthSession(session) {
     const specialBtn = document.getElementById('special-notes-btn');
 
     if (isAdmin) {
-        if (btn) btn.innerText = `Logout (${currentStaffUsername.toUpperCase()})`;
+        if (btn) btn.innerText = typeof t === 'function' ? `${t('logout')} (${currentStaffUsername.toUpperCase()})` : `Logout (${currentStaffUsername.toUpperCase()})`;
         if (badge) badge.style.display = "inline";
         if (specialBtn) specialBtn.style.display = "inline-block";
     } else {
-        if (btn) btn.innerText = "President Login";
+        if (btn) btn.innerText = typeof t === 'function' ? t('presidentLoginShort') : 'President Login';
         if (badge) badge.style.display = "none";
         if (specialBtn) specialBtn.style.display = "none";
     }
@@ -200,14 +200,14 @@ async function saveSpecialNotes() {
             .eq('id', 1);
 
         if (!error) {
-            showToast("Special Notes saved to server!", "success");
+            showToast(t('specialNotesSaved'), 'success');
             closeSpecialNotesModal();
         } else {
             throw error;
         }
     } catch (err) {
         console.error("Failed saving special notes:", err);
-        showToast("Error saving special notes: " + err.message, "error");
+        showToast(`${t('specialNotesSaveFailed')}: ${err.message}`, 'error');
     }
 }
 
@@ -226,14 +226,14 @@ async function saveStateInfo() {
             .eq('id', 1);
 
         if (!error) {
-            showToast("State profile information updated live!", "success");
+            showToast(t('stateInfoSaved'), 'success');
             loadTransfers();
         } else {
             throw error;
         }
     } catch (err) {
         console.error("Cloud failure update metadata:", err);
-        showToast("Failed saving state info text: " + err.message, "error");
+        showToast(`${t('stateInfoSaveFailed')}: ${err.message}`, 'error');
     }
 }
 
@@ -248,7 +248,7 @@ async function savePresidentInfo() {
     const idVal = document.getElementById('edit-id').value.trim();
     
     if (!presVal || !alliVal || !idVal) {
-        showToast("All info fields must be filled!", "warning");
+        showToast(t('infoFieldsRequired'), 'warning');
         return;
     }
     
@@ -271,14 +271,14 @@ async function savePresidentInfo() {
             localStorage.setItem('cached_guild_name', alliVal);
             localStorage.setItem('cached_id_game', idVal);
 
-            showToast("Information saved to 3475 Server", "success");
+            showToast(t('infoSaved'), 'success');
             loadFooterInfo();
         } else {
             throw error;
         }
     } catch (err) {
         console.error("Cloud sync save failure:", err);
-        showToast("Database failed saving information: " + err.message, "error");
+        showToast(`${t('infoSaveFailed')}: ${err.message}`, 'error');
     }
 }
 
@@ -288,7 +288,7 @@ async function changeMaxSlots(value) {
     
     const parsedValue = parseInt(value);
     if (isNaN(parsedValue) || parsedValue < 1) {
-        showToast("Invalid slots number!", "warning");
+        showToast(t('invalidSlots'), 'warning');
         document.getElementById('in-max-slots').value = maxSlots;
         return;
     }
@@ -304,14 +304,14 @@ async function changeMaxSlots(value) {
 
         if (!error) {
             maxSlots = parsedValue;
-            showToast(`Maximum slots updated to ${maxSlots}`, "success");
+            showToast(t('maxSlotsUpdated', { max: maxSlots }), 'success');
             loadTransfers();
         } else {
             throw error;
         }
     } catch (err) {
         console.error("Failed adjusting system limits:", err);
-        showToast("Failed to update max slots on server: " + err.message, "error");
+        showToast(`${t('maxSlotsUpdateFailed')}: ${err.message}`, 'error');
         document.getElementById('in-max-slots').value = maxSlots;
     }
 }
@@ -320,89 +320,81 @@ async function changeMaxSlots(value) {
 async function submitTransfer() {
     const client = getSupabase();
     if (!client) return;
-    
-    const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
-    if (acceptedCount >= maxSlots) {
-        showToast("Registration is closed. Quota full!", "error");
-        return;
-    }
-    
-    const state = document.getElementById('in-state').value.trim();
-    const nickname = document.getElementById('in-nickname').value.trim();
-    const gameId = document.getElementById('in-gameid').value.trim();
-    const alliance = document.getElementById('in-alliance').value.trim();
-    const furnace = document.getElementById('in-furnace').value.trim();
-    const power = document.getElementById('in-power').value.trim();
-    const heroPower = document.getElementById('in-heropower').value.trim();
-    const totalHero = document.getElementById('in-totalhero').value.trim();
-    const referrer = document.getElementById('in-referrer').value.trim();
-    
-    if (!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
-        showToast("Please fill all input fields!", "warning");
-        return;
-    }
 
-    if (!/^\d+$/.test(gameId)) {
-        showToast("Game ID must contain numbers only!", "warning");
-        return;
-    }
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn?.disabled) return;
+    if (submitBtn) submitBtn.disabled = true;
 
-    // Parse all numeric fields up front and reject the submission if any of
-    // them are not valid non-negative whole numbers, instead of letting
-    // NaN silently reach the database.
-    const stateNum = parseInt(state, 10);
-    const furnaceNum = parseInt(furnace, 10);
-    const powerNum = parseInt(power, 10);
-    const heroPowerNum = parseInt(heroPower, 10);
-    const totalHeroNum = parseInt(totalHero, 10);
-    const numericFields = { stateNum, furnaceNum, powerNum, heroPowerNum, totalHeroNum };
+    try {
+        const state = document.getElementById('in-state').value.trim();
+        const nickname = document.getElementById('in-nickname').value.trim();
+        const gameId = document.getElementById('in-gameid').value.trim();
+        const alliance = document.getElementById('in-alliance').value.trim();
+        const furnace = document.getElementById('in-furnace').value.trim();
+        const power = document.getElementById('in-power').value.trim();
+        const heroPower = document.getElementById('in-heropower').value.trim();
+        const totalHero = document.getElementById('in-totalhero').value.trim();
+        const referrer = document.getElementById('in-referrer').value.trim();
 
-    const hasInvalidNumber = Object.values(numericFields).some(n => !Number.isFinite(n) || n < 0);
-    if (hasInvalidNumber) {
-        showToast("Please enter valid, non-negative numbers for State, Furnace, Power, and Hero Power fields!", "warning");
-        return;
-    }
+        if (!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
+            showToast(t('fillAllFields'), 'warning');
+            return;
+        }
+        if (!/^\d+$/.test(gameId)) {
+            showToast(t('gameIdNumbers'), 'warning');
+            return;
+        }
 
-    // Furnace Level is a controlled 1-10 dropdown in the UI, but re-check the
-    // range here too in case someone bypasses the dropdown via devtools.
-    if (furnaceNum < 1 || furnaceNum > 10) {
-        showToast("Furnace Level must be between 1 and 10!", "warning");
-        return;
-    }
-    
-    // .select('id').single() is added so we can hand the new row's id off
-    // to the real-time notification module (notifications.js) right below
-    // — without it, a successful insert wouldn't tell us which id to track.
-    const { data: insertedRow, error } = await client.from('player_transfers').insert({
-        transfer_from_state: stateNum,
-        nickname: nickname,
-        game_id: gameId,
-        desired_alliance: alliance,
-        furnace_level: furnaceNum,
-        power: powerNum,
-        hero_power: heroPowerNum,
-        total_hero_power: totalHeroNum,
-        referrer: referrer || null,
-        status: 'Waiting'
-    }).select('id').single();
-    
-    if (!error) {
-        showToast("Transfer application sent successfully!", "success");
+        const stateNum = parseInt(state, 10);
+        const furnaceNum = parseInt(furnace, 10);
+        const powerNum = parseInt(power, 10);
+        const heroPowerNum = parseInt(heroPower, 10);
+        const totalHeroNum = parseInt(totalHero, 10);
+        const numericFields = { stateNum, furnaceNum, powerNum, heroPowerNum, totalHeroNum };
+        if (Object.values(numericFields).some(n => !Number.isFinite(n) || n < 0)) {
+            showToast(t('invalidNumbers'), 'warning');
+            return;
+        }
+        if (furnaceNum < 1 || furnaceNum > 10) {
+            showToast(t('furnaceRange'), 'warning');
+            return;
+        }
 
-        // Opt-in real-time notifications: only start tracking this
-        // application on this device if the guest checked the box.
+        const { data: insertedRow, error } = await client.rpc('submit_transfer_application', {
+            p_transfer_from_state: stateNum,
+            p_nickname: nickname,
+            p_game_id: gameId,
+            p_desired_alliance: alliance,
+            p_furnace_level: furnaceNum,
+            p_power: powerNum,
+            p_hero_power: heroPowerNum,
+            p_total_hero_power: totalHeroNum,
+            p_referrer: referrer || null
+        });
+
+        if (error) {
+            if (String(error.message || '').includes('REGISTRATION_QUOTA_FULL')) {
+                showToast(t('quotaFull'), 'error');
+            } else {
+                throw error;
+            }
+            return;
+        }
+
+        const application = insertedRow || {};
+        showToast(t('submitSuccess'), 'success');
+
         const notifCheckbox = document.getElementById('in-get-notification');
-        if (notifCheckbox && notifCheckbox.checked && insertedRow && typeof trackNewApplication === 'function') {
-            trackNewApplication(insertedRow.id);
+        if (notifCheckbox?.checked && application.id && typeof trackNewApplication === 'function') {
+            trackNewApplication(application.id);
+        }
+        if (application.id && application.notification_recovery_code && typeof showRecoveryCodeModal === 'function') {
+            showRecoveryCodeModal(application.id, application.notification_recovery_code);
         }
 
         document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
-            if(input.id !== 'in-max-slots' && input.id !== 'in-furnace' && !input.classList.contains('info-input')) {
-                input.value = "";
-            }
+            if (input.id !== 'in-max-slots' && input.id !== 'in-furnace' && !input.classList.contains('info-input')) input.value = '';
         });
-        // Furnace Level is a slider, not a text field: reset it back to its
-        // default position/label and require it to be touched again.
         const furnaceReset = document.getElementById('in-furnace');
         if (furnaceReset) {
             furnaceReset.value = '1';
@@ -410,9 +402,15 @@ async function submitTransfer() {
             const furnaceBadge = document.getElementById('furnace-badge');
             if (furnaceBadge) furnaceBadge.textContent = 'FC 1';
         }
+        const notifCheckboxAfter = document.getElementById('in-get-notification');
+        if (notifCheckboxAfter) notifCheckboxAfter.checked = false;
         loadTransfers();
-    } else {
-        showToast("Error submitting: " + error.message, "error");
+    } catch (error) {
+        console.error('Error submitting transfer application:', error);
+        showToast(`${t('submitError')}: ${error.message || error}`, 'error');
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        updateCounters();
     }
 }
 
@@ -538,8 +536,8 @@ function renderTable() {
     
     if (transferList.length === 0) {
         const totalCols = isAdmin ? 6 : 5;
-        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">No applications found</td></tr>`;
-        if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">No applications found</div>`;
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">${escapeHtml(typeof t === 'function' ? t('noApplications') : 'No applications found')}</td></tr>`;
+        if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">${escapeHtml(typeof t === 'function' ? t('noApplications') : 'No applications found')}</div>`;
         return;
     }
     
@@ -552,10 +550,10 @@ function renderTable() {
             actionCell = `
                 <td class="admin-actions">
                     ${item.status === 'Waiting' ? `
-                        <button class="btn-accept" onclick="updateStatus(${item.id}, 'Accepted')">Accept</button>
-                        <button class="btn-reject" onclick="updateStatus(${item.id}, 'Rejected')">Reject</button>
+                        <button class="btn-accept" onclick="updateStatus(${item.id}, 'Accepted')">${typeof t === 'function' ? t('accept') : 'Accept'}</button>
+                        <button class="btn-reject" onclick="updateStatus(${item.id}, 'Rejected')">${typeof t === 'function' ? t('reject') : 'Reject'}</button>
                     ` : `
-                        <button class="btn-delete" onclick="deleteRecord(${item.id})">Delete</button>
+                        <button class="btn-delete" onclick="deleteRecord(${item.id})">${typeof t === 'function' ? t('delete') : 'Delete'}</button>
                     `}
                 </td>
             `;
@@ -573,7 +571,7 @@ function renderTable() {
             <td class="hide-mobile from-state-cell">${escapeHtml(item.transfer_from_state)}</td>
             <td><strong>${escapeHtml(item.nickname)}</strong></td>
             <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="Click to copy ID">${escapeHtml(item.game_id)} 📋</td>
-            <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(item.status)}</span></td>
+            <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(typeof statusLabel === 'function' ? statusLabel(item.status) : item.status)}</span></td>
         `;
         tbody.appendChild(row);
 
@@ -582,12 +580,12 @@ function renderTable() {
             card.className = 'mobile-applicant';
             const statusClass = `badge badge-${item.status.toLowerCase()}`;
             const notes = isAdmin && item.notes ? `<div class="mobile-note">📝 ${escapeHtml(item.notes)}</div>` : '';
-            const adminActions = isAdmin ? `<div class="mobile-admin-actions">${item.status === 'Waiting' ? `<button class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')" style="background:var(--success);padding:7px!important;font-size:.72rem!important;">Accept</button><button class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')" style="background:var(--danger);padding:7px!important;font-size:.72rem!important;">Reject</button>` : `<button class="btn btn-delete" onclick="deleteRecord(${item.id})" style="background:#475569;padding:7px!important;font-size:.72rem!important;">Delete</button>`}</div>` : '';
+            const adminActions = isAdmin ? `<div class="mobile-admin-actions">${item.status === 'Waiting' ? `<button class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')" style="background:var(--success);padding:7px!important;font-size:.72rem!important;">${typeof t === 'function' ? t('accept') : 'Accept'}</button><button class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')" style="background:var(--danger);padding:7px!important;font-size:.72rem!important;">${typeof t === 'function' ? t('reject') : 'Reject'}</button>` : `<button class="btn btn-delete" onclick="deleteRecord(${item.id})" style="background:#475569;padding:7px!important;font-size:.72rem!important;">${typeof t === 'function' ? t('delete') : 'Delete'}</button>`}</div>` : '';
             card.innerHTML = `
-                <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(item.status)}</span></div>
+                <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(typeof statusLabel === 'function' ? statusLabel(item.status) : item.status)}</span></div>
                 <div class="mobile-meta"><span>From ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span>F${escapeHtml(item.furnace_level)}</span></div>
                 ${notes}
-                <div class="mobile-actions"><button class="btn btn-view-detail" onclick="showDetailPopup(${index})">👁 Details</button><button class="btn btn-admin" onclick="copyToClipboard(transferList[${index}].game_id)">📋 Copy ID</button></div>
+                <div class="mobile-actions"><button class="btn btn-view-detail" onclick="showDetailPopup(${index})">👁 ${typeof t === 'function' ? t('details') : 'Details'}</button><button class="btn btn-admin" onclick="copyToClipboard(transferList[${index}].game_id)">📋 ${typeof t === 'function' ? t('copyId') : 'Copy ID'}</button></div>
                 ${adminActions}
             `;
             mobileList.appendChild(card);
@@ -618,8 +616,8 @@ function showDetailPopup(index) {
 
     currentSelectedPlayerId = player.id;
 
-    document.getElementById('pop-nickname').innerText = `Detail: ${player.nickname}`;
-    document.getElementById('pop-state').innerText = `State ${player.transfer_from_state}`;
+    document.getElementById('pop-nickname').innerText = `${t('detailPrefix')}: ${player.nickname}`;
+    document.getElementById('pop-state').innerText = `${t('statePrefix')} ${player.transfer_from_state}`;
     
     const popGameId = document.getElementById('pop-gameid');
     popGameId.innerText = `${player.game_id} 📋`;
@@ -633,10 +631,10 @@ function showDetailPopup(index) {
     document.getElementById('pop-heropower').innerText = Number(player.hero_power).toLocaleString();
     document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
     document.getElementById('pop-referrer').innerText = player.referrer || '-';
-    document.getElementById('pop-status').innerText = player.status;
+    document.getElementById('pop-status').innerText = typeof statusLabel === 'function' ? statusLabel(player.status) : player.status;
     const statusPill = document.getElementById('pop-status-pill');
     if (statusPill) {
-        statusPill.innerText = player.status;
+        statusPill.innerText = typeof statusLabel === 'function' ? statusLabel(player.status) : player.status;
         statusPill.className = `modal-status-pill modal-status-${String(player.status).toLowerCase()}`;
     }
 
@@ -676,14 +674,14 @@ async function savePlayerNote(playerId) {
             .eq('id', playerId);
 
         if (!error) {
-            showToast("Admin note saved successfully!", "success");
+            showToast(t('adminNoteSaved'), 'success');
             loadTransfers();
         } else {
             throw error;
         }
     } catch (err) {
         console.error("Failed to save note:", err);
-        showToast("Error saving note: " + err.message, "error");
+        showToast(`${t('adminNoteSaveFailed')}: ${err.message}`, 'error');
     }
 }
 
@@ -705,38 +703,36 @@ window.onclick = function(event) {
 // ADMIN ACTION: UPDATE APPLICANT STATUS
 async function updateStatus(id, newStatus) {
     if (!isAdmin) {
-        showToast("Unauthorized action!", "error");
+        showToast(t('unauthorized'), 'error');
         return;
     }
-    
     const client = getSupabase();
     if (!client) return;
-    
-    if (newStatus === 'Accepted') {
-        const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
-        if (acceptedCount >= maxSlots) {
-            showToast(`Cannot accept! Quota limit (${maxSlots}) has been reached.`, "error");
-            return;
-        }
-    }
-    
+
     const actionText = newStatus.toLowerCase();
-    if (!confirm(`Are you sure you want to ${actionText} this player transfer application?`)) {
-        return;
-    }
-    
+    const actionLabel = newStatus === 'Accepted' ? t('acceptVerb') : t('rejectVerb');
+    if (!confirm(t('confirmStatus', { action: actionLabel }))) return;
+
     try {
-        const { error } = await client
-            .from('player_transfers')
-            .update({ status: newStatus })
-            .eq('id', id);
-            
+        let error = null;
+        if (newStatus === 'Accepted') {
+            const result = await client.rpc('accept_transfer_application', { p_transfer_id: id });
+            error = result.error;
+            if (error && String(error.message || '').includes('QUOTA_FULL')) {
+                showToast(t('quotaReached', { max: maxSlots }), 'error');
+                return;
+            }
+        } else {
+            const result = await client.from('player_transfers').update({ status: newStatus }).eq('id', id);
+            error = result.error;
+        }
         if (error) throw error;
-        showToast(`Application ${newStatus} successfully!`, "success");
+        const statusLabelText = typeof statusLabel === 'function' ? statusLabel(newStatus) : newStatus;
+        showToast(t('applicationStatusSuccess', { status: statusLabelText }), 'success');
         await loadTransfers();
     } catch (err) {
-        console.error("Failed altering column parameters:", err);
-        showToast("Failed to update status: " + err.message, "error");
+        console.error('Failed altering application status:', err);
+        showToast(`${t('statusUpdateFailed')}: ${err.message || err}`, 'error');
     }
 }
 
@@ -745,7 +741,7 @@ async function deleteRecord(id) {
     if (!isAdmin) return;
     const player = transferList.find(p => p.id === id);
     const playerName = player ? player.nickname : 'this applicant';
-    if (!confirm(`Delete ${playerName} permanently?\n\nThis cannot be undone.`)) return;
+    if (!confirm(t('confirmDelete', { name: playerName }))) return;
     
     const client = getSupabase();
     if (!client) return;
@@ -753,10 +749,10 @@ async function deleteRecord(id) {
     try {
         const { error } = await client.from('player_transfers').delete().eq('id', id);
         if (error) throw error;
-        showToast("Record deleted successfully.", "success");
+        showToast(t('recordDeleted'), 'success');
         await loadTransfers();
     } catch (err) {
-        showToast("Delete failed: " + err.message, "error");
+        showToast(`${t('deleteFailed')}: ${err.message}`, 'error');
     }
 }
 
@@ -773,7 +769,7 @@ function resetTransferPhase() {
     }
 
     const totalRecords = transferList.length;
-    if (!confirm(`⚠️ WARNING\n\nYou are about to permanently delete ${totalRecords} transfer application${totalRecords === 1 ? '' : 's'}.\n\nThis action cannot be undone.`)) {
+    if (!confirm(t('confirmReset', { count: totalRecords }))) {
         return;
     }
 
@@ -792,7 +788,7 @@ async function confirmResetTransferPhase() {
     const password = passwordInput ? passwordInput.value : '';
 
     if (!password) {
-        showToast("Please enter the admin password!", "warning");
+        showToast(t('adminPasswordRequired'), 'warning');
         return;
     }
 
@@ -802,14 +798,14 @@ async function confirmResetTransferPhase() {
     const confirmBtn = document.getElementById('reset-password-confirm-btn');
     if (confirmBtn) {
         confirmBtn.disabled = true;
-        confirmBtn.innerText = 'Verifying...';
+        confirmBtn.innerText = t('verifying');
     }
 
     try {
         const { data: isValid, error: authError } = await client.rpc('verify_admin_code', { input_code: password });
 
         if (authError || !isValid) {
-            showToast("Reset canceled. Verification security check failed.", "warning");
+            showToast(t('resetVerificationFailed'), 'warning');
             return;
         }
 
@@ -820,16 +816,16 @@ async function confirmResetTransferPhase() {
 
         if (error) throw error;
 
-        showToast("All transfer records have been cleared!", "success");
+        showToast(t('allRecordsCleared'), 'success');
         closeResetPasswordModal();
         await loadTransfers();
     } catch (err) {
         console.error("Wipe compilation sequence error:", err);
-        showToast("Reset failed: " + err.message, "error");
+        showToast(`${t('resetFailed')}: ${err.message}`, 'error');
     } finally {
         if (confirmBtn) {
             confirmBtn.disabled = false;
-            confirmBtn.innerText = '⚠️ Delete All Records';
+            confirmBtn.innerText = t('deleteAllRecords');
         }
     }
 }
@@ -866,7 +862,7 @@ async function submitStaffLogin() {
     const password = document.getElementById('input-login-password').value;
 
     if (!username || !password) {
-        showToast("Please enter both username and password!", "warning");
+        showToast(t('loginFieldsRequired'), 'warning');
         return;
     }
 
@@ -874,7 +870,7 @@ async function submitStaffLogin() {
     // other staff username, so a valid staff password never accidentally
     // opens a real session here.
     if (!isPresidentUsername(username)) {
-        showToast("This page is for the President account only.", "error");
+        showToast(t('presidentOnly'), 'error');
         return;
     }
 
@@ -895,13 +891,13 @@ async function submitStaffLogin() {
     }
 
     if (error) {
-        showToast("Login failed: incorrect username or password", "error");
+        showToast(t('loginFailed'), 'error');
         return;
     }
 
     applyAuthSession(data.session);
     closeLoginModal();
-    showToast("Welcome back, President!", "success");
+    showToast(t('welcomePresident'), 'success');
 }
 
 async function handleStaffLogout() {
@@ -910,13 +906,13 @@ async function handleStaffLogout() {
         await client.auth.signOut();
     }
     applyAuthSession(null);
-    showToast("President Logout", "info");
+    showToast(t('presidentLogout'), 'info');
 }
 
 // EXPORT TO EXCEL / CSV
 function exportCSV() {
     if (transferList.length === 0) {
-        showToast("No data to export", "warning");
+        showToast(t('noDataExport'), 'warning');
         return;
     }
     
@@ -955,6 +951,7 @@ function exportCSV() {
 
 // POPUP NOTIFICATION TOAST
 function showToast(message, type = 'info') {
+    if (typeof translateDynamicMessage === 'function') message = translateDynamicMessage(message);
     const container = document.getElementById('toast-container');
     if (!container) return;
     
