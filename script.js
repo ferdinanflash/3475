@@ -344,13 +344,14 @@ async function submitTransfer() {
             showToast(t('gameIdNumbers'), 'warning');
             return;
         }
+        if (power.length > 50 || heroPower.length > 50 || totalHero.length > 50) {
+            showToast(t('invalidNumbers'), 'warning');
+            return;
+        }
 
         const stateNum = parseInt(state, 10);
         const furnaceNum = parseInt(furnace, 10);
-        const powerNum = parseInt(power, 10);
-        const heroPowerNum = parseInt(heroPower, 10);
-        const totalHeroNum = parseInt(totalHero, 10);
-        const numericFields = { stateNum, furnaceNum, powerNum, heroPowerNum, totalHeroNum };
+        const numericFields = { stateNum, furnaceNum };
         if (Object.values(numericFields).some(n => !Number.isFinite(n) || n < 0)) {
             showToast(t('invalidNumbers'), 'warning');
             return;
@@ -366,9 +367,9 @@ async function submitTransfer() {
             p_game_id: gameId,
             p_desired_alliance: alliance,
             p_furnace_level: furnaceNum,
-            p_power: powerNum,
-            p_hero_power: heroPowerNum,
-            p_total_hero_power: totalHeroNum,
+            p_power: power,
+            p_hero_power: heroPower,
+            p_total_hero_power: totalHero,
             p_referrer: referrer || null
         });
 
@@ -627,9 +628,9 @@ function showDetailPopup(index) {
 
     document.getElementById('pop-alliance').innerText = player.desired_alliance || '-';
     document.getElementById('pop-furnace').innerText = `FC ${player.furnace_level}`;
-    document.getElementById('pop-power').innerText = Number(player.power).toLocaleString();
-    document.getElementById('pop-heropower').innerText = Number(player.hero_power).toLocaleString();
-    document.getElementById('pop-totalhero').innerText = Number(player.total_hero_power).toLocaleString();
+    document.getElementById('pop-power').innerText = player.power;
+    document.getElementById('pop-heropower').innerText = player.hero_power;
+    document.getElementById('pop-totalhero').innerText = player.total_hero_power;
     document.getElementById('pop-referrer').innerText = player.referrer || '-';
     document.getElementById('pop-status').innerText = typeof statusLabel === 'function' ? statusLabel(player.status) : player.status;
     const statusPill = document.getElementById('pop-status-pill');
