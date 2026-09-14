@@ -1,21 +1,43 @@
--- 3475 Transfer Portal - safety/notification upgrade
--- Run this entire file in Supabase SQL Editor before deploying the new frontend.
+-- 3475 Transfer Portal — fixes "operator does not exist: text = integer"
+-- Run this ENTIRE file in the Supabase SQL Editor.
+--
+-- ROOT CAUSE:
+-- migration_2026-09-14.sql used "create or replace function ...".
+-- CREATE OR REPLACE only replaces a function with the *exact same*
+-- parameter signature. Because this app has been through several
+-- versions, an earlier version of submit_transfer_application()
+-- (and possibly the other two RPCs) had a different parameter
+-- signature. That means the "replace" actually created a SECOND,
+-- overloaded function with the same name instead of replacing the
+-- old one. PostgREST can then resolve your RPC call to the stale
+-- overload, whose old body compares a text value to an integer
+-- column — producing "operator does not exist: text = integer".
+--
+-- This script drops every overload of each function by name (using
+-- pg_proc, not a fixed signature), then recreates the correct,
+-- single version of each. Safe to run multiple times.
 
-create extension if not exists pgcrypto;
+do $$
+declare
+    r record;
+begin
+    for r in
+        select p.oid::regprocedure as full_signature
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public'
+          and p.proname in (
+              'submit_transfer_application',
+              'accept_transfer_application',
+              'recover_transfer_application'
+          )
+    loop
+        execute format('drop function if exists %s cascade;', r.full_signature);
+    end loop;
+end $$;
 
--- Private recovery code used only when a guest wants to restore notification
--- tracking after clearing browser data / changing device.
-alter table public.player_transfers
-    add column if not exists notification_recovery_code text;
+-- Recreate the three functions (identical to migration_2026-09-14.sql)
 
-create unique index if not exists player_transfers_notification_recovery_code_uidx
-    on public.player_transfers (notification_recovery_code)
-    where notification_recovery_code is not null;
-
--- Atomic guest submission. The system_settings row is locked while checking
--- the accepted quota, so two simultaneous submissions cannot both consume the
--- same last available slot. This function deliberately always creates a
--- Waiting application; acceptance is handled by the admin RPC below.
 create or replace function public.submit_transfer_application(
     p_transfer_from_state integer,
     p_nickname text,
@@ -50,8 +72,6 @@ begin
         raise exception 'Required application fields are missing';
     end if;
 
-    -- Lock the settings row. Both this function and the admin acceptance
-    -- function use the same lock, making quota decisions serialized.
     select max_slots
       into v_max_slots
       from public.system_settings
@@ -71,8 +91,6 @@ begin
         raise exception 'REGISTRATION_QUOTA_FULL';
     end if;
 
-    -- Generate an 8-character recovery code. The unique index is a second
-    -- line of defense; regenerate if a collision ever occurs.
     loop
         v_code := upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 8));
         exit when not exists (
@@ -115,9 +133,6 @@ begin
 end;
 $$;
 
--- Atomic admin acceptance. Only authenticated President/Demon/Phoenix staff
--- accounts may call it. It uses the same system_settings row lock as guest
--- submission, preventing an acceptance from exceeding the configured quota.
 create or replace function public.accept_transfer_application(p_transfer_id bigint)
 returns jsonb
 language plpgsql
@@ -182,8 +197,6 @@ begin
 end;
 $$;
 
--- Recovery is intentionally done through a server-side function instead of
--- exposing a recovery-code column through a broad guest SELECT query.
 create or replace function public.recover_transfer_application(
     p_transfer_id bigint,
     p_recovery_code text
@@ -219,8 +232,14 @@ grant execute on function public.submit_transfer_application(integer, text, text
 grant execute on function public.accept_transfer_application(bigint) to authenticated;
 grant execute on function public.recover_transfer_application(bigint, text) to anon, authenticated;
 
--- Optional hardening after you confirm the portal works:
--- The frontend no longer needs the recovery-code column in direct SELECTs.
--- If your existing RLS policy currently exposes all player_transfers to anon,
--- consider tightening SELECT policy separately after testing the public table
--- and Realtime behavior.
+-- Verify only ONE overload remains per function name:
+select p.proname, p.oid::regprocedure as signature
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in (
+      'submit_transfer_application',
+      'accept_transfer_application',
+      'recover_transfer_application'
+  )
+order by p.proname;
