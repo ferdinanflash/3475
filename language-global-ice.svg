@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Global Ice">
+  <defs>
+    <radialGradient id="g" cx="35%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#8ff5ff"/>
+      <stop offset=".38" stop-color="#20bfff"/>
+      <stop offset=".72" stop-color="#0877d9"/>
+      <stop offset="1" stop-color="#063b91"/>
+    </radialGradient>
+    <linearGradient id="ice" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".35" stop-color="#8cefff"/>
+      <stop offset="1" stop-color="#1687ff"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#glow)">
+    <path d="M16 68c5 12 15 19 28 21l4-10-10-7-10 2-12-6z" fill="url(#ice)" opacity=".9"/>
+    <path d="M80 68c-5 12-15 19-28 21l-4-10 10-7 10 2 12-6z" fill="url(#ice)" opacity=".9"/>
+    <path d="M49 6 56 19 50 27 42 18z" fill="url(#ice)"/>
+    <circle cx="48" cy="43" r="29" fill="url(#g)" stroke="#b9f7ff" stroke-width="2.2"/>
+    <path d="M19 42h58M24 29c14 7 34 7 48 0M24 57c14-7 34-7 48 0" fill="none" stroke="#b8f5ff" stroke-width="1.8" opacity=".8"/>
+    <path d="M48 14c-8 8-12 18-12 29s4 21 12 29M48 14c8 8 12 18 12 29s-4 21-12 29" fill="none" stroke="#d7fbff" stroke-width="1.8" opacity=".85"/>
+    <path d="M10 55 5 66l10-3 3 9 6-13-5-7zM86 55l5 11-10-3-3 9-6-13 5-7z" fill="url(#ice)"/>
+    <path d="m48 68 7 12-7 10-7-10z" fill="url(#ice)" stroke="#d5fbff" stroke-width="1.2"/>
+  </g>
+</svg>
