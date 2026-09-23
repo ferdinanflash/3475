@@ -750,3 +750,65 @@ body{
 #copy-recovery-code-btn{width:100%;margin-bottom:8px}
 .recovery-code-modal-content small{display:block;color:#94a3b8;line-height:1.45}
 @media(max-width:600px){.recovery-input-grid{grid-template-columns:1fr}.recovery-code-grid{grid-template-columns:1fr}.header-right{gap:6px}}
+
+/* ===== ADMIN MODE: TIDY APPLICANT LIST BUTTONS (rapikan tombol, cegah overflow) ===== */
+.mobile-applicant{overflow:hidden;box-sizing:border-box}
+
+.mobile-actions,
+.mobile-admin-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr;
+  gap:6px !important;
+  width:100%;
+  box-sizing:border-box;
+}
+.mobile-admin-actions{margin-top:7px !important}
+/* Kalau cuma ada 1 tombol (mis. Delete saja), biarkan melebar penuh */
+.mobile-admin-actions > button:only-child{grid-column:1 / -1}
+
+.mobile-actions button,
+.mobile-admin-actions button{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:36px;
+  border:none;
+  border-radius:8px !important;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  transition:filter .15s ease, transform .1s ease;
+}
+.mobile-actions button:active,
+.mobile-admin-actions button:active{transform:scale(.97);filter:brightness(.9)}
+
+.mobile-actions .btn-view-detail{
+  background:#475569 !important;
+  font-size:.74rem !important;
+  padding:8px 6px !important;
+}
+.mobile-actions .btn-admin{
+  background:#334155 !important;
+  font-size:.74rem !important;
+  padding:8px 6px !important;
+}
+.mobile-actions .btn-view-detail:hover,
+.mobile-actions .btn-admin:hover{background:#1e293b !important}
+
+.mobile-admin-actions .btn-accept{background:var(--success) !important}
+.mobile-admin-actions .btn-reject{background:var(--danger) !important}
+.mobile-admin-actions .btn-delete{background:#475569 !important}
+.mobile-admin-actions .btn-accept:hover{filter:brightness(1.08)}
+.mobile-admin-actions .btn-reject:hover{filter:brightness(1.08)}
+.mobile-admin-actions .btn-delete:hover{background:#334155 !important}
+
+/* Desktop table: samakan bentuk tombol admin biar konsisten dengan versi mobile */
+.admin-actions button{border-radius:6px !important;transition:filter .15s ease}
+.admin-actions button:hover{filter:brightness(1.1)}
