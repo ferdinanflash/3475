@@ -812,3 +812,62 @@ body{
 /* Desktop table: samakan bentuk tombol admin biar konsisten dengan versi mobile */
 .admin-actions button{border-radius:6px !important;transition:filter .15s ease}
 .admin-actions button:hover{filter:brightness(1.1)}
+/* ===== FIX: MOBILE APPLICANTS LIST RENDERING ===== */
+@media (max-width: 600px) {
+
+  /* --- Header: judul & tombol tidak boleh bertabrakan --- */
+  .applicants-card.mobile-open .applicants-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .applicants-card.mobile-open .applicants-title-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .applicants-card.mobile-open .applicants-title-wrap > div {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .applicants-card.mobile-open .applicants-title-wrap h3,
+  .applicants-card.mobile-open .applicants-title-wrap .section-subtitle {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .applicants-card.mobile-open .applicants-tools {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+  }
+
+  /* --- Nama pemain: LTR + truncation dari kanan --- */
+  .applicants-card.mobile-open .mobile-applicant-top {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .applicants-card.mobile-open .mobile-player {
+    flex: 1 1 auto !important;      /* ambil sisa ruang, boleh shrink */
+    min-width: 0 !important;        /* kunci agar flexbox boleh memotong */
+    max-width: none !important;     /* hapus batas 58% yang bikin sempit */
+    display: block !important;
+    text-align: left !important;
+    direction: ltr !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+  .applicants-card.mobile-open .mobile-applicant-top .badge {
+    flex: 0 0 auto !important;      /* badge jangan menyusut */
+    margin-left: 6px !important;
+  }
+}
