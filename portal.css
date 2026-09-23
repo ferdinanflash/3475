@@ -812,7 +812,10 @@ body{
 /* Desktop table: samakan bentuk tombol admin biar konsisten dengan versi mobile */
 .admin-actions button{border-radius:6px !important;transition:filter .15s ease}
 .admin-actions button:hover{filter:brightness(1.1)}
+
 /* ===== FIX: MOBILE APPLICANTS LIST RENDERING ===== */
+/* Perbaikan untuk bug: nama pemain terpotong di kiri, badge menimpa nama,
+   header bertabrakan dengan tombol Reset Phase/Export CSV. */
 @media (max-width: 600px) {
 
   /* --- Header: judul & tombol tidak boleh bertabrakan --- */
@@ -871,5 +874,3 @@ body{
     margin-left: 6px !important;
   }
 }
-
-
