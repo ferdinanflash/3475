@@ -866,3 +866,53 @@ body{
         min-height: 40px;
     }
 }
+
+/* ================= ABOUT OUR STATE (rich layout) ================= */
+.state-modal-content{max-width:560px}
+.state-modal-content .modal-header{background:#0b1222;border-bottom:1px solid #1f2a44}
+.state-modal-content .modal-body{background:#0f172a;gap:16px}
+.state-title{font-size:1.25rem!important;font-weight:900;letter-spacing:.5px;line-height:1.2}
+.state-title-gold{background:linear-gradient(90deg,#fbbf24,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 18px rgba(251,191,36,.25)}
+.state-title-blue{color:#a5b4fc}
+.state-intro{white-space:pre-wrap;font-size:.92rem;line-height:1.5;color:#cbd5e1;text-align:justify}
+.state-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.state-card{border-radius:10px;padding:12px;border:1px solid;font-size:.82rem;line-height:1.4;color:#cbd5e1}
+.state-card p{margin:0}
+.state-card strong{display:block;color:#f8fafc;font-size:.82rem;margin-bottom:2px}
+.sc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sc-icon{font-size:1.5rem;line-height:1}
+.sc-title{font-weight:800;font-size:.95rem;letter-spacing:.3px}
+.sc-gold{background:linear-gradient(135deg,rgba(120,90,20,.35),rgba(30,41,59,.6));border-color:#b8860b}.sc-gold .sc-title{color:#fbbf24}
+.sc-amber{background:linear-gradient(135deg,rgba(120,70,20,.35),rgba(30,41,59,.6));border-color:#b8860b}.sc-amber .sc-title{color:#fbbf24}
+.sc-teal{background:linear-gradient(135deg,rgba(20,110,100,.35),rgba(30,41,59,.6));border-color:#2a8f85}.sc-teal .sc-title{color:#5eead4}
+.sc-purple{background:linear-gradient(135deg,rgba(90,70,160,.35),rgba(30,41,59,.6));border-color:#7c6fd0}.sc-purple .sc-title{color:#c4b5fd}
+.state-playtime-head h5{margin:4px 0 0;font-size:1.15rem;font-weight:600;color:#f1f5f9}
+.state-table-wrap{overflow-x:auto;border:1px solid #334155;border-radius:10px;background:#0b1222}
+.state-table{width:100%;border-collapse:collapse;font-size:.85rem;text-align:center;min-width:420px}
+.state-table th{padding:10px 8px;background:#111c33;color:#e2e8f0;font-weight:700;border-bottom:1px solid #334155;white-space:nowrap}
+.state-table th:first-child,.state-table td:first-child{text-align:left;padding-left:12px;white-space:nowrap}
+.state-table td{padding:11px 8px;color:#f1f5f9;border-bottom:1px solid #1e293b}
+.state-table tr:last-child td{border-bottom:0}
+.state-table td:first-child{background:#0f172a}
+.c-bt1{background:rgba(76,70,140,.45)}
+.c-bt2{background:rgba(30,90,120,.45)}
+.c-cj{background:rgba(25,105,80,.45)}
+.c-fo{background:rgba(120,95,30,.5)}
+.state-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;color:#cbd5e1;margin-top:-6px}
+.state-legend span{display:inline-flex;align-items:center;gap:6px}
+.state-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.lg-bt1{background:#5b54b0}.lg-bt2{background:#2a7fa8}.lg-cj{background:#2a9470}.lg-fo{background:#a8862f}
+@media (max-width:520px){.state-cards{grid-template-columns:1fr}.state-title{font-size:1.05rem!important}}
+
+/* ---- About Our State: admin editor ---- */
+.se-note{background:rgba(245,158,11,.1);border-left:3px solid var(--warning);padding:8px 10px;font-size:.82rem;color:#cbd5e1;border-radius:4px}
+.se-label{display:block;margin:10px 0 4px;font-size:.78rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px}
+.se-input{width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;color:#f8fafc;border-radius:6px;padding:6px 8px;font:inherit;font-size:.85rem;margin-bottom:6px}
+.se-input:focus{border-color:var(--primary);outline:none}
+.se-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.se-row{display:flex;gap:6px}.se-row .se-icon{width:52px;flex:none;text-align:center}
+.se-table th,.se-table td{padding:4px}.se-table .se-input{margin:0;padding:5px 6px;min-width:70px;text-align:center}
+.se-table th .se-input{font-weight:700}
+.se-del{background:none;border:0;cursor:pointer;font-size:1rem;padding:4px}
+.se-add{margin-top:8px;align-self:flex-start}
+@media (max-width:520px){.se-cards{grid-template-columns:1fr}}

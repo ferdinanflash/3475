@@ -88,10 +88,130 @@ function setupRealtimeChannels() {
 
 // 1. DISPLAY SYSTEM METADATA FROM SUPABASE (state_info etc., from system_settings)
 function displaySystemSettings(settings) {
-    const stateInfoText = settings.state_info || "Welcome to our State! No profile rules assigned yet.";
-    document.getElementById('state-info-text').innerText = stateInfoText;
-    document.getElementById('state-info-edit').value = stateInfoText;
+    const raw = settings.state_info || '';
+    // Don't wipe what the admin is typing when an unrelated realtime update arrives
+    if (raw === stateRaw && stateData && isAdmin) return;
+    stateRaw = raw;
+    stateData = parseStateInfo(raw);
+    renderStateInfo();
 }
+
+// ---------- ABOUT OUR STATE: structured content stored as JSON in system_settings.state_info ----------
+let stateRaw = null;
+let stateData = null;
+
+function defaultStateData() {
+    return {
+        intro: '',
+        cards: [
+            { icon: '⚔️', cls: 'sc-gold',   title: t('scCoreTitle'),  strong: t('scCoreStrong'),  text: t('scCoreText') },
+            { icon: '⚙️', cls: 'sc-amber',  title: t('scRotTitle'),   strong: t('scRotStrong'),   text: t('scRotText') },
+            { icon: '🤝', cls: 'sc-teal',   title: t('scUnityTitle'), strong: t('scUnityStrong'), text: t('scUnityText') },
+            { icon: '☁️', cls: 'sc-purple', title: t('scEasyTitle'),  strong: t('scEasyStrong'),  text: t('scEasyText') }
+        ],
+        playTitle: t('playTimeTitle'),
+        headers: [t('thAlliance'), 'BT1 Time', 'BT2 Time', 'CJ Time', 'Foundry Time'],
+        rows: [
+            ['ARX', '13:30', '15:35', '-', '-'],
+            ['IDN - By Vote', 'By Vote', '12:00/14:00', '12:00/14:00', '12:00/14:00'],
+            ['ZXC', '13:00', '13:00', '20:30', '14:00/19:00'],
+            ['VNX', '13:00/19:00', '13:00/19:00', '13:00/19:00', '14:00'],
+            ['CAT', '12:30', '14:00', '-', '-']
+        ]
+    };
+}
+
+function parseStateInfo(raw) {
+    const data = defaultStateData();
+    const text = String(raw || '').trim();
+    if (!text) return data;
+    try {
+        const obj = JSON.parse(text);
+        if (obj && typeof obj === 'object' && obj.v === 2) {
+            if (typeof obj.intro === 'string') data.intro = obj.intro;
+            if (Array.isArray(obj.cards) && obj.cards.length) {
+                data.cards = obj.cards.slice(0, 4).map((c, i) => ({
+                    icon: c.icon || '', cls: data.cards[i] ? data.cards[i].cls : 'sc-gold',
+                    title: c.title || '', strong: c.strong || '', text: c.text || ''
+                }));
+            }
+            if (typeof obj.playTitle === 'string') data.playTitle = obj.playTitle;
+            if (Array.isArray(obj.headers) && obj.headers.length === 5) data.headers = obj.headers.map(String);
+            if (Array.isArray(obj.rows)) data.rows = obj.rows.map(r => [0,1,2,3,4].map(i => String((r && r[i]) ?? '')));
+            return data;
+        }
+    } catch (e) { /* not JSON: legacy plain text */ }
+    data.intro = text;   // legacy plain-text description becomes the intro
+    return data;
+}
+
+function renderStateInfo() {
+    const view = document.getElementById('state-info-view');
+    if (!view) return;
+    if (!stateData) stateData = parseStateInfo(stateRaw);
+    const d = stateData;
+    const esc = escapeHtml;
+    const colCls = ['', 'c-bt1', 'c-bt2', 'c-cj', 'c-fo'];
+    const legendCls = ['', 'lg-bt1', 'lg-bt2', 'lg-cj', 'lg-fo'];
+    const saveBtn = document.getElementById('save-state-btn');
+
+    if (isAdmin) {
+        if (saveBtn) saveBtn.style.display = 'block';
+        view.innerHTML = `
+            <div class="se-note">✏️ Edit mode: change any text below, then press Save.</div>
+            <label class="se-label">Intro text</label>
+            <textarea id="se-intro" class="se-input" rows="3">${esc(d.intro)}</textarea>
+            <label class="se-label">Cards</label>
+            <div class="se-cards">${d.cards.map((c, i) => `
+                <div class="state-card ${c.cls}">
+                    <div class="se-row"><input class="se-input se-icon" data-card="${i}" data-f="icon" value="${esc(c.icon)}" maxlength="4" placeholder="🙂">
+                    <input class="se-input" data-card="${i}" data-f="title" value="${esc(c.title)}" placeholder="Title"></div>
+                    <input class="se-input" data-card="${i}" data-f="strong" value="${esc(c.strong)}" placeholder="Bold text">
+                    <textarea class="se-input" rows="2" data-card="${i}" data-f="text" placeholder="Description">${esc(c.text)}</textarea>
+                </div>`).join('')}
+            </div>
+            <label class="se-label">Play time table</label>
+            <input id="se-playtitle" class="se-input" value="${esc(d.playTitle)}" placeholder="Table title">
+            <div class="state-table-wrap"><table class="state-table se-table">
+                <thead><tr>${d.headers.map((hd, i) => `<th><input class="se-input" data-h="${i}" value="${esc(hd)}"></th>`).join('')}<th></th></tr></thead>
+                <tbody>${d.rows.map((r, ri) => `<tr>${r.map((cell, ci) => `<td class="${colCls[ci]}"><input class="se-input" data-r="${ri}" data-c="${ci}" value="${esc(cell)}"></td>`).join('')}
+                    <td><button type="button" class="se-del" title="Delete row" onclick="stateDeleteRow(${ri})">🗑</button></td></tr>`).join('')}
+                </tbody></table></div>
+            <button type="button" class="btn btn-admin se-add" onclick="stateAddRow()">➕ Add row</button>`;
+        return;
+    }
+
+    if (saveBtn) saveBtn.style.display = 'none';
+    const legend = [1,2,3,4].map(i => `<span><i class="${legendCls[i]}"></i>${esc(String(d.headers[i]).replace(/\s*time\s*$/i, ''))}</span>`).join('');
+    view.innerHTML = `
+        ${d.intro ? `<div class="state-intro">${esc(d.intro)}</div>` : ''}
+        <div class="state-cards">${d.cards.map(c => `
+            <div class="state-card ${c.cls}">
+                <div class="sc-head"><span class="sc-icon">${esc(c.icon)}</span><span class="sc-title">${esc(c.title)}</span></div>
+                <p><strong>${esc(c.strong)}</strong> ${esc(c.text)}</p>
+            </div>`).join('')}
+        </div>
+        <div class="state-playtime-head"><h5>${esc(d.playTitle)}</h5></div>
+        <div class="state-table-wrap"><table class="state-table">
+            <thead><tr>${d.headers.map(hd => `<th>${esc(hd)}</th>`).join('')}</tr></thead>
+            <tbody>${d.rows.map(r => `<tr>${r.map((cell, ci) => `<td class="${colCls[ci]}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table></div>
+        <div class="state-legend">${legend}</div>`;
+}
+
+// Read the editor fields back into stateData
+function collectStateEditor() {
+    const view = document.getElementById('state-info-view');
+    if (!view || !isAdmin || !view.querySelector('#se-intro')) return;
+    const d = stateData;
+    d.intro = view.querySelector('#se-intro').value.trim();
+    view.querySelectorAll('[data-card]').forEach(el => { d.cards[+el.dataset.card][el.dataset.f] = el.value.trim(); });
+    d.playTitle = view.querySelector('#se-playtitle').value.trim();
+    view.querySelectorAll('[data-h]').forEach(el => { d.headers[+el.dataset.h] = el.value.trim(); });
+    view.querySelectorAll('[data-r]').forEach(el => { d.rows[+el.dataset.r][+el.dataset.c] = el.value.trim(); });
+}
+function stateAddRow() { collectStateEditor(); stateData.rows.push(['', '', '', '', '']); renderStateInfo(); }
+function stateDeleteRow(i) { collectStateEditor(); stateData.rows.splice(i, 1); renderStateInfo(); }
 
 // 1b. DISPLAY PRESIDENT / ALLIANCE / ID GAME FROM footer_settings
 // Follows the same pattern as res.js: show the cached localStorage version
@@ -215,7 +335,15 @@ async function saveSpecialNotes() {
 async function saveStateInfo() {
     if (!isAdmin) return;
     
-    const textValue = document.getElementById('state-info-edit').value;
+    collectStateEditor();
+    const d = stateData;
+    const textValue = JSON.stringify({
+        v: 2, intro: d.intro,
+        cards: d.cards.map(c => ({ icon: c.icon, title: c.title, strong: c.strong, text: c.text })),
+        playTitle: d.playTitle, headers: d.headers,
+        rows: d.rows.filter(r => r.some(cell => cell !== ''))
+    });
+    stateRaw = textValue;
     const client = getSupabase();
     if (!client) return;
 
@@ -490,17 +618,13 @@ function updateCounters() {
         infoInputs.forEach(input => input.style.display = 'inline-block');
         if (saveInfoBtn) saveInfoBtn.style.display = 'inline-block';
         
-        document.getElementById('state-info-text').style.display = 'none';
-        document.getElementById('state-info-edit').style.display = 'block';
-        document.getElementById('save-state-btn').style.display = 'block';
+        renderStateInfo();
     } else {
         infoValues.forEach(span => span.style.display = 'inline-block');
         infoInputs.forEach(input => input.style.display = 'none');
         if (saveInfoBtn) saveInfoBtn.style.display = 'none';
         
-        document.getElementById('state-info-text').style.display = 'block';
-        document.getElementById('state-info-edit').style.display = 'none';
-        document.getElementById('save-state-btn').style.display = 'none';
+        renderStateInfo();
     }
     
     if (acceptedCount >= maxSlots) {
