@@ -515,9 +515,6 @@ async function submitTransfer() {
         if (notifCheckbox?.checked && application.id && typeof trackNewApplication === 'function') {
             trackNewApplication(application.id);
         }
-        if (application.id && application.notification_recovery_code && typeof showRecoveryCodeModal === 'function') {
-            showRecoveryCodeModal(application.id, application.notification_recovery_code);
-        }
 
         document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
             if (input.id !== 'in-max-slots' && input.id !== 'in-furnace' && !input.classList.contains('info-input')) input.value = '';

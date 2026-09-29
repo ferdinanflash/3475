@@ -15,7 +15,7 @@
     <meta name="theme-color" content="#0f172a">
 
     <link rel="stylesheet" href="effect.css">
-    <link rel="stylesheet" href="portal.css?v=7">
+    <link rel="stylesheet" href="portal.css?v=8">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
@@ -126,25 +126,6 @@
     </div>
 </div>
 
-<!-- Modal: Notification Recovery Code -->
-<div class="modal-overlay" id="recovery-code-modal">
-    <div class="modal-content recovery-code-modal-content">
-        <div class="modal-header">
-            <h4 data-i18n="recoveryTitle">🔐 Save Your Recovery Code</h4>
-            <button class="modal-close" onclick="closeRecoveryCodeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p data-i18n="recoveryIntro">Keep these two values safe. They are required to recover notifications on another device or after browser data is cleared.</p>
-            <div class="recovery-code-grid">
-                <div><span data-i18n="applicationIdLabel">Application ID</span><strong id="recovery-app-id">-</strong></div>
-                <div><span data-i18n="recoveryCodeLabel">Recovery Code</span><strong id="recovery-code-value">-</strong></div>
-            </div>
-            <button class="btn btn-primary" id="copy-recovery-code-btn" onclick="copyRecoveryCode()" data-i18n="copyRecovery">📋 Copy Recovery Code</button>
-            <small data-i18n="recoveryWarning">Do not share this code publicly. Anyone with both values may be able to track this application.</small>
-        </div>
-    </div>
-</div>
-
 <!-- Modal: My Application Status (guest notification center, no login required) -->
 <div class="modal-overlay" id="status-modal">
     <div class="modal-content" style="max-width: 440px;">
@@ -153,15 +134,6 @@
             <button class="modal-close" onclick="closeStatusModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label data-i18n="recoverLabel">Recover / Add Application</label>
-                <div class="recovery-input-grid">
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-check-transfer-id" placeholder="Application ID" data-i18n-placeholder="applicationIdPlaceholder" onkeydown="if(event.key==='Enter'){event.preventDefault();handleCheckStatus();}">
-                    <input type="text" id="input-recovery-code" placeholder="Recovery Code" data-i18n-placeholder="recoveryCodePlaceholder" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handleCheckStatus();}">
-                    <button class="btn btn-primary" onclick="handleCheckStatus()" data-i18n="checkButton">Check</button>
-                </div>
-                <small data-i18n="recoverHelp">Lost tracking on a new device or after clearing browser data? Enter the Application ID and Recovery Code saved after submission.</small>
-            </div>
             <div id="tracked-list-container"></div>
         </div>
     </div>
@@ -333,9 +305,9 @@
 </div>
 
 <script src="common.js"></script>
-<script src="script.js?v=10"></script>
-<script src="notifications.js?v=3"></script>
-<script src="lang.js?v=8"></script>
+<script src="script.js?v=11"></script>
+<script src="notifications.js?v=4"></script>
+<script src="lang.js?v=9"></script>
 <script src="portal.js?v=2"></script>
 
 

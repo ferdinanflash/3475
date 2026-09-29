@@ -10,12 +10,9 @@
 //   - Tracked IDs expire after 10 days (matches the Reservation Portal),
 //     so this device doesn't keep listening forever on old applications.
 //
-// An ID ends up tracked in one of two ways:
-//   1. Automatically — right after submitTransfer() succeeds, if the
-//      "Get Notification?" checkbox was checked. See trackNewApplication(),
-//      called from script.js.
-//   2. Manually — via the "My Application Status" modal's recovery box,
-//      for when localStorage gets cleared (new device, browser reset).
+// An ID is tracked only on this device (localStorage), automatically right after
+// submitTransfer() succeeds, if the "Get Notification?" checkbox was checked.
+// See trackNewApplication(), called from script.js.
 //
 // Depends on getSupabase()/escapeHtml() (common.js) and showToast()
 // (script.js) — load this file AFTER both:
@@ -309,23 +306,6 @@ async function trackNewApplication(newId) {
     }
 }
 
-let lastRecoveryCode = '';
-function showRecoveryCodeModal(id, code) {
-    lastRecoveryCode = String(code || '');
-    const idEl = document.getElementById('recovery-app-id');
-    const codeEl = document.getElementById('recovery-code-value');
-    if (idEl) idEl.textContent = String(id);
-    if (codeEl) codeEl.textContent = lastRecoveryCode;
-    document.getElementById('recovery-code-modal')?.classList.add('active');
-}
-function closeRecoveryCodeModal() {
-    document.getElementById('recovery-code-modal')?.classList.remove('active');
-}
-function copyRecoveryCode() {
-    if (!lastRecoveryCode) return;
-    copyToClipboard(lastRecoveryCode);
-}
-
 // ================= "MY APPLICATION STATUS" MODAL =================
 function openStatusModal() {
     document.getElementById('status-modal')?.classList.add('active');
@@ -334,50 +314,6 @@ function openStatusModal() {
 
 function closeStatusModal() {
     document.getElementById('status-modal')?.classList.remove('active');
-}
-
-// Manual recovery: applicant types in an Application ID (e.g. after
-// clearing browser data), we verify it exists, then start tracking it
-// again — re-adding it to localStorage and re-activating its own channel.
-async function handleCheckStatus() {
-    const idInput = document.getElementById('input-check-transfer-id');
-    const codeInput = document.getElementById('input-recovery-code');
-    const rawId = (idInput?.value || '').trim();
-    const recoveryCode = (codeInput?.value || '').trim().toUpperCase();
-
-    if (!isValidTransferId(rawId)) {
-        showToast(t('invalidApplicationId'), 'warning');
-        return;
-    }
-    if (!/^[A-Z0-9]{8}$/.test(recoveryCode)) {
-        showToast(t('invalidRecoveryCode'), 'warning');
-        return;
-    }
-
-    const id = parseInt(rawId, 10);
-    const client = getSupabase();
-    if (!client) return;
-
-    const { data, error } = await client.rpc('recover_transfer_application', {
-        p_transfer_id: id,
-        p_recovery_code: recoveryCode
-    });
-
-    if (error || !data) {
-        showToast(t('recoveryFailed'), 'error');
-        return;
-    }
-
-    lastKnownStatus.set(String(data.id), data.status);
-    addTrackedId(data.id);
-    if (isNotificationSupported() && Notification.permission === 'default') {
-        const granted = await requestNotificationPermission();
-        setNotificationPreference(granted);
-    }
-    if (idInput) idInput.value = '';
-    if (codeInput) codeInput.value = '';
-    showToast(t('trackingRestored', { id: data.id }), 'success');
-    renderTrackedList();
 }
 
 async function renderTrackedList() {
