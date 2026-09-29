@@ -907,3 +907,20 @@ body{
 .state-table:not(.se-table) th,.state-table:not(.se-table) td{padding:9px 3px;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.25}
 .state-table:not(.se-table) th{font-size:.74rem}
 .state-table:not(.se-table) th:first-child,.state-table:not(.se-table) td:first-child{width:17%;padding-left:8px;padding-right:4px;white-space:normal;text-align:left}
+
+/* ================= HEADER ACTIONS ROW: [language dropdown] [About Our State] [crown] ================= */
+.site-header .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%}
+.lang-select-wrap{position:relative;display:inline-flex;align-items:center;flex:0 0 auto;height:40px;padding:0 22px 0 6px;gap:2px;border:1px solid rgba(68,173,255,.58);border-radius:10px;background:linear-gradient(180deg,rgba(7,31,65,.98),rgba(5,17,38,.99));box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+.lang-select-wrap img{width:24px;height:24px;flex:none;filter:drop-shadow(0 0 5px rgba(22,174,255,.55))}
+.lang-select-wrap::after{content:"\25BE";position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#8fb3d9;font-size:.75rem;pointer-events:none}
+#language-select{-webkit-appearance:none;appearance:none;background:transparent;border:0;outline:0;color:#e8f8ff;font:inherit;font-weight:800;font-size:.82rem;height:100%;padding:0 4px;width:auto;max-width:92px;cursor:pointer}
+#language-select option{background:#0f172a;color:#f8fafc}
+.lang-select-wrap:focus-within{border-color:#69daff;box-shadow:0 0 0 2px rgba(105,218,255,.25)}
+.site-header .header-actions #about-state-btn{flex:1 1 0;min-width:0;width:auto;height:40px;margin:0!important;padding:0 8px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.82rem;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+#about-state-btn .about-state-label{font-size:.82rem!important;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis}
+.site-header .header-actions .admin-controls{flex:0 0 auto!important;width:auto!important;margin:0!important;flex-direction:row;align-items:center}
+.site-header .header-actions .admin-controls-buttons{display:flex!important;width:auto!important;gap:6px!important;flex-wrap:wrap;justify-content:flex-end}
+.site-header .header-actions #admin-btn{flex:0 0 auto!important;min-width:44px;height:40px;padding:0 10px!important;font-size:1.05rem!important;white-space:nowrap}
+.site-header .header-actions #special-notes-btn{height:40px}
+.header-actions .admin-badge{flex:1 0 100%;text-align:center}
+@media (min-width:901px){.site-header .header-actions{width:auto;flex-wrap:nowrap}.site-header .header-actions #about-state-btn{flex:0 0 auto;padding:0 14px!important}}

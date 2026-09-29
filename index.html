@@ -15,7 +15,7 @@
     <meta name="theme-color" content="#0f172a">
 
     <link rel="stylesheet" href="effect.css">
-    <link rel="stylesheet" href="portal.css?v=8">
+    <link rel="stylesheet" href="portal.css?v=9">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
@@ -166,31 +166,37 @@
                 <button class="btn-save-info" id="save-info-btn" onclick="savePresidentInfo()" data-i18n="save">💾 Save</button>
             </div>
 
-            <div class="language-switcher" aria-label="Language selector" role="group">
-                <span class="language-switcher-icon" aria-hidden="true"><img src="language-global-ice.svg" alt=""></span>
-                <button type="button" class="language-option active" data-lang="en" aria-label="English" aria-pressed="true">ENG</button>
-                <button type="button" class="language-option" data-lang="id" aria-label="Indonesian" aria-pressed="false">ID</button>
-                <button type="button" class="language-option" data-lang="cn" aria-label="Chinese" aria-pressed="false">CN</button>
-                <button type="button" class="language-option" data-lang="it" aria-label="Italian" aria-pressed="false">IT</button>
-                <button type="button" class="language-option" data-lang="tl" aria-label="Filipino" aria-pressed="false">PH</button>
-            </div>
+            <div class="header-actions">
+                <label class="lang-select-wrap">
+                    <img src="language-global-ice.svg" alt="" aria-hidden="true">
+                    <select id="language-select" aria-label="Language">
+                        <option value="en">English</option>
+                        <option value="id">Indonesia</option>
+                        <option value="cn">中文</option>
+                        <option value="it">Italiano</option>
+                        <option value="tl">Filipino</option>
+                    </select>
+                </label>
 
-            <div class="admin-controls">
-                <div class="admin-controls-buttons">
-                    <button class="btn btn-admin" data-i18n="specialNotes" id="special-notes-btn" style="display:none; background: var(--warning); color: #000; font-weight: bold;" onclick="openSpecialNotesModal()">📝 Special Notes</button>
-                    <button class="btn btn-admin" id="admin-btn" onclick="handleAdminLogin()">👑</button>
+                <button class="btn btn-leather" id="about-state-btn" onclick="openStateModal()">
+                    📜 <span class="about-state-label" data-i18n="aboutState">About Our State</span>
+                </button>
+
+                <div class="admin-controls">
+                    <div class="admin-controls-buttons">
+                        <button class="btn btn-admin" data-i18n="specialNotes" id="special-notes-btn" style="display:none; background: var(--warning); color: #000; font-weight: bold;" onclick="openSpecialNotesModal()">📝 Special Notes</button>
+                        <button class="btn btn-admin" id="admin-btn" title="President Login" onclick="handleAdminLogin()">👑</button>
+                    </div>
                 </div>
-                <span id="admin-badge" class="admin-badge" style="display:none;" data-i18n="presidentMode">● President Mode</span>
+                <span id="admin-badge" class="admin-badge" style="display:none;" data-i18n="presidentMode">👑 President Mode</span>
             </div>
         </div>
     </header>
 
     <div class="grid dashboard-grid">
         <div class="card form-card">
-            <div class="section-heading"><div><h3 data-i18n="transferForm">Transfer Form</h3><p class="section-subtitle" data-i18n="transferSubtitle">Enter your transfer details once. You can check the status below in real time.</p></div></div>
-            <button class="btn btn-leather" id="about-state-btn" onclick="openStateModal()">
-                📜 <span class="animated-title about-state-label" data-i18n="aboutState">About Our State</span>
-            </button>
+            <div class="section-heading"><div><p class="section-subtitle" data-i18n="transferSubtitle">Enter your transfer details once. You can check the status below in real time.</p></div></div>
+            
             <button class="btn btn-admin notif-bell-btn" id="notif-status-btn" onclick="openStatusModal()" style="margin-top:8px;width:100%;">
                 <span data-i18n="myApplicationStatus">🔔 My Application Status</span>
                 <span id="notif-count-badge" class="notif-count-badge" style="display:none;">0</span>
@@ -305,9 +311,9 @@
 </div>
 
 <script src="common.js"></script>
-<script src="script.js?v=11"></script>
+<script src="script.js?v=12"></script>
 <script src="notifications.js?v=4"></script>
-<script src="lang.js?v=9"></script>
+<script src="lang.js?v=10"></script>
 <script src="portal.js?v=2"></script>
 
 

@@ -80,7 +80,7 @@ function applyLanguage(lang){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder=t(el.dataset.i18nPlaceholder); });
   const title=document.querySelector('title[data-i18n]'); if(title) title.textContent=t(title.dataset.i18n);
-  document.querySelectorAll('.language-option').forEach(btn=>{ const active=btn.dataset.lang===lang; btn.classList.toggle('active',active); btn.setAttribute('aria-pressed',active?'true':'false'); });
+  const langSel=document.getElementById('language-select'); if(langSel) langSel.value=lang;
   const adminBtn=document.getElementById('admin-btn');
   if(adminBtn && typeof isAdmin !== 'undefined') adminBtn.innerText = isAdmin ? `${t('logout')} (${String(currentStaffUsername || '').toUpperCase()})` : '👑';
   if(typeof renderTable==='function') renderTable();
@@ -101,6 +101,6 @@ function translateDynamicMessage(message){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.language-option').forEach(btn=>btn.addEventListener('click',()=>applyLanguage(btn.dataset.lang)));
+  document.getElementById('language-select')?.addEventListener('change',e=>applyLanguage(e.target.value));
   applyLanguage(currentLanguage());
 });

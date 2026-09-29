@@ -58,7 +58,7 @@ function applyAuthSession(session) {
         if (badge) badge.style.display = "inline";
         if (specialBtn) specialBtn.style.display = "inline-block";
     } else {
-        if (btn) btn.innerText = typeof t === 'function' ? t('presidentLoginShort') : 'President Login';
+        if (btn) { btn.innerText = '👑'; btn.title = typeof t === 'function' ? t('presidentLoginShort') : 'President Login'; }
         if (badge) badge.style.display = "none";
         if (specialBtn) specialBtn.style.display = "none";
     }

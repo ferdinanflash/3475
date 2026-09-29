@@ -9,17 +9,17 @@
 //   - everything else (Supabase, CDN): never touched, always straight to network
 //
 // >>> Bump CACHE_VERSION on every deploy so old files are dropped. <<<
-const CACHE_VERSION = '2026-09-30-5';
+const CACHE_VERSION = '2026-09-30-6';
 const CACHE_NAME = `transfer3475-${CACHE_VERSION}`;
 const PRECACHE = [
     './',
     './index.html',
     './effect.css',
     './common.js',
-    './script.js?v=11',
+    './script.js?v=12',
     './notifications.js?v=4',
     './opening-animation.js',
-    './lang.js?v=9',
+    './lang.js?v=10',
     './portal.js?v=1',
     './site.webmanifest',
     './android-chrome-192x192.png',
