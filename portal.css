@@ -1007,3 +1007,41 @@ body.admin-mode .site-header .header-actions #admin-btn[aria-expanded="true"]{bo
 
 /* President Info modal: full-width fields (overrides the old 95px inline-editor width) */
 #president-info-modal .modal-body input,#president-info-modal #edit-id{width:100%;max-width:100%;box-sizing:border-box}
+
+/* ===== FIX: Applicants List (mobile, President mode) — kartu tidak lagi meluber ke kanan =====
+   Penyebab: grid `1fr` = minmax(auto,1fr) sehingga kolom melebar mengikuti min-content anak-anaknya
+   (tombol nowrap, nama, badge, catatan). minmax(0,1fr) + min-width:0 memaksa semuanya muat di layar. */
+@media (max-width:900px){
+  .applicants-card.mobile-open .mobile-applicants-list{
+    grid-template-columns:minmax(0,1fr)!important;
+    overflow-x:hidden!important;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important;
+    height:calc(100dvh - 78px);
+  }
+  .applicants-card.mobile-open .mobile-applicant,
+  .applicants-card.mobile-open .mobile-applicant > *{min-width:0;max-width:100%;box-sizing:border-box}
+
+  /* Baris atas: nama (elipsis) + badge status selalu terlihat */
+  .applicants-card.mobile-open .mobile-applicant-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .applicants-card.mobile-open .mobile-player{flex:1 1 auto;min-width:0;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .applicants-card.mobile-open .mobile-applicant-top .badge{flex:0 0 auto;min-width:0;padding:4px 8px}
+  .applicants-card.mobile-open .mobile-meta{display:flex;flex-wrap:wrap;align-items:center;min-width:0}
+  .applicants-card.mobile-open .mobile-meta > span{min-width:0;overflow-wrap:anywhere}
+
+  /* Tombol aksi: 2 kolom sama lebar, tidak melebihi kartu */
+  .admin-mode .applicants-card.mobile-open .mobile-actions,
+  .admin-mode .applicants-card.mobile-open .mobile-admin-actions{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;max-width:100%;box-sizing:border-box;
+  }
+  .admin-mode .applicants-card.mobile-open .mobile-actions .btn,
+  .admin-mode .applicants-card.mobile-open .mobile-admin-actions .btn{
+    min-width:0;width:100%;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  }
+  .admin-mode .applicants-card.mobile-open .mobile-admin-actions .btn-delete{grid-column:1 / -1}
+  .applicants-card.mobile-open .mobile-note{min-width:0;max-width:100%}
+
+  /* Header (Reset Phase / Export CSV) tetap satu baris dan muat */
+  .applicants-card.mobile-open .applicants-header{min-width:0;box-sizing:border-box}
+  .applicants-card.mobile-open .applicants-title-wrap{min-width:0}
+  .applicants-card.mobile-open .applicants-tools .btn-admin{white-space:nowrap}
+}
