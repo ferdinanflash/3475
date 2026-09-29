@@ -152,7 +152,6 @@ function renderStateInfo() {
     const d = stateData;
     const esc = escapeHtml;
     const colCls = ['', 'c-bt1', 'c-bt2', 'c-cj', 'c-fo'];
-    const legendCls = ['', 'lg-bt1', 'lg-bt2', 'lg-cj', 'lg-fo'];
     const saveBtn = document.getElementById('save-state-btn');
 
     if (isAdmin) {
@@ -182,7 +181,6 @@ function renderStateInfo() {
     }
 
     if (saveBtn) saveBtn.style.display = 'none';
-    const legend = [1,2,3,4].map(i => `<span><i class="${legendCls[i]}"></i>${esc(String(d.headers[i]).replace(/\s*time\s*$/i, ''))}</span>`).join('');
     view.innerHTML = `
         ${d.intro ? `<div class="state-intro">${esc(d.intro)}</div>` : ''}
         <div class="state-cards">${d.cards.map(c => `
@@ -196,7 +194,7 @@ function renderStateInfo() {
             <thead><tr>${d.headers.map(hd => `<th>${esc(hd)}</th>`).join('')}</tr></thead>
             <tbody>${d.rows.map(r => `<tr>${r.map((cell, ci) => `<td class="${colCls[ci]}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
         </table></div>
-        <div class="state-legend">${legend}</div>`;
+        `;
 }
 
 // Read the editor fields back into stateData

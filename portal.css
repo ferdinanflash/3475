@@ -691,8 +691,6 @@ body{
 @media (max-width:1100px){
   .dashboard-grid{grid-template-columns:1fr}
   .form-card{position:static;max-height:none;overflow:visible}
-  .table-container{display:none}
-  .mobile-applicants-list{display:grid;gap:8px}
   .admin-mode .applicants-tools{display:grid;grid-template-columns:1fr 1fr}
   .admin-mode .mobile-admin-actions{display:flex}
 }
@@ -898,10 +896,6 @@ body{
 .c-bt2{background:rgba(30,90,120,.45)}
 .c-cj{background:rgba(25,105,80,.45)}
 .c-fo{background:rgba(120,95,30,.5)}
-.state-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;color:#cbd5e1;margin-top:-6px}
-.state-legend span{display:inline-flex;align-items:center;gap:6px}
-.state-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
-.lg-bt1{background:#5b54b0}.lg-bt2{background:#2a7fa8}.lg-cj{background:#2a9470}.lg-fo{background:#a8862f}
 @media (max-width:520px){.state-cards{grid-template-columns:1fr}.state-title{font-size:1.05rem!important}}
 
 /* ---- About Our State: admin editor ---- */
