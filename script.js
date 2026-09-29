@@ -739,7 +739,7 @@ function showDetailPopup(index) {
     document.getElementById('pop-state').innerText = `${t('statePrefix')} ${player.transfer_from_state}`;
     
     const popGameId = document.getElementById('pop-gameid');
-    popGameId.innerText = `${player.game_id} 📋`;
+    popGameId.innerText = String(player.game_id);   // ikon 📋 sudah ditambahkan CSS (.game-id-detail::after); jangan diduplikasi di sini
     popGameId.style.cursor = 'pointer';
     popGameId.title = 'Click to copy ID';
     popGameId.onclick = () => copyToClipboard(player.game_id);
