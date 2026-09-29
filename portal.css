@@ -1045,3 +1045,14 @@ body.admin-mode .site-header .header-actions #admin-btn[aria-expanded="true"]{bo
   .applicants-card.mobile-open .applicants-title-wrap{min-width:0}
   .applicants-card.mobile-open .applicants-tools .btn-admin{white-space:nowrap}
 }
+
+/* ===== About Our State: isi kartu mengikuti baris baru dari editor ===== */
+.state-card .sc-strong{margin:0 0 4px}
+.state-card .sc-text{font-size:.82rem;line-height:1.45;color:#cbd5e1;overflow-wrap:anywhere}
+.state-card .sc-line{margin:0}
+.state-card .sc-line + .sc-line{margin-top:2px}
+.state-card .sc-bullet{padding-left:.9em;text-indent:-.9em}
+.state-card .sc-gap{height:.6em}
+.state-intro{white-space:pre-line;text-align:left}
+.se-input.se-textarea{min-height:110px;resize:vertical;line-height:1.4}
+#se-intro{min-height:90px;resize:vertical;line-height:1.4}

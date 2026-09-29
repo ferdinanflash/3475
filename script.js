@@ -144,6 +144,17 @@ function parseStateInfo(raw) {
     return data;
 }
 
+// Render teks multi-baris dari editor (Enter = baris baru). Baris berawalan "-", "•" atau "*"
+// ditampilkan sebagai bullet dengan indent gantung; baris kosong menjadi jarak antar paragraf.
+function renderMultiline(text) {
+    return String(text || '').replace(/\r\n?/g, '\n').split('\n').map(line => {
+        const l = line.trim();
+        if (!l) return '<div class="sc-gap"></div>';
+        const bullet = /^[-•*]\s+/.test(l);
+        return `<div class="sc-line${bullet ? ' sc-bullet' : ''}">${escapeHtml(l)}</div>`;
+    }).join('');
+}
+
 function renderStateInfo() {
     const view = document.getElementById('state-info-view');
     if (!view) return;
@@ -165,7 +176,7 @@ function renderStateInfo() {
                     <div class="se-row"><input class="se-input se-icon" data-card="${i}" data-f="icon" value="${esc(c.icon)}" maxlength="4" placeholder="🙂">
                     <input class="se-input" data-card="${i}" data-f="title" value="${esc(c.title)}" placeholder="Title"></div>
                     <input class="se-input" data-card="${i}" data-f="strong" value="${esc(c.strong)}" placeholder="Bold text">
-                    <textarea class="se-input" rows="2" data-card="${i}" data-f="text" placeholder="Description">${esc(c.text)}</textarea>
+                    <textarea class="se-input se-textarea" rows="5" data-card="${i}" data-f="text" placeholder="Description">${esc(c.text)}</textarea>
                 </div>`).join('')}
             </div>
             <label class="se-label">Play time table</label>
@@ -185,7 +196,8 @@ function renderStateInfo() {
         <div class="state-cards">${d.cards.map(c => `
             <div class="state-card ${c.cls}">
                 <div class="sc-head"><span class="sc-icon">${esc(c.icon)}</span><span class="sc-title">${esc(c.title)}</span></div>
-                <p><strong>${esc(c.strong)}</strong> ${esc(c.text)}</p>
+                ${c.strong ? `<p class="sc-strong"><strong>${esc(c.strong)}</strong></p>` : ''}
+                <div class="sc-text">${renderMultiline(c.text)}</div>
             </div>`).join('')}
         </div>
         <div class="state-playtime-head"><h5>${esc(d.playTitle)}</h5></div>
@@ -247,7 +259,12 @@ function loadFooterInfo() {
 }
 
 // Helper: apply president/guild/id values to every display element + edit form
+// Nilai asli dari database/cache. Jangan pernah membaca ulang dari teks yang tampil di layar
+// (bisa berubah karena terjemahan otomatis browser / Google Translate).
+let presidentInfoRaw = { president: '', alliance: '', id: '' };
+
 function applyPresidentDisplay(president, alliance, idGame) {
+    presidentInfoRaw = { president: String(president ?? ''), alliance: String(alliance ?? ''), id: String(idGame ?? '') };
     document.getElementById('val-president').innerText = president;
     document.getElementById('val-alliance').innerText = alliance;
 
@@ -1085,14 +1102,14 @@ function openApplicantList() {
 // PRESIDENT INFO EDITOR MODAL
 function openPresidentInfoModal() {
     if (!isAdmin) return;
-    const fill = (inputId, valId) => {
-        const shown = (document.getElementById(valId)?.innerText || '').trim();
+    const fill = (inputId, raw) => {
+        const v = String(raw || '').trim();
         const input = document.getElementById(inputId);
-        if (input) input.value = (shown === '-' || shown === '...') ? '' : shown;
+        if (input) input.value = (v === '-' || v === '...') ? '' : v;
     };
-    fill('edit-president', 'val-president');
-    fill('edit-alliance', 'val-alliance');
-    fill('edit-id', 'val-id');
+    fill('edit-president', presidentInfoRaw.president);
+    fill('edit-alliance', presidentInfoRaw.alliance);
+    fill('edit-id', presidentInfoRaw.id);
     document.getElementById('president-info-modal').classList.add('active');
     document.getElementById('edit-president')?.focus();
 }
