@@ -9,21 +9,31 @@
 //   - everything else (Supabase, CDN): never touched, always straight to network
 //
 // >>> Bump CACHE_VERSION on every deploy so old files are dropped. <<<
-const CACHE_VERSION = '2026-09-30-6';
+const CACHE_VERSION = '2026-09-30-8';
 const CACHE_NAME = `transfer3475-${CACHE_VERSION}`;
 const PRECACHE = [
     './',
     './index.html',
     './effect.css',
     './common.js',
-    './script.js?v=12',
+    './script.js?v=13',
     './notifications.js?v=4',
     './opening-animation.js',
     './lang.js?v=10',
-    './portal.js?v=1',
+    './portal.js?v=3',
     './site.webmanifest',
     './android-chrome-192x192.png',
-    './android-chrome-512x512.png'
+    './android-chrome-512x512.png',
+    './furnace/fc-1.webp',
+    './furnace/fc-2.webp',
+    './furnace/fc-3.webp',
+    './furnace/fc-4.webp',
+    './furnace/fc-5.webp',
+    './furnace/fc-6.webp',
+    './furnace/fc-7.webp',
+    './furnace/fc-8.webp',
+    './furnace/fc-9.webp',
+    './furnace/fc-10.webp'
 ];
 
 self.addEventListener('install', (event) => {

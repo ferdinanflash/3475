@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (furnaceEl) {
         furnaceEl.addEventListener('input', () => {
             const badge = document.getElementById('furnace-badge');
-            if (badge) badge.textContent = 'FC ' + furnaceEl.value;
+            if (badge) setFurnaceBadge(badge, furnaceEl.value);
             furnaceEl.dataset.touched = '1';
         });
     }

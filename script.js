@@ -5,6 +5,16 @@
 // copyToClipboard are all defined once in common.js and shared with res.js.
 // Make sure index.html loads common.js BEFORE this file.
 
+// ================= FURNACE LEVEL BADGE (FC1-10 images) =================
+function furnaceBadgeHTML(level) {
+    const n = parseInt(level, 10);
+    if (!Number.isFinite(n) || n < 1 || n > 10) return `FC ${escapeHtml(level)}`;
+    return `<img class="fc-img" src="furnace/fc-${n}.webp" alt="FC ${n}" title="FC ${n}" width="96" height="96" loading="lazy" decoding="async">`;
+}
+function setFurnaceBadge(el, level) {
+    if (el) el.innerHTML = furnaceBadgeHTML(level);
+}
+
 let isAdmin = false;
 let currentStaffUsername = null;
 let transferList = [];
@@ -524,7 +534,7 @@ async function submitTransfer() {
             furnaceReset.value = '1';
             furnaceReset.dataset.touched = '0';
             const furnaceBadge = document.getElementById('furnace-badge');
-            if (furnaceBadge) furnaceBadge.textContent = 'FC 1';
+            setFurnaceBadge(furnaceBadge, 1);
         }
         const notifCheckboxAfter = document.getElementById('in-get-notification');
         if (notifCheckboxAfter) notifCheckboxAfter.checked = false;
@@ -703,7 +713,7 @@ function renderTable() {
             const adminActions = isAdmin ? `<div class="mobile-admin-actions" aria-label="Applicant actions">${item.status === 'Waiting' ? `<button type="button" class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')"><span class="action-icon">✓</span><span>${typeof t === 'function' ? t('accept') : 'Accept'}</span></button><button type="button" class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')"><span class="action-icon">×</span><span>${typeof t === 'function' ? t('reject') : 'Reject'}</span></button>` : `<button type="button" class="btn btn-delete" onclick="deleteRecord(${item.id})"><span class="action-icon">⌫</span><span>${typeof t === 'function' ? t('delete') : 'Delete'}</span></button>`}</div>` : '';
             card.innerHTML = `
                 <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(typeof statusLabel === 'function' ? statusLabel(item.status) : item.status)}</span></div>
-                <div class="mobile-meta"><span>From ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span>F${escapeHtml(item.furnace_level)}</span></div>
+                <div class="mobile-meta"><span>From ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span class="mobile-fc">${furnaceBadgeHTML(item.furnace_level)}</span></div>
                 ${notes}
                 <div class="mobile-actions" aria-label="Applicant information actions"><button type="button" class="btn btn-view-detail" onclick="showDetailPopup(${index})"><span class="action-icon">👁</span><span>${typeof t === 'function' ? t('details') : 'Details'}</span></button><button type="button" class="btn btn-admin btn-copy-id" onclick="copyToClipboard(transferList[${index}].game_id)"><span class="action-icon">▣</span><span>${typeof t === 'function' ? t('copyId') : 'Copy ID'}</span></button></div>
                 ${adminActions}
@@ -746,7 +756,7 @@ function showDetailPopup(index) {
     popGameId.onclick = () => copyToClipboard(player.game_id);
 
     document.getElementById('pop-alliance').innerText = player.desired_alliance || '-';
-    document.getElementById('pop-furnace').innerText = `FC ${player.furnace_level}`;
+    setFurnaceBadge(document.getElementById('pop-furnace'), player.furnace_level);
     document.getElementById('pop-power').innerText = player.power;
     document.getElementById('pop-heropower').innerText = player.hero_power;
     document.getElementById('pop-totalhero').innerText = player.total_hero_power;
