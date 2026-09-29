@@ -192,7 +192,7 @@ function renderStateInfo() {
         <div class="state-playtime-head"><h5>${esc(d.playTitle)}</h5></div>
         <div class="state-table-wrap"><table class="state-table">
             <thead><tr>${d.headers.map(hd => `<th>${esc(hd)}</th>`).join('')}</tr></thead>
-            <tbody>${d.rows.map(r => `<tr>${r.map((cell, ci) => `<td class="${colCls[ci]}">${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+            <tbody>${d.rows.map(r => `<tr>${r.map((cell, ci) => `<td class="${colCls[ci]}">${esc(cell).replace(/\//g, '/&#8203;')}</td>`).join('')}</tr>`).join('')}</tbody>
         </table></div>
         `;
 }

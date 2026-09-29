@@ -910,3 +910,9 @@ body{
 .se-del{background:none;border:0;cursor:pointer;font-size:1rem;padding:4px}
 .se-add{margin-top:8px;align-self:flex-start}
 @media (max-width:520px){.se-cards{grid-template-columns:1fr}}
+
+/* ---- About Our State: compact table that never scrolls sideways (view mode) ---- */
+.state-table:not(.se-table){table-layout:fixed;width:100%;min-width:0;font-size:.78rem}
+.state-table:not(.se-table) th,.state-table:not(.se-table) td{padding:9px 3px;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.25}
+.state-table:not(.se-table) th{font-size:.74rem}
+.state-table:not(.se-table) th:first-child,.state-table:not(.se-table) td:first-child{width:17%;padding-left:8px;padding-right:4px;white-space:normal;text-align:left}
