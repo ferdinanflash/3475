@@ -963,3 +963,47 @@ body{
 .site-header .header-actions #about-state-btn:focus-visible{outline:2px solid rgba(105,218,255,.9);outline-offset:2px}
 #about-state-btn .about-state-label{font-weight:800;color:#e8f8ff}
 @media (prefers-reduced-motion:reduce){.site-header .header-actions #about-state-btn{animation-duration:12s}}
+
+
+/* ===== President menu: crown button becomes a dropdown after login ===== */
+.pres-menu{position:relative;display:inline-block}
+.pres-menu-list{display:none;position:absolute;right:0;top:calc(100% + 8px);min-width:236px;width:max-content;max-width:min(320px,calc(100vw - 20px));box-sizing:border-box;padding:6px;border-radius:12px;border:1px solid rgba(68,173,255,.58);background:linear-gradient(180deg,rgba(9,28,58,.99),rgba(5,15,34,.99));box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 0 0 1px rgba(125,211,252,.10);z-index:1200}
+.pres-menu.open .pres-menu-list{display:block;animation:pm-pop .14s ease-out}
+@keyframes pm-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.pres-menu-head{padding:6px 10px 8px;margin-bottom:4px;font-size:.72rem;font-weight:800;letter-spacing:.3px;color:#4ade80;border-bottom:1px solid rgba(68,173,255,.22)}
+.pres-menu-item{display:flex;align-items:center;gap:10px;width:100%;min-height:42px;margin:0;padding:8px 10px;border:0;border-radius:8px;background:transparent;box-shadow:none;color:#e8f8ff;font:inherit;font-weight:700;font-size:.88rem;line-height:1.2;text-align:left;cursor:pointer}
+.pres-menu-item:hover,.pres-menu-item:focus-visible{background:rgba(43,154,255,.18);outline:none}
+.pres-menu-item:active{background:rgba(43,154,255,.28)}
+.pres-menu-item .pm-ico{flex:0 0 22px;text-align:center;font-size:1.05rem}
+.pres-menu-sep{height:1px;margin:4px 6px;background:rgba(68,173,255,.22)}
+.pres-menu-item.pm-danger{color:#fca5a5}
+.pres-menu-item.pm-danger:hover,.pres-menu-item.pm-danger:focus-visible{background:rgba(239,68,68,.18)}
+
+/* President logged in: everything lives in the crown menu, so hide the loose buttons */
+body.admin-mode #about-state-btn{display:none!important}
+body.admin-mode .mobile-view-applicants-btn{display:none!important}
+body.admin-mode .site-header .header-actions .admin-controls{flex:1 1 0!important;min-width:0}
+body.admin-mode .site-header .header-actions .admin-controls-buttons{width:100%!important;flex-wrap:nowrap}
+body.admin-mode .pres-menu{display:block;width:100%}
+body.admin-mode .site-header .header-actions #admin-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    width:100%!important;flex:1 1 auto!important;height:40px;padding:0 12px!important;
+    border:1px solid rgba(255,214,102,.65)!important;border-radius:10px!important;
+    background:linear-gradient(180deg,rgba(7,31,65,.98),rgba(5,17,38,.99))!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10)!important;
+    color:#ffe08a!important;font-weight:800;font-size:.88rem!important;letter-spacing:.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
+}
+body.admin-mode .site-header .header-actions #admin-btn:hover{filter:brightness(1.12)}
+body.admin-mode .site-header .header-actions #admin-btn[aria-expanded="true"]{border-color:#69daff!important;box-shadow:0 0 0 2px rgba(105,218,255,.25)!important}
+@media (min-width:901px){
+    body.admin-mode .site-header .header-actions .admin-controls{flex:0 0 auto!important}
+    body.admin-mode .site-header .header-actions #admin-btn{min-width:170px}
+}
+
+/* Desktop: "Applicants List" scrolls to the on-page list; flash it so it is easy to spot */
+.applicants-card.pm-flash{animation:pm-flash 1.5s ease-out}
+@keyframes pm-flash{0%{box-shadow:0 0 0 0 rgba(96,165,250,.0)}20%{box-shadow:0 0 0 3px rgba(96,165,250,.85),0 0 22px rgba(59,130,246,.55)}100%{box-shadow:0 0 0 0 rgba(96,165,250,0)}}
+
+/* President Info modal: full-width fields (overrides the old 95px inline-editor width) */
+#president-info-modal .modal-body input,#president-info-modal #edit-id{width:100%;max-width:100%;box-sizing:border-box}

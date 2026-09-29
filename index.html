@@ -15,7 +15,7 @@
     <meta name="theme-color" content="#0f172a">
 
     <link rel="stylesheet" href="effect.css">
-    <link rel="stylesheet" href="portal.css?v=11">
+    <link rel="stylesheet" href="portal.css?v=12">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
@@ -81,6 +81,31 @@
             </div>
             <textarea id="admin-special-notes-edit" style="height: 250px; font-family: inherit; font-size: 0.95rem; resize: vertical; margin-bottom: 8px; background: #0f172a;" placeholder="Tulis catatan, to-do list, atau pengingat transfer di sini..."></textarea>
             <button class="btn btn-primary" data-i18n="saveSpecialNotes" id="save-special-notes-btn" style="padding: 10px; font-size: 0.9rem;" onclick="saveSpecialNotes()">💾 Save Special Notes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal President Info editor (President only; opened from the crown menu) -->
+<div class="modal-overlay" id="president-info-modal">
+    <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-header">
+            <h4 data-i18n="presidentInfoTitle">👑 President Info</h4>
+            <button class="modal-close" onclick="closePresidentInfoModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label data-i18n="presidentManager">President/State Manager:</label>
+                <input type="text" id="edit-president" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label data-i18n="alliance">Alliance:</label>
+                <input type="text" id="edit-alliance" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label data-i18n="gameIdShort">ID:</label>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="edit-id" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" id="save-info-btn" style="padding: 10px; font-size: 0.9rem;" onclick="savePresidentInfo()" data-i18n="save">💾 Save</button>
         </div>
     </div>
 </div>
@@ -151,19 +176,15 @@
                 <div class="info-item">
                     <span class="info-label" data-i18n="presidentManager">President/State Manager:</span>
                     <span class="info-value" id="val-president">...</span>
-                    <input type="text" class="info-input" id="edit-president">
                 </div>
                 <div class="info-item">
                     <span class="info-label" data-i18n="alliance">Alliance:</span>
                     <span class="info-value" id="val-alliance" style="color: var(--success);">-</span>
-                    <input type="text" class="info-input" id="edit-alliance">
                 </div>
                 <div class="info-item">
                     <span class="info-label" data-i18n="gameIdShort">ID:</span>
                     <span class="info-value" id="val-id" style="color: var(--warning);">-</span>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" class="info-input" id="edit-id">
                 </div>
-                <button class="btn-save-info" id="save-info-btn" onclick="savePresidentInfo()" data-i18n="save">💾 Save</button>
             </div>
 
             <div class="header-actions">
@@ -184,11 +205,20 @@
 
                 <div class="admin-controls">
                     <div class="admin-controls-buttons">
-                        <button class="btn btn-admin" data-i18n="specialNotes" id="special-notes-btn" style="display:none; background: var(--warning); color: #000; font-weight: bold;" onclick="openSpecialNotesModal()">📝 Special Notes</button>
-                        <button class="btn btn-admin" id="admin-btn" title="President Login" onclick="handleAdminLogin()">👑</button>
+                        <div class="pres-menu" id="pres-menu">
+                            <button class="btn btn-admin" id="admin-btn" title="President Login" aria-haspopup="menu" aria-expanded="false" aria-controls="pres-menu-list" onclick="handleAdminLogin()">👑</button>
+                            <div class="pres-menu-list" id="pres-menu-list" role="menu" aria-label="President menu">
+                                <div class="pres-menu-head" data-i18n="presidentMode">● President Mode</div>
+                                <button type="button" class="pres-menu-item" role="menuitem" onclick="presMenuAction('applicants')"><span class="pm-ico" aria-hidden="true">👥</span><span data-i18n="applicantsList">Applicants List</span></button>
+                                <button type="button" class="pres-menu-item" role="menuitem" onclick="presMenuAction('notes')"><span class="pm-ico" aria-hidden="true">📝</span><span data-i18n="menuSpecialNotes">Special Notes</span></button>
+                                <button type="button" class="pres-menu-item" role="menuitem" onclick="presMenuAction('info')"><span class="pm-ico" aria-hidden="true">👑</span><span data-i18n="menuPresidentInfo">President Info</span></button>
+                                <button type="button" class="pres-menu-item" role="menuitem" onclick="presMenuAction('state')"><span class="pm-ico" aria-hidden="true">📜</span><span data-i18n="aboutState">About Our State</span></button>
+                                <div class="pres-menu-sep" role="separator"></div>
+                                <button type="button" class="pres-menu-item pm-danger" role="menuitem" onclick="presMenuAction('logout')"><span class="pm-ico" aria-hidden="true">🚪</span><span data-i18n="logout">Logout</span></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <span id="admin-badge" class="admin-badge" style="display:none;" data-i18n="presidentMode">👑 President Mode</span>
             </div>
         </div>
     </header>
@@ -311,9 +341,9 @@
 </div>
 
 <script src="common.js"></script>
-<script src="script.js?v=13"></script>
+<script src="script.js?v=14"></script>
 <script src="notifications.js?v=4"></script>
-<script src="lang.js?v=10"></script>
+<script src="lang.js?v=11"></script>
 <script src="portal.js?v=3"></script>
 
 

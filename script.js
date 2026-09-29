@@ -59,19 +59,8 @@ function applyAuthSession(session) {
     currentStaffUsername = isAdmin ? sessionUsername : null;
     document.body.classList.toggle('admin-mode', isAdmin);
 
-    const btn = document.getElementById('admin-btn');
-    const badge = document.getElementById('admin-badge');
-    const specialBtn = document.getElementById('special-notes-btn');
-
-    if (isAdmin) {
-        if (btn) btn.innerText = typeof t === 'function' ? `${t('logout')} (${currentStaffUsername.toUpperCase()})` : `Logout (${currentStaffUsername.toUpperCase()})`;
-        if (badge) badge.style.display = "inline";
-        if (specialBtn) specialBtn.style.display = "inline-block";
-    } else {
-        if (btn) { btn.innerText = '👑'; btn.title = typeof t === 'function' ? t('presidentLoginShort') : 'President Login'; }
-        if (badge) badge.style.display = "none";
-        if (specialBtn) specialBtn.style.display = "none";
-    }
+    refreshAdminBtn();
+    if (!isAdmin) { closePresMenu(); closePresidentInfoModal(); }
 
     updateCounters();
     renderTable();
@@ -409,6 +398,7 @@ async function savePresidentInfo() {
 
             showToast(t('infoSaved'), 'success');
             loadFooterInfo();
+            closePresidentInfoModal();
         } else {
             throw error;
         }
@@ -527,7 +517,7 @@ async function submitTransfer() {
         }
 
         document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
-            if (input.id !== 'in-max-slots' && input.id !== 'in-furnace' && !input.classList.contains('info-input')) input.value = '';
+            if (input.id !== 'in-max-slots' && input.id !== 'in-furnace') input.value = '';
         });
         const furnaceReset = document.getElementById('in-furnace');
         if (furnaceReset) {
@@ -599,7 +589,6 @@ function updateCounters() {
     const submitBtn = document.getElementById('submit-btn');
     const lockMessage = document.getElementById('lock-message');
     const maxSlotsInput = document.getElementById('in-max-slots');
-    const specialNotesBtn = document.getElementById('special-notes-btn');
     
     if (maxSlotsInput) {
         maxSlotsInput.disabled = !isAdmin;
@@ -610,37 +599,20 @@ function updateCounters() {
         maxSlotDisplay.innerText = maxSlots;
     }
 
-    if (specialNotesBtn) {
-        specialNotesBtn.style.display = isAdmin ? 'inline-block' : 'none';
-    }
-    
-    const infoValues = document.querySelectorAll('.info-value');
-    const infoInputs = document.querySelectorAll('.info-input');
-    const saveInfoBtn = document.getElementById('save-info-btn');
-    
-    if (isAdmin) {
-        infoValues.forEach(span => span.style.display = 'none');
-        infoInputs.forEach(input => input.style.display = 'inline-block');
-        if (saveInfoBtn) saveInfoBtn.style.display = 'inline-block';
-        
-        renderStateInfo();
-    } else {
-        infoValues.forEach(span => span.style.display = 'inline-block');
-        infoInputs.forEach(input => input.style.display = 'none');
-        if (saveInfoBtn) saveInfoBtn.style.display = 'none';
-        
-        renderStateInfo();
-    }
+    // President info is display-only in the header; editing happens in the
+    // President Info modal (opened from the crown menu). Only the About Our
+    // State view/editor needs re-rendering when the auth state changes.
+    renderStateInfo();
     
     if (acceptedCount >= maxSlots) {
         inputs.forEach(input => {
-            if (input.id !== 'in-max-slots' && !input.classList.contains('info-input')) input.disabled = true;
+            if (input.id !== 'in-max-slots') input.disabled = true;
         });
         if (submitBtn) submitBtn.disabled = true;
         if (lockMessage) lockMessage.style.display = "block";
     } else {
         inputs.forEach(input => {
-            if (input.id !== 'in-max-slots' && !input.classList.contains('info-input')) input.disabled = false;
+            if (input.id !== 'in-max-slots') input.disabled = false;
         });
         if (submitBtn) submitBtn.disabled = false;
         if (lockMessage) lockMessage.style.display = "none";
@@ -969,7 +941,7 @@ async function confirmResetTransferPhase() {
 // writes.
 function handleAdminLogin() {
     if (isAdmin) {
-        handleStaffLogout();
+        togglePresMenu();
         return;
     }
     const userInput = document.getElementById('input-login-username');
@@ -1038,6 +1010,116 @@ async function handleStaffLogout() {
     applyAuthSession(null);
     showToast(t('presidentLogout'), 'info');
 }
+
+// ================= PRESIDENT MENU (crown dropdown) =================
+// After President login the crown button becomes a dropdown that gathers every
+// President action in one place: Applicants List, Special Notes, President
+// Info, About Our State and Logout.
+function refreshAdminBtn() {
+    const btn = document.getElementById('admin-btn');
+    if (!btn) return;
+    if (isAdmin) {
+        btn.innerText = `👑 ${String(currentStaffUsername || '').toUpperCase()} ▾`;
+        btn.title = 'President Menu';
+    } else {
+        btn.innerText = '👑';
+        btn.title = typeof t === 'function' ? t('presidentLoginShort') : 'President Login';
+        btn.setAttribute('aria-expanded', 'false');
+    }
+}
+
+function togglePresMenu() {
+    const menu = document.getElementById('pres-menu');
+    if (!menu) return;
+    if (menu.classList.contains('open')) closePresMenu();
+    else openPresMenu();
+}
+
+function openPresMenu() {
+    const menu = document.getElementById('pres-menu');
+    const btn = document.getElementById('admin-btn');
+    if (!menu || !isAdmin) return;
+    menu.classList.add('open');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+}
+
+function closePresMenu(returnFocus) {
+    const menu = document.getElementById('pres-menu');
+    const btn = document.getElementById('admin-btn');
+    if (!menu) return;
+    menu.classList.remove('open');
+    if (btn) {
+        btn.setAttribute('aria-expanded', 'false');
+        if (returnFocus) btn.focus();
+    }
+}
+
+function presMenuAction(action) {
+    closePresMenu();
+    if (!isAdmin) return;
+    switch (action) {
+        case 'applicants': openApplicantList(); break;
+        case 'notes': openSpecialNotesModal(); break;
+        case 'info': openPresidentInfoModal(); break;
+        case 'state': openStateModal(); break;
+        case 'logout': handleStaffLogout(); break;
+    }
+}
+
+// Phones: the list opens as its full-screen window (same one as "View
+// Applicants"). Wider screens already show the list on the page, so jump to it.
+function openApplicantList() {
+    if (window.matchMedia('(max-width: 600px)').matches) {
+        openApplicantsModal();
+        return;
+    }
+    const card = document.querySelector('.applicants-card');
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    card.classList.remove('pm-flash');
+    void card.offsetWidth;
+    card.classList.add('pm-flash');
+    setTimeout(() => card.classList.remove('pm-flash'), 1600);
+}
+
+// PRESIDENT INFO EDITOR MODAL
+function openPresidentInfoModal() {
+    if (!isAdmin) return;
+    const fill = (inputId, valId) => {
+        const shown = (document.getElementById(valId)?.innerText || '').trim();
+        const input = document.getElementById(inputId);
+        if (input) input.value = (shown === '-' || shown === '...') ? '' : shown;
+    };
+    fill('edit-president', 'val-president');
+    fill('edit-alliance', 'val-alliance');
+    fill('edit-id', 'val-id');
+    document.getElementById('president-info-modal').classList.add('active');
+    document.getElementById('edit-president')?.focus();
+}
+
+function closePresidentInfoModal() {
+    const modal = document.getElementById('president-info-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('pres-menu');
+    if (menu && menu.classList.contains('open') && !menu.contains(e.target)) closePresMenu();
+});
+
+document.addEventListener('keydown', (e) => {
+    const menu = document.getElementById('pres-menu');
+    if (!menu || !menu.classList.contains('open')) return;
+    if (e.key === 'Escape') { closePresMenu(true); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        const items = Array.from(menu.querySelectorAll('.pres-menu-item'));
+        if (!items.length) return;
+        e.preventDefault();
+        const i = items.indexOf(document.activeElement);
+        const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length - 1 : i - 1);
+        items[next].focus();
+    }
+});
 
 // EXPORT TO EXCEL / CSV
 function exportCSV() {
