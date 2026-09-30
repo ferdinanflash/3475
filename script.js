@@ -155,11 +155,122 @@ function renderMultiline(text) {
     }).join('');
 }
 
+// ---------- AUTO-TRANSLATE "ABOUT OUR STATE" (display only) ----------
+// The text saved in Supabase is never touched. For non-admin viewers the content is translated
+// in the browser into the selected language, cached in localStorage, and rendered from a COPY.
+// Admin/President always sees and edits the original text. If translation fails, the original is shown.
+const STATE_TR_LANG = { en: 'en', id: 'id', cn: 'zh-CN', it: 'it', tl: 'tl' };
+const STATE_TR_PROTECT = /\b(BT1|BT2|CJ|SvS|Foundry|Castle|Stronghold|State|ARX|IDN|ZXC|VNX|CAT|Hero|Furnace|Power)\b/g;
+let stateTr = null;            // { key, data, changed, status: 'loading'|'done'|'failed' }
+let showStateOriginal = false; // viewer toggle
+
+function stateHash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function stateTrKey() { return currentLanguage() + '|' + stateHash(String(stateRaw || '')); }
+
+function stateTrProtect(str) {
+    const map = [];
+    const s = str.replace(STATE_TR_PROTECT, m => { map.push(m); return 'ZQ' + (map.length - 1) + 'Z'; });
+    return { s, map };
+}
+function stateTrRestore(str, map) { return str.replace(/ZQ\s?(\d+)\s?Z/gi, (_, i) => map[i] !== undefined ? map[i] : ''); }
+
+async function stateTrFetch(text, tl) {
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&dt=t&tl=' +
+        encodeURIComponent(tl) + '&q=' + encodeURIComponent(text);
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('translate ' + r.status);
+    const j = await r.json();
+    return j[0].map(seg => seg[0]).join('');
+}
+
+// Translate a list of single-line strings (cached per string in localStorage)
+async function stateTrLines(lines, tl) {
+    const out = new Map(), todo = [];
+    lines.forEach(l => {
+        let c = null;
+        try { c = localStorage.getItem('3475_tr:' + tl + ':' + stateHash(l)); } catch (e) {}
+        if (c !== null) out.set(l, c); else todo.push(l);
+    });
+    for (let i = 0; i < todo.length;) {        // chunks of <= ~1200 chars per request
+        const chunk = []; let len = 0;
+        while (i < todo.length && (chunk.length === 0 || len + todo[i].length < 1200)) { len += todo[i].length + 1; chunk.push(todo[i++]); }
+        const prot = chunk.map(stateTrProtect);
+        let res = null;
+        try {
+            const joined = await stateTrFetch(prot.map(p => p.s).join('\n'), tl);
+            const parts = joined.split('\n');
+            if (parts.length === chunk.length) res = parts;
+        } catch (e) { /* fall through to one-by-one */ }
+        if (!res) res = await Promise.all(prot.map(p => stateTrFetch(p.s, tl)));
+        chunk.forEach((orig, k) => {
+            const val = stateTrRestore(res[k], prot[k].map).trim() || orig;
+            out.set(orig, val);
+            try { localStorage.setItem('3475_tr:' + tl + ':' + stateHash(orig), val); } catch (e) {}
+        });
+    }
+    return out;
+}
+
+async function ensureStateTranslation() {
+    if (isAdmin || !stateData || !String(stateRaw || '').trim()) return;
+    const key = stateTrKey();
+    if (stateTr && stateTr.key === key) return;
+    const tl = STATE_TR_LANG[currentLanguage()] || 'en';
+    stateTr = { key, data: null, changed: false, status: 'loading' };
+
+    const d = stateData;
+    const units = new Set();
+    const canTr = s => /\p{L}/u.test(s) && !/^\s*$/.test(s);
+    const splitLine = l => { const m = l.match(/^(\s*[-•*]\s+)?([\s\S]*)$/); return [m[1] || '', m[2].trim()]; };
+    const collect = str => String(str || '').split(/\r\n?|\n/).forEach(l => { const b = splitLine(l)[1]; if (canTr(b)) units.add(b); });
+    collect(d.intro);
+    d.cards.forEach(c => { collect(c.title); collect(c.strong); collect(c.text); });
+    collect(d.playTitle);
+    d.headers.forEach(collect);
+    d.rows.forEach(r => r.forEach((cell, ci) => { if (ci > 0) collect(cell); }));   // column 0 = alliance names: never translated
+
+    try {
+        const map = await stateTrLines([...units], tl);
+        if (!stateTr || stateTr.key !== key) return;           // language/content changed meanwhile
+        let changed = false;
+        const tr = str => String(str || '').split(/\r\n?|\n/).map(l => {
+            const [pre, body] = splitLine(l);
+            if (!canTr(body) || !map.has(body)) return l;
+            const v = map.get(body); if (v !== body) changed = true;
+            return pre + v;
+        }).join('\n');
+        stateTr.data = {
+            intro: tr(d.intro),
+            cards: d.cards.map(c => ({ ...c, title: tr(c.title), strong: tr(c.strong), text: tr(c.text) })),
+            playTitle: tr(d.playTitle),
+            headers: d.headers.map(tr),
+            rows: d.rows.map(r => r.map((cell, ci) => ci === 0 ? cell : tr(cell)))
+        };
+        stateTr.changed = changed;
+        stateTr.status = 'done';
+    } catch (e) {
+        console.warn('Auto-translate failed, showing original text', e);
+        if (stateTr && stateTr.key === key) stateTr.status = 'failed';
+    }
+    if (stateTr && stateTr.key === key) renderStateInfo();
+}
+
+function toggleStateOriginal() { showStateOriginal = !showStateOriginal; renderStateInfo(); }
+
+function stateTrNote() {
+    if (isAdmin || !stateTr || stateTr.key !== stateTrKey()) return '';
+    if (stateTr.status === 'loading') return `<div class="state-tr-note">🌐 ${escapeHtml(t('stateTranslating'))}</div>`;
+    if (stateTr.status !== 'done' || !stateTr.changed) return '';
+    return `<div class="state-tr-note">🌐 ${escapeHtml(t(showStateOriginal ? 'stateShowingOriginal' : 'stateAutoTranslated'))} ·
+        <button type="button" onclick="toggleStateOriginal()">${escapeHtml(t(showStateOriginal ? 'stateShowTranslation' : 'stateShowOriginal'))}</button></div>`;
+}
+
 function renderStateInfo() {
     const view = document.getElementById('state-info-view');
     if (!view) return;
     if (!stateData) stateData = parseStateInfo(stateRaw);
-    const d = stateData;
+    // Viewers get a translated COPY; stateData (the original, used for editing/saving) is never modified
+    const d = (!isAdmin && !showStateOriginal && stateTr && stateTr.key === stateTrKey() && stateTr.data) ? stateTr.data : stateData;
     const esc = escapeHtml;
     const colCls = ['', 'c-bt1', 'c-bt2', 'c-cj', 'c-fo'];
     const saveBtn = document.getElementById('save-state-btn');
@@ -192,6 +303,7 @@ function renderStateInfo() {
 
     if (saveBtn) saveBtn.style.display = 'none';
     view.innerHTML = `
+        ${stateTrNote()}
         ${d.intro ? `<div class="state-intro">${esc(d.intro)}</div>` : ''}
         <div class="state-cards">${d.cards.map(c => `
             <div class="state-card ${c.cls}">
@@ -206,6 +318,7 @@ function renderStateInfo() {
             <tbody>${d.rows.map(r => `<tr>${r.map((cell, ci) => `<td class="${colCls[ci]}">${esc(cell).replace(/\//g, '/&#8203;')}</td>`).join('')}</tr>`).join('')}</tbody>
         </table></div>
         `;
+    ensureStateTranslation();
 }
 
 // Read the editor fields back into stateData
@@ -271,7 +384,7 @@ function applyPresidentDisplay(president, alliance, idGame) {
     const valId = document.getElementById('val-id');
     valId.innerText = idGame;
     valId.style.cursor = 'pointer';
-    valId.title = 'Click to copy ID';
+    valId.title = t('clickToCopyId');
     valId.onclick = () => copyToClipboard(idGame);
 
     document.getElementById('edit-president').value = president === '-' ? '' : president;
@@ -689,7 +802,7 @@ function renderTable() {
             ${isAdmin ? actionCell : ''}
             <td class="hide-mobile from-state-cell">${escapeHtml(item.transfer_from_state)}</td>
             <td><strong>${escapeHtml(item.nickname)}</strong></td>
-            <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="Click to copy ID">${escapeHtml(item.game_id)} 📋</td>
+            <td class="game-id-cell" onclick="copyToClipboard(transferList[${index}].game_id)" style="cursor:pointer;" title="${t('clickToCopyId')}">${escapeHtml(item.game_id)} 📋</td>
             <td style="text-align: center;"><span class="${badgeClass}">${escapeHtml(typeof statusLabel === 'function' ? statusLabel(item.status) : item.status)}</span></td>
         `;
         tbody.appendChild(row);
@@ -741,7 +854,7 @@ function showDetailPopup(index) {
     const popGameId = document.getElementById('pop-gameid');
     popGameId.innerText = String(player.game_id);   // ikon 📋 sudah ditambahkan CSS (.game-id-detail::after); jangan diduplikasi di sini
     popGameId.style.cursor = 'pointer';
-    popGameId.title = 'Click to copy ID';
+    popGameId.title = t('clickToCopyId');
     popGameId.onclick = () => copyToClipboard(player.game_id);
 
     document.getElementById('pop-alliance').innerText = player.desired_alliance || '-';
@@ -996,7 +1109,7 @@ async function submitStaffLogin() {
     const submitBtn = document.getElementById('login-submit-btn');
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerText = 'Signing in...';
+        submitBtn.innerText = t('signingIn');
     }
 
     const { data, error } = await client.auth.signInWithPassword({
@@ -1006,7 +1119,7 @@ async function submitStaffLogin() {
 
     if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerText = '🔐 Login';
+        submitBtn.innerText = t('login');
     }
 
     if (error) {
@@ -1037,7 +1150,7 @@ function refreshAdminBtn() {
     if (!btn) return;
     if (isAdmin) {
         btn.innerText = `👑 ${String(currentStaffUsername || '').toUpperCase()} ▾`;
-        btn.title = 'President Menu';
+        btn.title = t('presidentMenuTitle');
     } else {
         btn.innerText = '👑';
         btn.title = typeof t === 'function' ? t('presidentLoginShort') : 'President Login';

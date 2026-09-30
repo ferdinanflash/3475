@@ -352,7 +352,7 @@ async function renderTrackedList() {
                     <span>${escapeHtml(item.nickname || '')}</span>
                 </div>
                 <span class="${badgeClass}">${escapeHtml(item.status || '-')}</span>
-                <button class="tracked-remove-btn" onclick="removeTrackedId(${item.id})" title="Stop tracking this ID">✕</button>
+                <button class="tracked-remove-btn" onclick="removeTrackedId(${item.id})" title="${t('stopTracking')}">✕</button>
             </div>`;
     });
 
@@ -365,7 +365,7 @@ async function renderTrackedList() {
                     <strong>#${id}</strong>
                     <span class="tracked-missing-label">${escapeHtml(t('recordNotFound'))}</span>
                 </div>
-                <button class="tracked-remove-btn" onclick="removeTrackedId(${id})" title="Stop tracking this ID">✕</button>
+                <button class="tracked-remove-btn" onclick="removeTrackedId(${id})" title="${t('stopTracking')}">✕</button>
             </div>`);
     });
 
