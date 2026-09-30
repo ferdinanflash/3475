@@ -257,10 +257,10 @@ async function startRealtimeForId(id) {
                 if (String(previous || '').toLowerCase() === String(row.status || '').toLowerCase()) return;
 
                 // In-page toast — always fires, needs no permission at all.
-                const label = row.nickname ? escapeHtml(row.nickname) : `Application #${row.id}`;
+                const label = row.nickname ? escapeHtml(row.nickname) : t('applicationNumber', { id: row.id });
                 const toastType = row.status === 'Accepted' ? 'success' : row.status === 'Rejected' ? 'error' : 'info';
                 if (typeof showToast === 'function') {
-                    showToast(`🔔 ${label}: status changed to "${escapeHtml(statusLabel(row.status))}"`, toastType);
+                    showToast('🔔 ' + t('statusChangedToast', { label, status: escapeHtml(statusLabel(row.status)) }), toastType);
                 }
 
                 // Native OS/browser notification — only if permission was
