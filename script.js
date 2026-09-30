@@ -160,16 +160,27 @@ function renderMultiline(text) {
 // in the browser into the selected language, cached in localStorage, and rendered from a COPY.
 // Admin/President always sees and edits the original text. If translation fails, the original is shown.
 const STATE_TR_LANG = { en: 'en', id: 'id', cn: 'zh-CN', it: 'it', tl: 'tl' };
-const STATE_TR_PROTECT = /\b(BT1|BT2|CJ|SvS|Foundry|Castle|Stronghold|State|ARX|IDN|ZXC|VNX|CAT|Hero|Furnace|Power)\b/g;
+// Game terms that must never be machine-translated (kept as written, any letter case)
+const STATE_TR_PROTECT = /\b(BT1|BT2|CJ|SvS|Foundry|Strongholds?|State|NAP|ARX|IDN|ZXC|VNX|CAT|Hero|Furnace|Power)\b/gi;
+// Forced translations per target language (edit here to add more). Other languages keep the original term.
+const STATE_TR_GLOSSARY = [
+    { re: /\bTundra Arm League\b/gi, to: { id: 'Liga Perang Tundra' } },
+    { re: /\bCastles?\b/gi,          to: { id: 'Kastil' } },
+    { re: /\bFoundry\b/gi,           to: { id: 'Tanur' } }
+];
 let stateTr = null;            // { key, data, changed, status: 'loading'|'done'|'failed' }
 let showStateOriginal = false; // viewer toggle
 
 function stateHash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
 function stateTrKey() { return currentLanguage() + '|' + stateHash(String(stateRaw || '')); }
 
-function stateTrProtect(str) {
+function stateTrCase(src, val) { return (src.length > 1 && src === src.toUpperCase()) ? val.toUpperCase() : val; }
+function stateTrProtect(str, tl) {
     const map = [];
-    const s = str.replace(STATE_TR_PROTECT, m => { map.push(m); return 'ZQ' + (map.length - 1) + 'Z'; });
+    const keep = (m, forced) => { map.push(forced ? stateTrCase(m, forced) : m); return 'ZQ' + (map.length - 1) + 'Z'; };
+    let s = str;
+    STATE_TR_GLOSSARY.forEach(g => { s = s.replace(g.re, m => keep(m, g.to[tl])); });
+    s = s.replace(STATE_TR_PROTECT, m => keep(m));
     return { s, map };
 }
 function stateTrRestore(str, map) { return str.replace(/ZQ\s?(\d+)\s?Z/gi, (_, i) => map[i] !== undefined ? map[i] : ''); }
@@ -188,13 +199,13 @@ async function stateTrLines(lines, tl) {
     const out = new Map(), todo = [];
     lines.forEach(l => {
         let c = null;
-        try { c = localStorage.getItem('3475_tr:' + tl + ':' + stateHash(l)); } catch (e) {}
+        try { c = localStorage.getItem('3475_tr3:' + tl + ':' + stateHash(l)); } catch (e) {}
         if (c !== null) out.set(l, c); else todo.push(l);
     });
     for (let i = 0; i < todo.length;) {        // chunks of <= ~1200 chars per request
         const chunk = []; let len = 0;
         while (i < todo.length && (chunk.length === 0 || len + todo[i].length < 1200)) { len += todo[i].length + 1; chunk.push(todo[i++]); }
-        const prot = chunk.map(stateTrProtect);
+        const prot = chunk.map(x => stateTrProtect(x, tl));
         let res = null;
         try {
             const joined = await stateTrFetch(prot.map(p => p.s).join('\n'), tl);
@@ -205,7 +216,7 @@ async function stateTrLines(lines, tl) {
         chunk.forEach((orig, k) => {
             const val = stateTrRestore(res[k], prot[k].map).trim() || orig;
             out.set(orig, val);
-            try { localStorage.setItem('3475_tr:' + tl + ':' + stateHash(orig), val); } catch (e) {}
+            try { localStorage.setItem('3475_tr3:' + tl + ':' + stateHash(orig), val); } catch (e) {}
         });
     }
     return out;
