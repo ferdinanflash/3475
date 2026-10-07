@@ -27,18 +27,39 @@ document.addEventListener("DOMContentLoaded", () => {
         furnaceEl.addEventListener('input', () => {
             const badge = document.getElementById('furnace-badge');
             if (badge) setFurnaceBadge(badge, furnaceEl.value);
+            updateFurnaceLabel(furnaceEl.value);
             furnaceEl.dataset.touched = '1';
         });
     }
+
+    // Inline errors disappear as soon as the field is edited.
+    const formFields = document.getElementById('transfer-form-fields');
+    if (formFields) {
+        formFields.addEventListener('input', e => { if (e.target && e.target.id) clearFieldError(e.target.id); });
+    }
+    // Power fields: live thousands separators.
+    ['in-power', 'in-heropower', 'in-totalhero'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => formatThousandsInput(el));
+    });
+    // Errors were written in the old language, so drop them on language change.
+    const langSel = document.getElementById('language-select');
+    if (langSel) langSel.addEventListener('change', clearAllFieldErrors);
+
+    // Applicant search + status filter.
+    const search = document.getElementById('applicant-search');
+    if (search) search.addEventListener('input', () => { applicantFilter.q = search.value; renderTable(); });
+    document.querySelectorAll('#status-filter .filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            applicantFilter.status = chip.dataset.status;
+            document.querySelectorAll('#status-filter .filter-chip').forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
+            renderTable();
+        });
+    });
 });
 
 function handleSubmitClick() {
-    const furnaceEl = document.getElementById('in-furnace');
-    if (furnaceEl && furnaceEl.dataset.touched !== '1') {
-        showToast(t('furnaceTouchRequired'), 'warning');
-        furnaceEl.focus();
-        return;
-    }
+    // Validation (including "furnace not touched") is shown inline by submitTransfer().
     submitTransfer();
 }
 

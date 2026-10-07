@@ -6,13 +6,91 @@
 // Make sure index.html loads common.js BEFORE this file.
 
 // ================= FURNACE LEVEL BADGE (FC1-10 images) =================
-function furnaceBadgeHTML(level) {
+function furnaceBadgeHTML(level, withText) {
     const n = parseInt(level, 10);
     if (!Number.isFinite(n) || n < 1 || n > 10) return `FC ${escapeHtml(level)}`;
-    return `<img class="fc-img" src="furnace/fc-${n}.webp" alt="FC ${n}" title="FC ${n}" width="96" height="96" loading="lazy" decoding="async">`;
+    const img = `<img class="fc-img" src="furnace/fc-${n}.webp" alt="FC ${n}" title="FC ${n}" width="96" height="96" loading="lazy" decoding="async">`;
+    return withText ? `${img}<span class="fc-text">FC ${n}</span>` : img;
 }
-function setFurnaceBadge(el, level) {
-    if (el) el.innerHTML = furnaceBadgeHTML(level);
+function setFurnaceBadge(el, level, withText) {
+    if (el) el.innerHTML = furnaceBadgeHTML(level, withText);
+}
+function updateFurnaceLabel(level) {
+    const el = document.getElementById('furnace-label');
+    if (el) el.textContent = `FC ${parseInt(level, 10) || level}`;
+}
+
+// ================= FORM HELPERS: inline errors + number formatting =================
+const FORM_FIELD_ORDER = ['in-state', 'in-nickname', 'in-gameid', 'in-alliance', 'in-furnace', 'in-power', 'in-heropower', 'in-totalhero'];
+const LOW_SLOT_THRESHOLD = 5;
+
+function setFieldError(id, message) {
+    const el = document.getElementById(id);
+    const group = el ? el.closest('.form-group') : null;
+    if (!group) return;
+    let err = group.querySelector('.field-error');
+    if (!err) {
+        err = document.createElement('small');
+        err.className = 'field-error';
+        err.id = 'err-' + id;
+        err.setAttribute('role', 'alert');
+        group.appendChild(err);
+    }
+    err.textContent = message;
+    group.classList.add('has-error');
+    el.setAttribute('aria-invalid', 'true');
+    el.setAttribute('aria-describedby', err.id);
+}
+function clearFieldError(id) {
+    const el = document.getElementById(id);
+    const group = el ? el.closest('.form-group') : null;
+    if (!group || !group.classList.contains('has-error')) return;
+    group.classList.remove('has-error');
+    const err = group.querySelector('.field-error');
+    if (err) err.textContent = '';
+    el.removeAttribute('aria-invalid');
+    el.removeAttribute('aria-describedby');
+}
+function clearAllFieldErrors() {
+    FORM_FIELD_ORDER.forEach(clearFieldError);
+}
+function focusField(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
+    try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
+}
+
+// Live "1,234,567" formatting while typing. Free text such as "1.5M" or "999K+" is left alone.
+function formatThousandsInput(el) {
+    const raw = el.value;
+    if (!/^[\d,\s]*$/.test(raw)) return;
+    const caret = el.selectionStart;
+    const digitsBefore = raw.slice(0, caret === null ? raw.length : caret).replace(/\D/g, '').length;
+    const formatted = raw.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (formatted === raw) return;
+    el.value = formatted;
+    let pos = 0, seen = 0;
+    while (pos < formatted.length && seen < digitsBefore) { if (/\d/.test(formatted[pos])) seen++; pos++; }
+    try { el.setSelectionRange(pos, pos); } catch (_) {}
+}
+// What gets stored: thousands separators removed, so the database keeps the same format as before.
+function normalizePowerValue(v) {
+    return String(v || '').replace(/(\d),(?=\d{3}(?!\d))/g, '$1');
+}
+// What gets shown: plain digit strings get separators, free text is untouched.
+function formatPowerDisplay(v) {
+    const s = String(v === null || v === undefined ? '' : v);
+    return /^\d{4,}$/.test(s) ? s.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : s;
+}
+
+// ================= APPLICANT SEARCH + STATUS FILTER =================
+const applicantFilter = { q: '', status: 'all' };
+function applicantMatchesFilter(item) {
+    if (applicantFilter.status !== 'all' && item.status !== applicantFilter.status) return false;
+    const q = applicantFilter.q.trim().toLowerCase();
+    if (!q) return true;
+    return String(item.nickname || '').toLowerCase().includes(q) || String(item.game_id || '').toLowerCase().includes(q);
 }
 
 let isAdmin = false;
@@ -598,33 +676,33 @@ async function submitTransfer() {
         const gameId = document.getElementById('in-gameid').value.trim();
         const alliance = document.getElementById('in-alliance').value.trim();
         const furnace = document.getElementById('in-furnace').value.trim();
-        const power = document.getElementById('in-power').value.trim();
-        const heroPower = document.getElementById('in-heropower').value.trim();
-        const totalHero = document.getElementById('in-totalhero').value.trim();
+        const power = normalizePowerValue(document.getElementById('in-power').value.trim());
+        const heroPower = normalizePowerValue(document.getElementById('in-heropower').value.trim());
+        const totalHero = normalizePowerValue(document.getElementById('in-totalhero').value.trim());
         const referrer = document.getElementById('in-referrer').value.trim();
 
-        if (!state || !nickname || !gameId || !alliance || !furnace || !power || !heroPower || !totalHero) {
-            showToast(t('fillAllFields'), 'warning');
-            return;
-        }
-        if (!/^\d+$/.test(gameId)) {
-            showToast(t('gameIdNumbers'), 'warning');
-            return;
-        }
-        if (power.length > 50 || heroPower.length > 50 || totalHero.length > 50) {
-            showToast(t('invalidNumbers'), 'warning');
-            return;
-        }
+        // Inline, per-field validation (errors appear under each field).
+        clearAllFieldErrors();
+        const bad = new Set();
+        const flag = (id, msg) => { setFieldError(id, msg); bad.add(id); };
+        [['in-state', state], ['in-nickname', nickname], ['in-gameid', gameId], ['in-alliance', alliance],
+         ['in-power', power], ['in-heropower', heroPower], ['in-totalhero', totalHero]]
+            .forEach(([id, val]) => { if (!val) flag(id, t('fieldRequired')); });
+
+        const furnaceEl = document.getElementById('in-furnace');
+        if (furnaceEl && furnaceEl.dataset.touched !== '1') flag('in-furnace', t('furnaceTouchRequired'));
+        if (gameId && !/^\d+$/.test(gameId)) flag('in-gameid', t('gameIdNumbers'));
+        if (power.length > 50) flag('in-power', t('invalidNumbers'));
+        if (heroPower.length > 50) flag('in-heropower', t('invalidNumbers'));
+        if (totalHero.length > 50) flag('in-totalhero', t('invalidNumbers'));
 
         const stateNum = parseInt(state, 10);
         const furnaceNum = parseInt(furnace, 10);
-        const numericFields = { stateNum, furnaceNum };
-        if (Object.values(numericFields).some(n => !Number.isFinite(n) || n < 0)) {
-            showToast(t('invalidNumbers'), 'warning');
-            return;
-        }
-        if (furnaceNum < 1 || furnaceNum > 10) {
-            showToast(t('furnaceRange'), 'warning');
+        if (state && (!Number.isFinite(stateNum) || stateNum < 0)) flag('in-state', t('invalidNumbers'));
+        if (!Number.isFinite(furnaceNum) || furnaceNum < 1 || furnaceNum > 10) flag('in-furnace', t('furnaceRange'));
+
+        if (bad.size) {
+            focusField(FORM_FIELD_ORDER.find(id => bad.has(id)));
             return;
         }
 
@@ -660,6 +738,8 @@ async function submitTransfer() {
         document.querySelectorAll('#transfer-form-fields input, #transfer-form-fields select').forEach(input => {
             if (input.id !== 'in-max-slots' && input.id !== 'in-furnace') input.value = '';
         });
+        clearAllFieldErrors();
+        updateFurnaceLabel(1);
         const furnaceReset = document.getElementById('in-furnace');
         if (furnaceReset) {
             furnaceReset.value = '1';
@@ -720,7 +800,17 @@ function updateCounters() {
     document.getElementById('count-total').innerText = totalApplicants;
     document.getElementById('count-accepted').innerText = acceptedCount;
     const leftEl = document.getElementById('count-left');
-    if (leftEl) leftEl.innerText = Math.max(0, maxSlots - acceptedCount);
+    const slotsLeft = Math.max(0, maxSlots - acceptedCount);
+    if (leftEl) leftEl.innerText = slotsLeft;
+    const leftCard = document.querySelector('.slots-left-card');
+    if (leftCard) {
+        leftCard.classList.toggle('is-low', slotsLeft > 0 && slotsLeft <= LOW_SLOT_THRESHOLD);
+        leftCard.classList.toggle('is-full', slotsLeft === 0);
+        if (slotsLeft > 0 && slotsLeft <= LOW_SLOT_THRESHOLD) leftCard.title = t('slotsLow', { n: slotsLeft });
+        else leftCard.removeAttribute('title');
+    }
+    const formFields = document.getElementById('transfer-form-fields');
+    if (formFields) formFields.classList.toggle('is-locked', slotsLeft === 0);
     
     // Scoped to #transfer-form-fields only — NOT a page-wide '.form-group'
     // selector, which would also grab (and disable) unrelated inputs like
@@ -750,7 +840,7 @@ function updateCounters() {
             if (input.id !== 'in-max-slots') input.disabled = true;
         });
         if (submitBtn) submitBtn.disabled = true;
-        if (lockMessage) lockMessage.style.display = "block";
+        if (lockMessage) lockMessage.style.display = "flex";
     } else {
         inputs.forEach(input => {
             if (input.id !== 'in-max-slots') input.disabled = false;
@@ -784,7 +874,16 @@ function renderTable() {
         return;
     }
     
+    if (!transferList.some(applicantMatchesFilter)) {
+        const totalCols = isAdmin ? 6 : 5;
+        const msg = escapeHtml(t('noMatches'));
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">${msg}</td></tr>`;
+        if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">${msg}</div>`;
+        return;
+    }
+
     transferList.forEach((item, index) => {
+        if (!applicantMatchesFilter(item)) return;
         const row = document.createElement('tr');
         let actionCell = "";
         let notesCell = "";
@@ -826,7 +925,7 @@ function renderTable() {
             const adminActions = isAdmin ? `<div class="mobile-admin-actions" aria-label="Applicant actions">${item.status === 'Waiting' ? `<button type="button" class="btn btn-accept" onclick="updateStatus(${item.id}, 'Accepted')"><span class="action-icon">✓</span><span>${typeof t === 'function' ? t('accept') : 'Accept'}</span></button><button type="button" class="btn btn-reject" onclick="updateStatus(${item.id}, 'Rejected')"><span class="action-icon">×</span><span>${typeof t === 'function' ? t('reject') : 'Reject'}</span></button>` : `<button type="button" class="btn btn-delete" onclick="deleteRecord(${item.id})"><span class="action-icon">⌫</span><span>${typeof t === 'function' ? t('delete') : 'Delete'}</span></button>`}</div>` : '';
             card.innerHTML = `
                 <div class="mobile-applicant-top"><span class="mobile-player">${escapeHtml(item.nickname)}</span><span class="${statusClass}">${escapeHtml(typeof statusLabel === 'function' ? statusLabel(item.status) : item.status)}</span></div>
-                <div class="mobile-meta"><span>From ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span class="mobile-fc">${furnaceBadgeHTML(item.furnace_level)}</span></div>
+                <div class="mobile-meta"><span>From ${escapeHtml(item.transfer_from_state)}</span><span>${escapeHtml(item.game_id)}</span><span class="mobile-fc">${furnaceBadgeHTML(item.furnace_level, true)}</span></div>
                 ${notes}
                 <div class="mobile-actions" aria-label="Applicant information actions"><button type="button" class="btn btn-view-detail" onclick="showDetailPopup(${index})"><span class="action-icon">👁</span><span>${typeof t === 'function' ? t('details') : 'Details'}</span></button><button type="button" class="btn btn-admin btn-copy-id" onclick="copyToClipboard(transferList[${index}].game_id)"><span class="action-icon">▣</span><span>${typeof t === 'function' ? t('copyId') : 'Copy ID'}</span></button></div>
                 ${adminActions}
@@ -869,10 +968,10 @@ function showDetailPopup(index) {
     popGameId.onclick = () => copyToClipboard(player.game_id);
 
     document.getElementById('pop-alliance').innerText = player.desired_alliance || '-';
-    setFurnaceBadge(document.getElementById('pop-furnace'), player.furnace_level);
-    document.getElementById('pop-power').innerText = player.power;
-    document.getElementById('pop-heropower').innerText = player.hero_power;
-    document.getElementById('pop-totalhero').innerText = player.total_hero_power;
+    setFurnaceBadge(document.getElementById('pop-furnace'), player.furnace_level, true);
+    document.getElementById('pop-power').innerText = formatPowerDisplay(player.power);
+    document.getElementById('pop-heropower').innerText = formatPowerDisplay(player.hero_power);
+    document.getElementById('pop-totalhero').innerText = formatPowerDisplay(player.total_hero_power);
     document.getElementById('pop-referrer').innerText = player.referrer || '-';
     document.getElementById('pop-status').innerText = typeof statusLabel === 'function' ? statusLabel(player.status) : player.status;
     const statusPill = document.getElementById('pop-status-pill');

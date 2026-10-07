@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title data-i18n="pageTitle">Player Transfer Registration</title>
 
     <!-- Favicons -->
@@ -16,7 +16,7 @@
     <meta name="theme-color" content="#0f172a">
 
     <link rel="stylesheet" href="effect.css">
-    <link rel="stylesheet" href="portal.css?v=15">
+    <link rel="stylesheet" href="portal.css?v=16">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
@@ -256,7 +256,8 @@
             <div id="lock-message" class="status-locked"><span>⚠️</span><div><strong data-i18n="registrationClosed">REGISTRATION CLOSED</strong><small data-i18n="quotaFull">The accepted quota is currently full.</small></div></div>
 
             <div id="transfer-form-fields" class="form-fields-grid">
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-section-title" data-i18n="secPlayer">Player Info</div>
+                <div class="form-group">
                     <label data-i18n="transferFromState">Transfer From State</label>
                     <div class="input-icon-wrap"><span class="field-icon">🧭</span><input type="number" id="in-state" data-i18n-placeholder="statePlaceholder" placeholder="e.g. 3475"></div>
                 </div>
@@ -272,12 +273,14 @@
                     <label data-i18n="desiredAlliance">Desired Alliance</label>
                     <div class="input-icon-wrap"><span class="field-icon">🛡️</span><input type="text" id="in-alliance" data-i18n-placeholder="alliancePlaceholder" placeholder="e.g. ARX/CAT/IDN/VNX/ZXC"></div>
                 </div>
+                <div class="form-section-title" data-i18n="secStrength">Strength</div>
                 <div class="form-group full-row">
                     <label data-i18n="furnaceLevel">Furnace Level</label>
                     <div class="input-icon-wrap slider-field">
                         <span class="field-icon">🔥</span>
-                        <input type="range" id="in-furnace" min="1" max="10" step="1" value="1" data-touched="0" >
+                        <input type="range" id="in-furnace" min="1" max="10" step="1" value="1" data-touched="0" aria-label="Furnace Level">
                         <span class="range-badge fc-badge" id="furnace-badge"><img class="fc-img" src="furnace/fc-1.webp" alt="FC 1" title="FC 1" width="96" height="96" decoding="async"></span>
+                        <span class="fc-label" id="furnace-label" aria-live="polite">FC 1</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -292,6 +295,7 @@
                     <label data-i18n="totalHeroPower">Total Hero Power</label>
                     <div class="input-icon-wrap"><span class="field-icon">🗡️</span><input type="text" id="in-totalhero" data-i18n-placeholder="totalHeroPowerPlaceholder" placeholder="Total Hero Power"></div>
                 </div>
+                <div class="form-section-title" data-i18n="secOptional">Optional</div>
                 <div class="form-group">
                     <label data-i18n="referrerOptional">Referrer (Optional)</label>
                     <div class="input-icon-wrap"><span class="field-icon">📜</span><input type="text" id="in-referrer" data-i18n-placeholder="referrerPlaceholder" placeholder="Who referred you? (optional)"></div>
@@ -321,6 +325,15 @@
                     <button class="btn btn-admin btn-success-soft" onclick="exportCSV()" data-i18n="exportCsv">⇩ Export CSV</button>
                 </div>
             </div>
+            <div class="applicants-filter" role="search">
+                <input type="search" id="applicant-search" data-i18n-placeholder="searchApplicants" placeholder="Search nickname or Game ID..." autocomplete="off" aria-label="Search applicants">
+                <div class="filter-chips" id="status-filter" role="group" aria-label="Status filter">
+                    <button type="button" class="filter-chip" data-status="all" aria-pressed="true" data-i18n="filterAll">All</button>
+                    <button type="button" class="filter-chip" data-status="Waiting" aria-pressed="false" data-i18n="statusWaiting">Waiting</button>
+                    <button type="button" class="filter-chip" data-status="Accepted" aria-pressed="false" data-i18n="statusAccepted">Accepted</button>
+                    <button type="button" class="filter-chip" data-status="Rejected" aria-pressed="false" data-i18n="statusRejected">Rejected</button>
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -342,10 +355,10 @@
 </div>
 
 <script src="common.js?v=2"></script>
-<script src="script.js?v=20"></script>
+<script src="script.js?v=21"></script>
 <script src="notifications.js?v=6"></script>
-<script src="lang.js?v=14"></script>
-<script src="portal.js?v=3"></script>
+<script src="lang.js?v=15"></script>
+<script src="portal.js?v=4"></script>
 
 
 
