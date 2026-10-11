@@ -65,7 +65,7 @@ function handleSubmitClick() {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=2026-10-12-1').catch(err => console.warn('Service worker registration failed:', err));
+        navigator.serviceWorker.register('sw.js?v=2026-10-12-2').catch(err => console.warn('Service worker registration failed:', err));
     });
 }
 
