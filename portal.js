@@ -65,7 +65,7 @@ function handleSubmitClick() {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=2026-10-12-4').catch(err => console.warn('Service worker registration failed:', err));
+        navigator.serviceWorker.register('sw.js?v=2026-10-12-5').catch(err => console.warn('Service worker registration failed:', err));
     });
 }
 
@@ -156,4 +156,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+
+// ================= BANNER ANIMATION (snow + pause when off-screen) =================
+(function () {
+    const banner = document.getElementById('banner');
+    if (!banner) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const snow = banner.querySelector('.fx-snow');
+
+    function setHeight() { banner.style.setProperty('--h', banner.clientHeight + 'px'); }
+    function spawn() {
+        if (!snow || snow.children.length) return;
+        const count = window.innerWidth < 600 ? 14 : 22;
+        for (let i = 0; i < count; i++) {
+            const f = document.createElement('span');
+            f.className = 'fx-flake';
+            const size = Math.random() * 2.2 + 1.4;
+            f.style.left = (Math.random() * 100) + '%';
+            f.style.width = f.style.height = size + 'px';
+            f.style.opacity = (Math.random() * 0.45 + 0.4).toFixed(2);
+            f.style.setProperty('--dx', (Math.random() * 40 - 12).toFixed(0) + 'px');
+            f.style.animationDuration = (Math.random() * 5 + 6).toFixed(1) + 's';
+            f.style.animationDelay = (-Math.random() * 10).toFixed(1) + 's';
+            snow.appendChild(f);
+        }
+    }
+    setHeight(); spawn();
+    if ('ResizeObserver' in window) new ResizeObserver(setHeight).observe(banner); else window.addEventListener('resize', setHeight);
+    // Stop animating when the banner is scrolled out of view (saves battery).
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(entries => {
+            banner.classList.toggle('is-paused', !entries[0].isIntersecting);
+        }).observe(banner);
+    }
 })();
