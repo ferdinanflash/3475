@@ -65,7 +65,7 @@ function handleSubmitClick() {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=2026-09-14-1').catch(err => console.warn('Service worker registration failed:', err));
+        navigator.serviceWorker.register('sw.js?v=2026-10-12-1').catch(err => console.warn('Service worker registration failed:', err));
     });
 }
 
@@ -82,3 +82,78 @@ document.addEventListener('DOMContentLoaded', () => {
         try { history.replaceState({}, document.title, window.location.pathname + window.location.hash); } catch (_) {}
     }
 });
+
+
+// ================= MODAL ACCESSIBILITY =================
+// Dialog semantics, focus trap, Esc to close and focus return for every .modal-overlay.
+// Purely additive: the existing open/close functions keep toggling the `active` class.
+(function () {
+    const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const openers = new Map();
+    const isVisible = el => el.getClientRects().length > 0;
+    const focusables = root => Array.from(root.querySelectorAll(FOCUSABLE)).filter(isVisible);
+    const activeModals = () => Array.from(document.querySelectorAll('.modal-overlay.active'));
+
+    function onOpen(modal, content) {
+        if (openers.has(modal)) return;
+        openers.set(modal, document.activeElement);
+        setTimeout(() => {
+            if (content.contains(document.activeElement)) return; // e.g. login already focused its input
+            const first = focusables(content).find(el => !el.classList.contains('modal-close')) || focusables(content)[0] || content;
+            first.focus({ preventScroll: true });
+        }, 30);
+    }
+    function onClose(modal) {
+        if (!openers.has(modal)) return;
+        const opener = openers.get(modal);
+        openers.delete(modal);
+        if (opener && document.contains(opener) && typeof opener.focus === 'function') opener.focus({ preventScroll: true });
+    }
+
+    function init() {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            const content = modal.querySelector('.modal-content');
+            if (!content) return;
+            content.setAttribute('role', 'dialog');
+            content.setAttribute('aria-modal', 'true');
+            content.tabIndex = -1;
+            const heading = content.querySelector('.modal-header h4');
+            if (heading) {
+                if (!heading.id) heading.id = (modal.id || 'modal') + '-title';
+                content.setAttribute('aria-labelledby', heading.id);
+            }
+            new MutationObserver(() => {
+                if (modal.classList.contains('active')) onOpen(modal, content); else onClose(modal);
+            }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+        });
+    }
+
+    document.addEventListener('keydown', e => {
+        const open = activeModals();
+        if (!open.length) return;
+        const modal = open[open.length - 1];
+        if (e.key === 'Escape') {
+            if (e.target.closest && e.target.closest('#pres-menu')) return;
+            const close = modal.querySelector('.modal-close');
+            if (close) { e.preventDefault(); close.click(); }
+            return;
+        }
+        if (e.key === 'Tab') {
+            const items = focusables(modal.querySelector('.modal-content'));
+            if (!items.length) { e.preventDefault(); return; }
+            const first = items[0], last = items[items.length - 1];
+            if (e.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+        }
+    });
+
+    // The status modal had no click-outside handler; the others are handled in script.js.
+    document.addEventListener('click', e => {
+        if (e.target && e.target.id === 'status-modal') {
+            const close = e.target.querySelector('.modal-close');
+            if (close) close.click();
+        }
+    });
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();

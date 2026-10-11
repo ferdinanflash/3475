@@ -337,7 +337,7 @@ async function renderTrackedList() {
         .in('id', ids);
 
     if (error) {
-        container.innerHTML = `<p class="tracked-empty" style="color:var(--danger);">Failed to load status: ${escapeHtml(error.message)}</p>`;
+        container.innerHTML = `<p class="tracked-empty tracked-error">${escapeHtml(t('failedLoadStatus'))}: ${escapeHtml(error.message)}</p>`;
         return;
     }
 

@@ -1,4 +1,104 @@
+/* ================= GOLD SHIMMER TEXT ANIMATION ================= */
+.animated-title {
+    margin: 0; 
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    
+    /* Base gold gradient color */
+    background: linear-gradient(
+        to right, 
+        #bf953f 0%, 
+        #fcf6ba 25%, 
+        #b38728 50%, 
+        #fbf5b7 75%, 
+        #aa771c 100%
+    );
+    background-size: 200% auto;
+    
+    /* Text clipping trick */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    
+    /* Background shadow effect & moving animation */
+    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
+    animation: goldShimmer 4s linear 3 both; /* plays 3x then rests (battery/paint friendly) */
+}
+
+/* Shimmer light movement */
+@keyframes goldShimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+/* ================= MOBILE SCREEN OPTIMIZATION ================= */
+@media (max-width: 600px) {
+    .animated-title {
+        font-size: 1.35rem; /* Title size that fits on mobile */
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Prevent iOS/Android auto-zoom when tapping an input */
+    input {
+        font-size: 16px !important; 
+        padding: 8px 10px !important;
+    }
+    
+    .btn {
+        padding: 10px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .president-info-box {
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+        gap: 6px !important;
+        padding: 8px !important;
+    }
+    
+    .card {
+        padding: 10px !important;
+    }
+
+    /* === Hide table columns that are too long on mobile === */
+    .hide-mobile {
+        display: none !important;
+    }
+
+    /* Flexible table container */
+    .table-container {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        table-layout: auto !important;
+        width: 100% !important;
+        font-size: 0.78rem !important;
+    }
+
+    th, td {
+        padding: 6px 3px !important;
+        white-space: nowrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) { .animated-title { animation: none; } }
+
+/* ===== (merged from effect.css) ===== */
+
 :root {
+            --text-soft: #cbd5e1;
+            --slate: #475569;
+            --surface-2: #111827;
+            --surface-3: #111c32;
+
             --bg-dark: #0f172a;
             --card-dark: #1e293b;
             --text-main: #f8fafc;
@@ -58,7 +158,7 @@
         
         /* MINIMAL PRESIDENT INFO BOX */
         .president-info-box { 
-            background: #111827; 
+            background: var(--surface-2); 
             padding: 8px 12px; 
             border-radius: 6px; 
             border: 1px solid var(--border); 
@@ -79,7 +179,7 @@
             padding: 2px 6px; 
             font-size: 0.8rem; 
             background: var(--card-dark); 
-            border: 1px solid #475569; 
+            border: 1px solid var(--slate); 
             color: #fff; 
             border-radius: 4px; 
             font-weight: bold; 
@@ -175,7 +275,7 @@
         }
 
         .btn-view-detail {
-            background: #475569;
+            background: var(--slate);
             color: #fff;
             border: none;
             padding: 3px 5px !important;
@@ -223,7 +323,7 @@
         }
 
         .admin-actions button.btn-delete {
-            background-color: #475569 !important;
+            background-color: var(--slate) !important;
         }
 
         /* GAME ID TEXT STYLING FOR FULL READABILITY */
@@ -246,7 +346,7 @@
         .btn:active { opacity: 0.8; }
         .btn-primary { background: var(--primary); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }
         .btn-primary:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
-        .btn-admin { background: #475569; width: auto; padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; }
+        .btn-admin { background: var(--slate); width: auto; padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; }
         
         /* TABLE RESPONSIVE CONTAINER */
         .table-container { 
@@ -276,7 +376,7 @@
         .max-slot-display { font-size: 1.1rem; line-height: 1.2; font-weight: bold; color: #fff; }
         .max-slot-container input {
             box-sizing: border-box; text-align: center; font-size: 1.1rem; line-height: 1.2; font-weight: bold; color: #fff;
-            width: 55px; padding: 2px 4px; margin: 0; background: var(--card-dark); border: 1px solid #475569; border-radius: 4px;
+            width: 55px; padding: 2px 4px; margin: 0; background: var(--card-dark); border: 1px solid var(--slate); border-radius: 4px;
             -moz-appearance: textfield;
         }
         .max-slot-container input:focus { outline: none; border-color: var(--primary); }
@@ -325,7 +425,7 @@
         }
         .modal-header {
             padding: 14px 18px;
-            background: #111827;
+            background: var(--surface-2);
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
@@ -372,7 +472,7 @@
         }
 
 /* ===== STATE 3475 UI V2 ===== */
-:root{--surface-2:#111827;--border-soft:var(--border);--muted:var(--text-muted);--radius:12px}
+:root{--border-soft:var(--border);--muted:var(--text-muted);--radius:12px}
 body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,var(--bg-dark) 38%,#0b1120 100%);}
 .container{max-width:1280px}
 .site-header{position:sticky;top:0;z-index:100;background:rgba(15,23,42,.94);backdrop-filter:blur(12px);padding:10px 0 12px;margin-bottom:18px;border-bottom:1px solid var(--border);}
@@ -386,7 +486,7 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,var(--
 .applicants-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.applicants-tools{display:flex;gap:7px;flex-wrap:wrap}.btn-success-soft{background:#166534!important}.btn-danger-soft{background:#991b1b!important}.table-container{border-radius:9px;overflow:hidden}.table-container table{table-layout:auto}.table-container th{padding:10px 7px}.table-container td{padding:9px 7px}.table-container .from-state-head,.table-container .from-state-cell{width:58px;min-width:58px;max-width:58px;text-align:center}.table-container tbody tr{transition:background .15s}.table-container tbody tr:hover{background:rgba(59,130,246,.06)}
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:70px}.badge-waiting{box-shadow:0 0 0 1px rgba(245,158,11,.25)}.badge-accepted{box-shadow:0 0 0 1px rgba(34,197,94,.25)}.badge-rejected{box-shadow:0 0 0 1px rgba(239,68,68,.25)}
 .mobile-applicants-list{display:none}.game-id-cell{user-select:none}.game-id-cell:hover{color:#fbbf24}
-.modal-header>div{min-width:0}.modal-status-waiting{background:rgba(245,158,11,.18);color:#fbbf24}.modal-status-accepted{background:rgba(34,197,94,.18);color:#4ade80}.modal-status-rejected{background:rgba(239,68,68,.18);color:#f87171}.modal-status-pill{display:inline-block;margin-top:3px;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:999px;background:var(--border);color:#cbd5e1}.game-id-detail{cursor:pointer}.game-id-detail::after{content:'  📋';font-size:.75rem}.detail-row:last-of-type{border-bottom:0}
+.modal-header>div{min-width:0}.modal-status-waiting{background:rgba(245,158,11,.18);color:#fbbf24}.modal-status-accepted{background:rgba(34,197,94,.18);color:#4ade80}.modal-status-rejected{background:rgba(239,68,68,.18);color:#f87171}.modal-status-pill{display:inline-block;margin-top:3px;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:999px;background:var(--border);color:var(--text-soft)}.game-id-detail{cursor:pointer}.game-id-detail::after{content:'  📋';font-size:.75rem}.detail-row:last-of-type{border-bottom:0}
 #toast-container{top:76px;left:auto;right:16px;width:min(380px,calc(100vw - 32px))}.toast{margin-bottom:8px}
 .mobile-view-applicants-btn,.mobile-applicants-back{display:none}
 .applicants-title-wrap{display:flex;align-items:center;gap:8px;min-width:0}
@@ -398,8 +498,8 @@ body{padding:18px;background:radial-gradient(circle at 50% -20%,#172554 0,var(--
   .mobile-view-arrow{margin-left:auto;font-size:1.8rem;line-height:1;color:#93c5fd}
   .applicants-card{display:none}
   .applicants-card.mobile-open{display:block;position:fixed;inset:0;z-index:1000;margin:0;border-radius:0;border:0!important;background:var(--bg-dark);box-shadow:none;overflow:hidden;padding:0!important}
-  .applicants-card.mobile-open .applicants-header{position:sticky;top:0;z-index:2;background:#111c32;border-bottom:1px solid var(--border);padding:14px!important;flex-direction:row!important;align-items:center!important;margin:0}
-  .mobile-applicants-back{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;border:1px solid #475569;border-radius:9px;background:var(--card-dark);color:#f8fafc;font-size:1.7rem;line-height:1;cursor:pointer}
+  .applicants-card.mobile-open .applicants-header{position:sticky;top:0;z-index:2;background:var(--surface-3);border-bottom:1px solid var(--border);padding:14px!important;flex-direction:row!important;align-items:center!important;margin:0}
+  .mobile-applicants-back{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;border:1px solid var(--slate);border-radius:9px;background:var(--card-dark);color:#f8fafc;font-size:1.7rem;line-height:1;cursor:pointer}
   .applicants-card.mobile-open .applicants-title-wrap{flex:1}
   .applicants-card.mobile-open .applicants-header h3{font-size:1.05rem}
   .applicants-card.mobile-open .applicants-header .section-subtitle{font-size:.7rem}
@@ -670,7 +770,7 @@ body{
 .admin-mode .applicants-header{padding-bottom:10px;border-bottom:1px solid var(--border)}
 .admin-mode .applicants-tools .btn-admin{min-height:34px}
 .admin-mode .table-container{border-color:#3b82f655}
-.admin-mode .table-container th{background:#111c32;color:#a5b4fc;font-size:.73rem;text-transform:uppercase;letter-spacing:.35px}
+.admin-mode .table-container th{background:var(--surface-3);color:#a5b4fc;font-size:.73rem;text-transform:uppercase;letter-spacing:.35px}
 .admin-mode .table-container td{font-size:.78rem}
 .admin-mode .table-container tbody tr:hover{background:rgba(59,130,246,.10)}
 .admin-action-head{text-align:center!important}
@@ -678,7 +778,7 @@ body{
 .admin-actions button{width:auto!important;min-width:38px;padding:5px 7px!important;font-size:.68rem!important}
 .admin-actions button.btn-accept{background:#15803d!important}
 .admin-actions button.btn-reject{background:#b91c1c!important}
-.admin-actions button.btn-delete{background:#475569!important}
+.admin-actions button.btn-delete{background:var(--slate)!important}
 .admin-extra-col{max-width:150px!important}
 .admin-mode .game-id-cell{color:#f8fafc}
 .admin-mode .mobile-applicant{border-color:var(--border)}
@@ -687,7 +787,7 @@ body{
 .admin-mode .president-info-box{border-color:#2563eb66;background:#0b1427}
 /* Make the admin note editor cleaner */
 #pop-notes-container{background:#0f172a99;border:1px solid var(--border)!important;border-radius:8px;padding:10px!important;margin-top:8px}
-#pop-notes-container .detail-label{font-weight:800;color:#cbd5e1}
+#pop-notes-container .detail-label{font-weight:800;color:var(--text-soft)}
 #pop-notes-input{min-height:82px!important}
 #pop-notes-save-btn{min-height:36px}
 
@@ -715,7 +815,7 @@ body{
 .notif-optin-label span{font-size:.9rem;color:#e2e8f0}
 .notif-optin-label small{display:block;color:var(--text-muted);font-weight:normal;margin-top:2px}
 
-.notif-bell-btn{display:flex;align-items:center;justify-content:center;gap:6px}
+.notif-bell-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;width:100%}
 .notif-count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:.68rem;font-weight:800;line-height:1}
 
 #tracked-list-container{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}
@@ -726,7 +826,7 @@ body{
 .tracked-item-info span{color:var(--text-muted);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tracked-item-missing{opacity:.7;border-style:dashed}
 .tracked-missing-label{color:var(--text-muted);font-style:italic}
-.tracked-remove-btn{background:transparent;border:1px solid #475569;color:var(--text-muted);width:26px;height:26px;border-radius:6px;cursor:pointer;flex-shrink:0;font-size:.85rem;line-height:1}
+.tracked-remove-btn{background:transparent;border:1px solid var(--slate);color:var(--text-muted);width:26px;height:26px;border-radius:6px;cursor:pointer;flex-shrink:0;font-size:.85rem;line-height:1}
 .tracked-remove-btn:hover{background:var(--danger);border-color:var(--danger);color:#fff}
 
 /* ===== V5 STRUCTURE / RECOVERY / LANGUAGE ===== */
@@ -868,9 +968,9 @@ body{
 .state-title{font-size:1.25rem!important;font-weight:900;letter-spacing:.5px;line-height:1.2}
 .state-title-gold{background:linear-gradient(90deg,#fbbf24,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 18px rgba(251,191,36,.25)}
 .state-title-blue{color:#a5b4fc}
-.state-intro{white-space:pre-wrap;font-size:.92rem;line-height:1.5;color:#cbd5e1;text-align:justify}
+.state-intro{white-space:pre-wrap;font-size:.92rem;line-height:1.5;color:var(--text-soft);text-align:justify}
 .state-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.state-card{border-radius:10px;padding:12px;border:1px solid;font-size:.82rem;line-height:1.4;color:#cbd5e1}
+.state-card{border-radius:10px;padding:12px;border:1px solid;font-size:.82rem;line-height:1.4;color:var(--text-soft)}
 .state-card p{margin:0}
 .state-card strong{display:block;color:#f8fafc;font-size:.82rem;margin-bottom:2px}
 .sc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -895,7 +995,7 @@ body{
 @media (max-width:520px){.state-cards{grid-template-columns:1fr}.state-title{font-size:1.05rem!important}}
 
 /* ---- About Our State: admin editor ---- */
-.se-note{background:rgba(245,158,11,.1);border-left:3px solid var(--warning);padding:8px 10px;font-size:.82rem;color:#cbd5e1;border-radius:4px}
+.se-note{background:rgba(245,158,11,.1);border-left:3px solid var(--warning);padding:8px 10px;font-size:.82rem;color:var(--text-soft);border-radius:4px}
 .se-label{display:block;margin:10px 0 4px;font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
 .se-input{width:100%;box-sizing:border-box;background:var(--bg-dark);border:1px solid var(--border);color:#f8fafc;border-radius:6px;padding:6px 8px;font:inherit;font-size:.85rem;margin-bottom:6px}
 .se-input:focus{border-color:var(--primary);outline:none}
@@ -1051,7 +1151,7 @@ body.admin-mode .site-header .header-actions #admin-btn[aria-expanded="true"]{bo
 
 /* ===== About Our State: isi kartu mengikuti baris baru dari editor ===== */
 .state-card .sc-strong{margin:0 0 4px}
-.state-card .sc-text{font-size:.82rem;line-height:1.45;color:#cbd5e1;overflow-wrap:anywhere}
+.state-card .sc-text{font-size:.82rem;line-height:1.45;color:var(--text-soft);overflow-wrap:anywhere}
 .state-card .sc-line{margin:0}
 .state-card .sc-line + .sc-line{margin-top:2px}
 .state-card .sc-bullet{padding-left:.9em;text-indent:-.9em}
@@ -1150,7 +1250,7 @@ body.admin-mode .site-header .header-actions #admin-btn[aria-expanded="true"]{bo
 /* 12. Visible keyboard focus */
 button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible,
 input[type="checkbox"]:focus-visible,input[type="range"]:focus-visible{outline:2px solid var(--focus-ring)!important;outline-offset:2px}
-input:not([type="checkbox"]):not([type="range"]):focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid rgba(105,218,255,.55)!important;outline-offset:1px}
+input:not([type="checkbox"]):not([type="range"]):focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--focus-ring)!important;outline-offset:2px}
 .slider-field:focus-within{border-color:rgba(96,165,250,.9);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
 
 /* 11. Respect "reduce motion" everywhere */
@@ -1161,3 +1261,71 @@ input:not([type="checkbox"]):not([type="range"]):focus-visible,textarea:focus-vi
 
 /* Applicant cards keep their natural height instead of stretching to fill the list */
 .applicants-card.mobile-open .mobile-applicants-list{align-content:start}
+
+/* =====================================================================
+   UI REFINEMENTS (2026-10-12)
+   4 modal a11y · 6/7 header chips · 8 form card · 9 empty state
+   11 inline-style classes · 13 tokens + effect.css merged into this file
+   ===================================================================== */
+
+/* 4. Modal close button: comfortable tap target */
+.modal-close{min-width:40px;min-height:40px;display:inline-grid;place-items:center;border-radius:8px;font-size:1.6rem;margin:-6px -8px -6px 0;cursor:pointer}
+.modal-close:hover{background:rgba(239,68,68,.12)}
+.modal-content:focus{outline:none}
+
+/* 11. Classes that replace inline styles */
+.modal-content.modal-sm{max-width:360px}
+.modal-content.modal-md{max-width:380px}
+.modal-content.modal-lg{max-width:440px}
+.form-group.flush{margin-bottom:0}
+.btn-compact{padding:10px;font-size:.9rem}
+.btn-xs{padding:6px;font-size:.8rem}
+.btn.btn-danger{background:var(--danger)}
+.u-warning{color:var(--warning)}
+#pop-power{color:var(--primary)}
+.detail-row.detail-row-notes{flex-direction:column;gap:6px;align-items:stretch;border-bottom:none}
+.modal-content textarea.note-input{height:70px;font-size:.85rem;resize:vertical}
+.modal-content textarea.special-notes-input{height:250px;font-family:inherit;font-size:.95rem;resize:vertical;margin-bottom:8px;background:var(--bg-dark)}
+.callout{padding:10px;font-size:.85rem;color:var(--text-soft);border-left:3px solid transparent}
+.callout-warn{background:rgba(245,158,11,.1);border-left-color:var(--warning);margin-bottom:10px}
+.callout-danger{background:rgba(239,68,68,.1);border-left-color:var(--danger)}
+.tracked-error{color:var(--danger)}
+.counter-card.type-total .counter-val{color:var(--primary)}
+.counter-card.type-accepted .counter-val{color:var(--success)}
+.counter-card.type-left .counter-val{color:var(--warning)}
+#val-alliance{color:var(--success)}
+#val-id{color:var(--warning)}
+
+/* Power / Total Hero Power badge icon */
+.field-icon.field-icon-img{width:32px;height:32px;left:6px;border-radius:0;background:none;border:0;box-shadow:none}
+.field-icon-img img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.65))}
+
+/* 7. President info as three chips (label above value) + loading skeleton */
+.site-header .president-info-box{display:flex;gap:8px;padding:0;background:none;border:0;box-shadow:none}
+.site-header .info-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:6px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.site-header .info-label{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem;line-height:1.2;color:var(--text-muted)}
+.site-header .info-value{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.92rem;font-weight:800;line-height:1.25}
+.info-value:empty::before{content:"";display:block;width:60px;height:.9em;border-radius:4px;background:linear-gradient(90deg,#1e293b,#334155,#1e293b);background-size:200% 100%;animation:skelShimmer 1.2s linear infinite}
+@keyframes skelShimmer{to{background-position:-200% 0}}
+
+/* 6. Header: compact on phones (one row of chips, one row of actions) */
+@media (max-width:600px){
+  .site-header .president-info-box{display:grid!important;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr);gap:6px!important;padding:0!important;width:100%}
+  .site-header .info-item{width:auto;padding:5px 8px;align-items:flex-start;justify-content:flex-start}
+  .site-header .info-label{font-size:.62rem}
+  .site-header .info-value{font-size:.82rem}
+  .site-header .header-right{gap:8px!important}
+  .site-header .header-actions{gap:6px}
+}
+
+/* 8. The form card is taller than most laptop screens: only pin it on tall viewports */
+@media (min-width:901px){.form-card{position:static}}
+@media (min-width:901px) and (min-height:1100px){.form-card{position:sticky;top:88px}}
+
+/* 9. Empty state */
+td.empty-cell{padding:0!important;white-space:normal}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:6px;padding:28px 16px;text-align:center;color:var(--text-muted)}
+.empty-state strong{color:var(--text-main);font-size:.95rem}
+.empty-state small{font-size:.8rem;line-height:1.4;max-width:34ch}
+.empty-state-ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;margin-bottom:4px;color:#7fb3fb;background:rgba(59,130,246,.12);border:1px solid rgba(96,165,250,.35)}
+.mobile-empty:has(.empty-state){padding:0}

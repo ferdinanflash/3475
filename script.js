@@ -467,11 +467,11 @@ let presidentInfoRaw = { president: '', alliance: '', id: '' };
 
 function applyPresidentDisplay(president, alliance, idGame) {
     presidentInfoRaw = { president: String(president ?? ''), alliance: String(alliance ?? ''), id: String(idGame ?? '') };
-    document.getElementById('val-president').innerText = president;
-    document.getElementById('val-alliance').innerText = alliance;
+    document.getElementById('val-president').innerText = president || '-';
+    document.getElementById('val-alliance').innerText = alliance || '-';
 
     const valId = document.getElementById('val-id');
-    valId.innerText = idGame;
+    valId.innerText = idGame || '-';
     valId.style.cursor = 'pointer';
     valId.title = t('clickToCopyId');
     valId.onclick = () => copyToClipboard(idGame);
@@ -479,6 +479,14 @@ function applyPresidentDisplay(president, alliance, idGame) {
     document.getElementById('edit-president').value = president === '-' ? '' : president;
     document.getElementById('edit-alliance').value = alliance === '-' ? '' : alliance;
     document.getElementById('edit-id').value = idGame === '-' ? '' : idGame;
+}
+
+// Friendly empty state (icon + title + hint) used by the applicants table and mobile list.
+function emptyStateHtml(title, hint, icon) {
+    const svg = icon === 'search'
+        ? '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>';
+    return `<div class="empty-state"><span class="empty-state-ico">${svg}</span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(hint)}</small></div>`;
 }
 
 // POPUP MODAL CONTROL SECTIONS
@@ -869,15 +877,16 @@ function renderTable() {
     
     if (transferList.length === 0) {
         const totalCols = isAdmin ? 6 : 5;
-        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">${escapeHtml(typeof t === 'function' ? t('noApplications') : 'No applications found')}</td></tr>`;
-        if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">${escapeHtml(typeof t === 'function' ? t('noApplications') : 'No applications found')}</div>`;
+        const emptyHtml = emptyStateHtml(t('noApplications'), t('noApplicationsHint'));
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" class="empty-cell">${emptyHtml}</td></tr>`;
+        if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">${emptyHtml}</div>`;
         return;
     }
     
     if (!transferList.some(applicantMatchesFilter)) {
         const totalCols = isAdmin ? 6 : 5;
-        const msg = escapeHtml(t('noMatches'));
-        tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center; color:#94a3b8; padding:24px;">${msg}</td></tr>`;
+        const msg = emptyStateHtml(t('noMatches'), t('noMatchesHint'), 'search');
+        tbody.innerHTML = `<tr><td colspan="${totalCols}" class="empty-cell">${msg}</td></tr>`;
         if (mobileList) mobileList.innerHTML = `<div class="mobile-empty">${msg}</div>`;
         return;
     }
