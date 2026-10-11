@@ -1340,3 +1340,23 @@ td.empty-cell{padding:0!important;white-space:normal}
 @media (min-width:901px) and (min-height:1100px){.form-card{top:16px}}
 @media (max-width:900px){.site-logo-img{height:120px;margin-inline:auto}}
 @media (max-width:600px){.site-logo-img{height:112px}}
+
+/* ===== Header controls: language, About and crown share one size, radius and baseline ===== */
+.site-header .header-actions{align-items:center}
+.site-header .header-actions .lang-select-wrap{margin:0;box-sizing:border-box;height:40px}
+.site-header .header-actions #about-state-btn{box-sizing:border-box;height:40px;margin:0!important}
+body:not(.admin-mode) .site-header .header-actions #admin-btn{
+    box-sizing:border-box;width:44px;min-width:44px;height:40px;padding:0!important;margin:0;
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid rgba(68,173,255,.58)!important;border-radius:10px!important;
+    background:linear-gradient(180deg,rgba(7,31,65,.98),rgba(5,17,38,.99))!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10)!important;
+    font-size:1.15rem!important;line-height:1;cursor:pointer;
+}
+body:not(.admin-mode) .site-header .header-actions #admin-btn:hover{filter:brightness(1.15)}
+
+
+/* ===== Landscape banner replaces the badge logo ===== */
+.site-logo-img{width:min(440px,100%);height:auto;aspect-ratio:1100/614;object-fit:cover;border-radius:14px;border:1px solid rgba(96,165,250,.35);filter:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+@media (max-width:900px){.site-logo-img{width:100%;height:auto;margin-inline:auto}}
+@media (max-width:600px){.site-logo-img{height:auto}}
