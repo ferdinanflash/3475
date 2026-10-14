@@ -128,6 +128,6 @@ function translateDynamicMessage(message){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('language-select')?.addEventListener('change',e=>applyLanguage(e.target.value));
+  document.getElementById('language-select')?.addEventListener('change',e=>{ applyLanguage(e.target.value); e.target.blur(); });
   applyLanguage(currentLanguage());
 });

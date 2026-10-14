@@ -800,16 +800,63 @@ async function loadTransfers() {
     }
 }
 
+
+// ===== ODOMETER COUNTERS: digits roll like a mechanical counter, with a staggered
+// count-up on first load and an icy glow pulse whenever a value changes. =====
+function setOdometer(el, value) {
+    if (!el) return;
+    const str = String(Math.max(0, parseInt(value, 10) || 0));
+    if (el.dataset.odo === str) return;
+    const first = el.dataset.odo === undefined;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.dataset.odo = str;
+    el.setAttribute('aria-label', str);
+    el.setAttribute('role', 'text');
+    el.classList.add('odo');
+    let cols = Array.from(el.querySelectorAll(':scope > .odo-col'));
+    // Rebuild when the number of digits changes (e.g. 9 -> 10)
+    if (cols.length !== str.length) {
+        el.textContent = '';
+        cols = [];
+        for (let i = 0; i < str.length; i++) {
+            const col = document.createElement('span');
+            col.className = 'odo-col';
+            col.setAttribute('aria-hidden', 'true');
+            const strip = document.createElement('span');
+            strip.className = 'odo-strip';
+            for (let d = 0; d <= 9; d++) { const n = document.createElement('i'); n.textContent = d; strip.appendChild(n); }
+            col.appendChild(strip);
+            el.appendChild(col);
+            cols.push(col);
+        }
+        void el.offsetWidth; // start every strip at 0, then roll
+    }
+    cols.forEach((col, i) => {
+        const strip = col.firstChild;
+        const digit = +str[i];
+        strip.style.transitionDelay = reduce ? '0s' : (i * 90) + 'ms';
+        strip.style.transform = 'translateY(' + (-digit) + 'em)';
+    });
+    if (reduce) return;
+    el.classList.remove('odo-rolling'); void el.offsetWidth; el.classList.add('odo-rolling');
+    clearTimeout(el._odoT);
+    el._odoT = setTimeout(() => el.classList.remove('odo-rolling'), 1300 + str.length * 90);
+    const card = el.closest('.counter-card');
+    if (card && !first) {
+        card.classList.remove('odo-burst'); void card.offsetWidth; card.classList.add('odo-burst');
+    }
+}
+
 // COUNTER LOGIC & ELEMENT TOGGLES FOR THE ADMIN VIEW
 function updateCounters() {
     const totalApplicants = transferList.length;
     const acceptedCount = transferList.filter(item => item.status === 'Accepted').length;
     
-    document.getElementById('count-total').innerText = totalApplicants;
-    document.getElementById('count-accepted').innerText = acceptedCount;
+    setOdometer(document.getElementById('count-total'), totalApplicants);
+    setOdometer(document.getElementById('count-accepted'), acceptedCount);
     const leftEl = document.getElementById('count-left');
     const slotsLeft = Math.max(0, maxSlots - acceptedCount);
-    if (leftEl) leftEl.innerText = slotsLeft;
+    if (leftEl) setOdometer(leftEl, slotsLeft);
     const leftCard = document.querySelector('.slots-left-card');
     if (leftCard) {
         leftCard.classList.toggle('is-low', slotsLeft > 0 && slotsLeft <= LOW_SLOT_THRESHOLD);
